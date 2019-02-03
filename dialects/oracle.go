@@ -690,7 +690,7 @@ func (db *oracle) GetColumns(queryer core.Queryer, ctx context.Context, tableNam
 			col.SQLType = schemas.SQLType{Name: schemas.TimeStampz, DefaultLength: 0, DefaultLength2: 0}
 		case "NUMBER":
 			col.SQLType = schemas.SQLType{Name: schemas.Double, DefaultLength: len1, DefaultLength2: len2}
-		case "LONG", "LONG RAW":
+		case "LONG", "LONG RAW", "NCLOB", "CLOB":
 			col.SQLType = schemas.SQLType{Name: schemas.Text, DefaultLength: 0, DefaultLength2: 0}
 		case "RAW":
 			col.SQLType = schemas.SQLType{Name: schemas.Binary, DefaultLength: 0, DefaultLength2: 0}
