@@ -38,6 +38,7 @@ type Engine struct {
 	Cacher core.Cacher
 
 	showSQL      bool
+	showCUDSQL   bool
 	showExecTime bool
 
 	logger     core.ILogger
@@ -96,12 +97,16 @@ func (engine *Engine) CondDeleted(colName string) builder.Cond {
 }
 
 // ShowSQL show SQL statement or not on logger if log level is great than INFO
+// Show[1] show SQL only INSERT UPDATE and DELETE.
 func (engine *Engine) ShowSQL(show ...bool) {
 	engine.logger.ShowSQL(show...)
 	if len(show) == 0 {
 		engine.showSQL = true
 	} else {
 		engine.showSQL = show[0]
+		if len(show) > 1 {
+			engine.showCUDSQL = show[1]
+		}
 	}
 }
 
@@ -1372,6 +1377,7 @@ func (engine *Engine) QueryInterface(sqlorArgs ...interface{}) ([]map[string]int
 func (engine *Engine) Insert(beans ...interface{}) (int64, error) {
 	session := engine.NewSession()
 	defer session.Close()
+	session.isCUD = true
 	return session.Insert(beans...)
 }
 
@@ -1379,6 +1385,7 @@ func (engine *Engine) Insert(beans ...interface{}) (int64, error) {
 func (engine *Engine) InsertOne(bean interface{}) (int64, error) {
 	session := engine.NewSession()
 	defer session.Close()
+	session.isCUD = true
 	return session.InsertOne(bean)
 }
 
@@ -1391,6 +1398,7 @@ func (engine *Engine) InsertOne(bean interface{}) (int64, error) {
 func (engine *Engine) Update(bean interface{}, condiBeans ...interface{}) (int64, error) {
 	session := engine.NewSession()
 	defer session.Close()
+	session.isCUD = true
 	return session.Update(bean, condiBeans...)
 }
 
@@ -1398,6 +1406,7 @@ func (engine *Engine) Update(bean interface{}, condiBeans ...interface{}) (int64
 func (engine *Engine) Delete(bean interface{}) (int64, error) {
 	session := engine.NewSession()
 	defer session.Close()
+	session.isCUD = true
 	return session.Delete(bean)
 }
 

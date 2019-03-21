@@ -146,7 +146,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	if session.isAutoClose {
 		defer session.Close()
 	}
-
+	session.isCUD = true
 	v := rValue(bean)
 	t := v.Type()
 

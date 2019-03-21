@@ -18,7 +18,7 @@ import (
 func (session *Session) Insert(beans ...interface{}) (int64, error) {
 	var affected int64
 	var err error
-
+	session.isCUD = true
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -517,7 +517,7 @@ func (session *Session) InsertOne(bean interface{}) (int64, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
-
+	session.isCUD = true
 	return session.innerInsert(bean)
 }
 

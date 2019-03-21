@@ -78,7 +78,7 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
-
+	session.isCUD = true
 	if err := session.statement.setRefBean(bean); err != nil {
 		return 0, err
 	}

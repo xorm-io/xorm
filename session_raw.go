@@ -172,6 +172,12 @@ func (session *Session) exec(sqlStr string, args ...interface{}) (sql.Result, er
 				session.engine.logger.Infof("[SQL] %v", sqlStr)
 			}
 		}
+	} else if session.engine.showCUDSQL && session.isCUD {
+		if len(args) > 0 {
+			session.engine.logger.Infof("[SQL] %v %#v", sqlStr, args)
+		} else {
+			session.engine.logger.Infof("[SQL] %v", sqlStr)
+		}
 	}
 
 	if !session.isAutoCommit {
