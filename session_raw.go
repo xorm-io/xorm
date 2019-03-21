@@ -160,7 +160,7 @@ func (session *Session) exec(sqlStr string, args ...interface{}) (sql.Result, er
 			defer func() {
 				execDuration := time.Since(b4ExecTime)
 				if len(args) > 0 {
-					session.engine.logger.Infof("[SQL] %s %#v - took: %v", sqlStr, args, execDuration)
+					session.engine.logger.Infof("[SQL] %s %+v - took: %v", sqlStr, args, execDuration)
 				} else {
 					session.engine.logger.Infof("[SQL] %s - took: %v", sqlStr, execDuration)
 				}
@@ -174,9 +174,9 @@ func (session *Session) exec(sqlStr string, args ...interface{}) (sql.Result, er
 		}
 	} else if session.engine.showCUDSQL && session.isCUD {
 		if len(args) > 0 {
-			session.engine.logger.Infof("[SQL] %v %#v", sqlStr, args)
+			session.engine.logger.Infof("%v %+v", sqlStr, args)
 		} else {
-			session.engine.logger.Infof("[SQL] %v", sqlStr)
+			session.engine.logger.Infof("%v", sqlStr)
 		}
 	}
 
