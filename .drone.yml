@@ -6,21 +6,11 @@ platform:
   os: linux
   arch: amd64
 
-clone:
-  disable: true
-
 workspace:
   base: /go
-  path: src/github.com/go-xorm/xorm
+  path: src/gitea.com/xorm/xorm
 
 steps:
-- name: git
-  pull: default
-  image: plugins/git:next
-  settings:
-    depth: 50
-    tags: true
-
 - name: init_postgres
   pull: default
   image: postgres:9.5
@@ -186,21 +176,11 @@ platform:
   os: linux
   arch: amd64
 
-clone:
-  disable: true
-
 workspace:
   base: /go
-  path: src/github.com/go-xorm/xorm
+  path: src/gitea.com/xorm/xorm
 
 steps:
-- name: git
-  pull: default
-  image: plugins/git:next
-  settings:
-    depth: 50
-    tags: true
-
 - name: init_postgres
   pull: default
   image: postgres:9.5
@@ -406,20 +386,11 @@ platform:
   os: linux
   arch: amd64
 
-clone:
-  disable: true
-
 workspace:
   base: /go
-  path: src/github.com/go-xorm/xorm
+  path: src/gitea.com/xorm/xorm
 
 steps:
-- name: git
-  pull: default
-  image: plugins/git:next
-  settings:
-    depth: 50
-    tags: true
 
 - name: build
   pull: default
@@ -618,20 +589,11 @@ platform:
   os: linux
   arch: amd64
 
-clone:
-  disable: true
-
 workspace:
   base: /go
-  path: src/github.com/go-xorm/xorm
+  path: src/gitea.com/xorm/xorm
 
 steps:
-- name: git
-  pull: default
-  image: plugins/git:next
-  settings:
-    depth: 50
-    tags: true
 
 - name: build
   pull: default
