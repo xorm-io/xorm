@@ -4,7 +4,7 @@
 
 xorm是一个简单而强大的Go语言ORM库. 通过它可以使数据库操作非常简便。
 
-[![Build Status](https://drone.gitea.com/api/badges/xorm/builder/status.svg)](https://drone.gitea.com/xorm/builder) [![](http://gocover.io/_badge/xorm.io/xorm)](http://gocover.io/xorm.io/xorm)
+[![Build Status](https://drone.gitea.com/api/badges/xorm/builder/status.svg)](https://drone.gitea.com/xorm/builder) [![](http://gocover.io/_badge/xorm.io/xorm)](https://gocover.io/xorm.io/xorm)
 [![](https://goreportcard.com/badge/xorm.io/xorm)](https://goreportcard.com/report/xorm.io/xorm)
 [![Join the chat at https://img.shields.io/discord/323460943201959939.svg](https://img.shields.io/discord/323460943201959939.svg)](https://discord.gg/HuR2CF3)
 
