@@ -97,10 +97,10 @@ func TestNullStructInsert(t *testing.T) {
 
 	if true {
 		item := NullType{
-			Name:   sql.NullString{"haolei", true},
-			Age:    sql.NullInt64{34, true},
-			Height: sql.NullFloat64{1.72, true},
-			IsMan:  sql.NullBool{true, true},
+			Name:   sql.NullString{String: "haolei", Valid: true},
+			Age:    sql.NullInt64{Int64: 34, Valid: true},
+			Height: sql.NullFloat64{Float64: 1.72, Valid: true},
+			IsMan:  sql.NullBool{Bool: true, Valid: true},
 		}
 		_, err := testEngine.Insert(&item)
 		if err != nil {
@@ -120,10 +120,10 @@ func TestNullStructInsert(t *testing.T) {
 
 		for i := 0; i < 5; i++ {
 			item := NullType{
-				Name:         sql.NullString{"haolei_" + fmt.Sprint(i+1), true},
-				Age:          sql.NullInt64{30 + int64(i), true},
-				Height:       sql.NullFloat64{1.5 + 1.1*float64(i), true},
-				IsMan:        sql.NullBool{true, true},
+				Name:         sql.NullString{String: "haolei_" + fmt.Sprint(i+1), Valid: true},
+				Age:          sql.NullInt64{Int64: 30 + int64(i), Valid: true},
+				Height:       sql.NullFloat64{Float64: 1.5 + 1.1*float64(i), Valid: true},
+				IsMan:        sql.NullBool{Bool: true, Valid: true},
 				CustomStruct: CustomStruct{i, i + 1, i + 2},
 			}
 
@@ -173,8 +173,8 @@ func TestNullStructUpdate(t *testing.T) {
 
 	if true { // 测试可插入NULL
 		item := new(NullType)
-		item.Age = sql.NullInt64{23, true}
-		item.Height = sql.NullFloat64{0, false} // update to NULL
+		item.Age = sql.NullInt64{Int64: 23, Valid: true}
+		item.Height = sql.NullFloat64{Float64: 0, Valid: false} // update to NULL
 
 		affected, err := testEngine.ID(2).Cols("age", "height", "is_man").Update(item)
 		if err != nil {
@@ -190,7 +190,7 @@ func TestNullStructUpdate(t *testing.T) {
 
 	if true { // 测试In update
 		item := new(NullType)
-		item.Age = sql.NullInt64{23, true}
+		item.Age = sql.NullInt64{Int64: 23, Valid: true}
 		affected, err := testEngine.In("id", 3, 4).Cols("age", "height", "is_man").Update(item)
 		if err != nil {
 			t.Error(err)
@@ -205,9 +205,9 @@ func TestNullStructUpdate(t *testing.T) {
 
 	if true { // 测试where
 		item := new(NullType)
-		item.Name = sql.NullString{"nullname", true}
-		item.IsMan = sql.NullBool{true, true}
-		item.Age = sql.NullInt64{34, true}
+		item.Name = sql.NullString{String: "nullname", Valid: true}
+		item.IsMan = sql.NullBool{Bool: true, Valid: true}
+		item.Age = sql.NullInt64{Int64: 34, Valid: true}
 
 		_, err := testEngine.Where("age > ?", 34).Update(item)
 		if err != nil {
@@ -218,9 +218,9 @@ func TestNullStructUpdate(t *testing.T) {
 
 	if true { // 修改全部时，插入空值
 		item := &NullType{
-			Name:   sql.NullString{"winxxp", true},
-			Age:    sql.NullInt64{30, true},
-			Height: sql.NullFloat64{1.72, true},
+			Name:   sql.NullString{String: "winxxp", Valid: true},
+			Age:    sql.NullInt64{Int64: 30, Valid: true},
+			Height: sql.NullFloat64{Float64: 1.72, Valid: true},
 			// IsMan:  sql.NullBool{true, true},
 		}
 

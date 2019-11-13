@@ -274,7 +274,7 @@ func TestCharst(t *testing.T) {
 
 func TestSync2_1(t *testing.T) {
 	type WxTest struct {
-		Id                 int   `xorm:"not null pk autoincr INT(64)`
+		Id                 int   `xorm:"not null pk autoincr INT(64)"`
 		Passport_user_type int16 `xorm:"null int"`
 		Id_delete          int8  `xorm:"null int default 1"`
 	}

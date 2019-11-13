@@ -531,9 +531,7 @@ func TestCreatedJsonTime(t *testing.T) {
 
 	var dis = make([]MyJsonTime, 0)
 	err = testEngine.Find(&dis)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 }
 
 func TestInsertMulti2(t *testing.T) {
@@ -552,12 +550,7 @@ func TestInsertMulti2(t *testing.T) {
 		t.Error(err)
 		panic(err)
 	}
-	if cnt != int64(len(users)) {
-		err = errors.New("insert not returned 1")
-		t.Error(err)
-		panic(err)
-		return
-	}
+	assert.EqualValues(t, len(users), cnt)
 
 	users2 := []*Userinfo{
 		&Userinfo{Username: "1xlw", Departname: "dev", Alias: "lunny2", Created: time.Now()},
@@ -567,16 +560,8 @@ func TestInsertMulti2(t *testing.T) {
 	}
 
 	cnt, err = testEngine.Insert(&users2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-
-	if cnt != int64(len(users2)) {
-		err = errors.New(fmt.Sprintf("insert not returned %v", len(users2)))
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, len(users2), cnt)
 }
 
 func TestInsertTwoTable(t *testing.T) {
