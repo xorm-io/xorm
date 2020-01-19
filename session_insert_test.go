@@ -928,6 +928,64 @@ func TestInsertWhere(t *testing.T) {
 	assert.EqualValues(t, 5, j5.Index)
 }
 
+func TestInsertExpr2(t *testing.T) {
+	assert.NoError(t, prepareEngine())
+
+	type InsertExprsRelease struct {
+		Id         int64
+		RepoId     int
+		IsTag      bool
+		IsDraft    bool
+		NumCommits int
+		Sha1       string
+	}
+
+	assertSync(t, new(InsertExprsRelease))
+
+	var ie = InsertExprsRelease{
+		RepoId: 1,
+		IsTag:  true,
+	}
+	inserted, err := testEngine.
+		SetExpr("is_draft", true).
+		SetExpr("num_commits", 0).
+		SetExpr("sha1", "").
+		Insert(&ie)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, inserted)
+
+	var ie2 InsertExprsRelease
+	has, err := testEngine.ID(ie.Id).Get(&ie2)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, true, ie2.IsDraft)
+	assert.EqualValues(t, "", ie2.Sha1)
+	assert.EqualValues(t, 0, ie2.NumCommits)
+	assert.EqualValues(t, 1, ie2.RepoId)
+	assert.EqualValues(t, true, ie2.IsTag)
+
+	inserted, err = testEngine.Table(new(InsertExprsRelease)).
+		SetExpr("is_draft", true).
+		SetExpr("num_commits", 0).
+		SetExpr("sha1", "").
+		Insert(map[string]interface{}{
+			"repo_id": 1,
+			"is_tag":  true,
+		})
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, inserted)
+
+	var ie3 InsertExprsRelease
+	has, err = testEngine.ID(ie.Id + 1).Get(&ie3)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, true, ie3.IsDraft)
+	assert.EqualValues(t, "", ie3.Sha1)
+	assert.EqualValues(t, 0, ie3.NumCommits)
+	assert.EqualValues(t, 1, ie3.RepoId)
+	assert.EqualValues(t, true, ie3.IsTag)
+}
+
 type NightlyRate struct {
 	ID int64 `xorm:"'id' not null pk BIGINT(20)" json:"id"`
 }
