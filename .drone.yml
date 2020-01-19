@@ -9,7 +9,7 @@ steps:
     GO111MODULE: "on"
     GOPROXY: "https://goproxy.cn"
   commands:
-    - go vet ./...
+    - go vet
   when:
     event:
     - push
