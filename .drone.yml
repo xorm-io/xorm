@@ -2,7 +2,7 @@
 kind: pipeline
 name: testing
 steps:
-- name: vet
+- name: test-vet
   pull: default
   image: golang:1.12
   environment:
@@ -138,7 +138,7 @@ steps:
     GO111MODULE: "on"
     GOPROXY: "https://goproxy.cn"
   depends_on:
-  - build
+  - test-vet
   - test-sqlite
   - test-mysql
   - test-mysql-utf8mb4
