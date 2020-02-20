@@ -215,7 +215,7 @@ func quoteTo(buf *strings.Builder, quotePair string, value string) {
 		_, _ = buf.WriteString(value)
 		return
 	}
-	
+
 	prefix, suffix := quotePair[0], quotePair[1]
 
 	i := 0
@@ -921,7 +921,7 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 	t := v.Type()
 	table := core.NewEmptyTable()
 	table.Type = t
-	table.Name = engine.tbNameForMap(v)
+	table.Name = getTableName(engine.TableMapper, v)
 
 	var idFieldColName string
 	var hasCacheTag, hasNoCacheTag bool
