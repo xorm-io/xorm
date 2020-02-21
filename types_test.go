@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"testing"
 
-	"xorm.io/core"
 	"github.com/stretchr/testify/assert"
+	"xorm.io/core"
 )
 
 func TestArrayField(t *testing.T) {
@@ -267,14 +267,14 @@ type Status struct {
 }
 
 var (
-	_        core.Conversion   = &Status{}
-	Registed Status            = Status{"Registed", "white"}
-	Approved Status            = Status{"Approved", "green"}
-	Removed  Status            = Status{"Removed", "red"}
-	Statuses map[string]Status = map[string]Status{
-		Registed.Name: Registed,
-		Approved.Name: Approved,
-		Removed.Name:  Removed,
+	_          core.Conversion   = &Status{}
+	Registered Status            = Status{"Registered", "white"}
+	Approved   Status            = Status{"Approved", "green"}
+	Removed    Status            = Status{"Removed", "red"}
+	Statuses   map[string]Status = map[string]Status{
+		Registered.Name: Registered,
+		Approved.Name:   Approved,
+		Removed.Name:    Removed,
 	}
 )
 
@@ -318,7 +318,7 @@ func TestCustomType2(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	cnt, err := session.Insert(&UserCus{1, "xlw", Registed})
+	cnt, err := session.Insert(&UserCus{1, "xlw", Registered})
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, cnt)
 
@@ -335,7 +335,7 @@ func TestCustomType2(t *testing.T) {
 	fmt.Println(user)
 
 	users := make([]UserCus, 0)
-	err = testEngine.Where("`"+testEngine.GetColumnMapper().Obj2Table("Status")+"` = ?", "Registed").Find(&users)
+	err = testEngine.Where("`"+testEngine.GetColumnMapper().Obj2Table("Status")+"` = ?", "Registered").Find(&users)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(users))
 

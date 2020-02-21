@@ -56,7 +56,7 @@ func TestVersion1(t *testing.T) {
 	}
 
 	if !has {
-		t.Error(errors.New(fmt.Sprintf("no version id is %v", ver.Id)))
+		t.Error(fmt.Errorf("no version id is %v", ver.Id))
 		panic(err)
 	}
 	fmt.Println(newVer)
@@ -170,7 +170,7 @@ func TestVersion3(t *testing.T) {
 	}
 
 	if !has {
-		t.Error(errors.New(fmt.Sprintf("no version id is %v", ver.Id)))
+		t.Error(fmt.Errorf("no version id is %v", ver.Id))
 		panic(err)
 	}
 	fmt.Println(newVer)

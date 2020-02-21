@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"xorm.io/xorm"
 	_ "github.com/mattn/go-sqlite3"
+	"xorm.io/xorm"
 )
 
 // User describes a user
@@ -19,14 +19,16 @@ type LoginInfo struct {
 	Id     int64
 	IP     string
 	UserId int64
-	// timestamp should be updated by database, so only allow get from db
-	TimeStamp string `xorm:"<-"`
-	// assume
-	Nonuse int `xorm:"->"`
+}
+
+// LoginInfo1 describes a login information
+type LoginInfo1 struct {
+	LoginInfo `xorm:"extends"`
+	UserName  string
 }
 
 func main() {
-	f := "singleMapping.db"
+	f := "derive.db"
 	os.Remove(f)
 
 	orm, err := xorm.NewEngine("sqlite3", f)
@@ -34,6 +36,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	defer orm.Close()
 	orm.ShowSQL(true)
 	err = orm.CreateTables(&User{}, &LoginInfo{})
 	if err != nil {
@@ -41,7 +44,7 @@ func main() {
 		return
 	}
 
-	_, err = orm.Insert(&User{1, "xlw"}, &LoginInfo{1, "127.0.0.1", 1, "", 23})
+	_, err = orm.Insert(&User{1, "xlw"}, &LoginInfo{1, "127.0.0.1", 1})
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -54,4 +57,14 @@ func main() {
 		return
 	}
 	fmt.Println(info)
+
+	infos := make([]LoginInfo1, 0)
+	err = orm.Sql(`select *, (select name from user where id = login_info.user_id) as user_name from
+             login_info limit 10`).Find(&infos)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(infos)
 }

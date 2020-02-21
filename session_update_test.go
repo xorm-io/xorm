@@ -407,7 +407,7 @@ func TestUpdate1(t *testing.T) {
 	}
 
 	if cnt != 1 {
-		err = errors.New(fmt.Sprintf("insert not returned 1 but %d", cnt))
+		err = fmt.Errorf("insert not returned 1 but %d", cnt)
 		t.Error(err)
 		panic(err)
 	}
@@ -745,7 +745,7 @@ func TestUpdateSameMapper(t *testing.T) {
 	assert.NoError(t, err)
 
 	if cnt != 1 {
-		err = errors.New(fmt.Sprintf("insert not returned 1 but %d", cnt))
+		err = fmt.Errorf("insert not returned 1 but %d", cnt)
 		t.Error(err)
 		panic(err)
 	}
@@ -861,7 +861,7 @@ func TestUseBool(t *testing.T) {
 	var fNumber int64
 	for _, u := range users {
 		if u.IsMan == false {
-			fNumber += 1
+			fNumber++
 		}
 	}
 

@@ -838,7 +838,7 @@ func (engine *Engine) Having(conditions string) *Session {
 	return session.Having(conditions)
 }
 
-// UnMapType removes the datbase mapper of a type
+// UnMapType removes the database mapper of a type
 func (engine *Engine) UnMapType(t reflect.Type) {
 	engine.mutex.Lock()
 	defer engine.mutex.Unlock()
@@ -987,11 +987,11 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 
 					pStart := strings.Index(k, "(")
 					if pStart == 0 {
-						return nil, errors.New("( could not be the first charactor")
+						return nil, errors.New("( could not be the first character")
 					}
 					if pStart > -1 {
 						if !strings.HasSuffix(k, ")") {
-							return nil, fmt.Errorf("field %s tag %s cannot match ) charactor", col.FieldName, key)
+							return nil, fmt.Errorf("field %s tag %s cannot match ) character", col.FieldName, key)
 						}
 
 						ctx.tagName = k[:pStart]

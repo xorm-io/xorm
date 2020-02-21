@@ -553,10 +553,10 @@ func TestInsertMulti2(t *testing.T) {
 	assert.EqualValues(t, len(users), cnt)
 
 	users2 := []*Userinfo{
-		&Userinfo{Username: "1xlw", Departname: "dev", Alias: "lunny2", Created: time.Now()},
-		&Userinfo{Username: "1xlw2", Departname: "dev", Alias: "lunny3", Created: time.Now()},
-		&Userinfo{Username: "1xlw11", Departname: "dev", Alias: "lunny2", Created: time.Now()},
-		&Userinfo{Username: "1xlw22", Departname: "dev", Alias: "lunny3", Created: time.Now()},
+		{Username: "1xlw", Departname: "dev", Alias: "lunny2", Created: time.Now()},
+		{Username: "1xlw2", Departname: "dev", Alias: "lunny3", Created: time.Now()},
+		{Username: "1xlw11", Departname: "dev", Alias: "lunny2", Created: time.Now()},
+		{Username: "1xlw22", Departname: "dev", Alias: "lunny3", Created: time.Now()},
 	}
 
 	cnt, err = testEngine.Insert(&users2)
@@ -646,10 +646,10 @@ func TestInsertMulti3(t *testing.T) {
 	assert.EqualValues(t, len(users), cnt)
 
 	users2 := []*MyUserinfo{
-		&MyUserinfo{Username: "1xlw", Departname: "dev", Alias: "lunny2", Created: time.Now()},
-		&MyUserinfo{Username: "1xlw2", Departname: "dev", Alias: "lunny3", Created: time.Now()},
-		&MyUserinfo{Username: "1xlw11", Departname: "dev", Alias: "lunny2", Created: time.Now()},
-		&MyUserinfo{Username: "1xlw22", Departname: "dev", Alias: "lunny3", Created: time.Now()},
+		{Username: "1xlw", Departname: "dev", Alias: "lunny2", Created: time.Now()},
+		{Username: "1xlw2", Departname: "dev", Alias: "lunny3", Created: time.Now()},
+		{Username: "1xlw11", Departname: "dev", Alias: "lunny2", Created: time.Now()},
+		{Username: "1xlw22", Departname: "dev", Alias: "lunny3", Created: time.Now()},
 	}
 
 	cnt, err = testEngine.Insert(&users2)
@@ -691,10 +691,10 @@ func TestInsertMulti4(t *testing.T) {
 	assert.EqualValues(t, len(users), cnt)
 
 	users2 := []*MyUserinfo2{
-		&MyUserinfo2{Username: "1xlw", Departname: "dev", Alias: "lunny2", Created: time.Now()},
-		&MyUserinfo2{Username: "1xlw2", Departname: "dev", Alias: "lunny3", Created: time.Now()},
-		&MyUserinfo2{Username: "1xlw11", Departname: "dev", Alias: "lunny2", Created: time.Now()},
-		&MyUserinfo2{Username: "1xlw22", Departname: "dev", Alias: "lunny3", Created: time.Now()},
+		{Username: "1xlw", Departname: "dev", Alias: "lunny2", Created: time.Now()},
+		{Username: "1xlw2", Departname: "dev", Alias: "lunny3", Created: time.Now()},
+		{Username: "1xlw11", Departname: "dev", Alias: "lunny2", Created: time.Now()},
+		{Username: "1xlw22", Departname: "dev", Alias: "lunny3", Created: time.Now()},
 	}
 
 	cnt, err = testEngine.Insert(&users2)
@@ -1083,7 +1083,7 @@ func TestInsertTwice(t *testing.T) {
 
 	var sliceA []InsertStructA // sliceA is empty
 	sliceB := []InsertStructB{
-		InsertStructB{
+		{
 			FieldB: 1,
 		},
 	}

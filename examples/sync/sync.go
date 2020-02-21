@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
-	"xorm.io/xorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"xorm.io/xorm"
 )
 
 // SyncUser2 describes a user

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"xorm.io/xorm"
 	_ "github.com/mattn/go-sqlite3"
+	"xorm.io/xorm"
 )
 
 // Status describes a status
