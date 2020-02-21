@@ -19,24 +19,9 @@ steps:
   environment:
     GO111MODULE: "on"
     GOPROXY: "https://goproxy.cn"
-    TEST_CACHE_ENABLE: false
   commands:
   - make test-sqlite
-  when:
-    event:
-    - push
-    - pull_request
-
-- name: test-sqlite-cache
-  image: golang:1.12
-  depends_on:
-    - test-sqlite
-  environment:
-    GO111MODULE: "on"
-    GOPROXY: "https://goproxy.cn"
-    TEST_CACHE_ENABLE: true
-  commands:
-  - make test-sqlite
+  - TEST_CACHE_ENABLE=true make test-sqlite
   when:
     event:
     - push
@@ -52,29 +37,9 @@ steps:
     TEST_MYSQL_DBNAME: xorm_test
     TEST_MYSQL_USERNAME: root
     TEST_MYSQL_PASSWORD:
-    TEST_CACHE_ENABLE: false
   commands:
   - make test-mysql
-  when:
-    event:
-    - push
-    - pull_request
-
-- name: test-mysql-cache
-  image: golang:1.12
-  depends_on:
-    - test-mysql
-  environment:
-    GO111MODULE: "on"
-    GOPROXY: "https://goproxy.cn"
-    TEST_MYSQL_HOST: mysql
-    TEST_MYSQL_CHARSET: utf8
-    TEST_MYSQL_DBNAME: xorm_test
-    TEST_MYSQL_USERNAME: root
-    TEST_MYSQL_PASSWORD:
-    TEST_CACHE_ENABLE: true
-  commands:
-  - make test-mysql
+  - TEST_CACHE_ENABLE=true make test-mysql
   when:
     event:
     - push
@@ -83,7 +48,7 @@ steps:
 - name: test-mysql-utf8mb4
   image: golang:1.12
   depends_on:
-    - test-mysql-cache
+  - test-mysql
   environment:
     GO111MODULE: "on"
     GOPROXY: "https://goproxy.cn"
@@ -92,29 +57,9 @@ steps:
     TEST_MYSQL_DBNAME: xorm_test
     TEST_MYSQL_USERNAME: root
     TEST_MYSQL_PASSWORD:
-    TEST_CACHE_ENABLE: false
   commands:
   - make test-mysql
-  when:
-    event:
-    - push
-    - pull_request
-
-- name: test-mysql-utf8mb4-cache
-  image: golang:1.12
-  depends_on:
-    - test-mysql-utf8mb4
-  environment:
-    GO111MODULE: "on"
-    GOPROXY: "https://goproxy.cn"
-    TEST_MYSQL_HOST: mysql
-    TEST_MYSQL_CHARSET: utf8mb4
-    TEST_MYSQL_DBNAME: xorm_test
-    TEST_MYSQL_USERNAME: root
-    TEST_MYSQL_PASSWORD:
-    TEST_CACHE_ENABLE: true
-  commands:
-  - make test-mysql
+  - TEST_CACHE_ENABLE=true make test-mysql
   when:
     event:
     - push
@@ -124,7 +69,7 @@ steps:
   pull: default
   image: golang:1.12
   depends_on:
-    - test-mysql-utf8mb4-cache
+    - test-mysql-utf8mb4
   environment:
     GO111MODULE: "on"
     GOPROXY: "https://goproxy.cn"
@@ -132,29 +77,9 @@ steps:
     TEST_MYSQL_DBNAME: xorm_test
     TEST_MYSQL_USERNAME: root
     TEST_MYSQL_PASSWORD:
-    TEST_CACHE_ENABLE: false
   commands:
   - make test-mymysql
-  when:
-    event:
-    - push
-    - pull_request
-
-- name: test-mymysql-cache
-  pull: default
-  image: golang:1.12
-  depends_on:
-    - test-mymysql
-  environment:
-    GO111MODULE: "on"
-    GOPROXY: "https://goproxy.cn"
-    TEST_MYSQL_HOST: mysql:3306
-    TEST_MYSQL_DBNAME: xorm_test
-    TEST_MYSQL_USERNAME: root
-    TEST_MYSQL_PASSWORD:
-    TEST_CACHE_ENABLE: true
-  commands:
-  - make test-mymysql
+  - TEST_CACHE_ENABLE=true make test-mymysql
   when:
     event:
     - push
@@ -170,29 +95,9 @@ steps:
     TEST_PGSQL_DBNAME: xorm_test
     TEST_PGSQL_USERNAME: postgres
     TEST_PGSQL_PASSWORD: postgres
-    TEST_CACHE_ENABLE: false
   commands:
   - make test-postgres
-  when:
-    event:
-    - push
-    - pull_request
-
-- name: test-postgres-cache
-  pull: default
-  image: golang:1.12
-  depends_on:
-    - test-postgres
-  environment:
-    GO111MODULE: "on"
-    GOPROXY: "https://goproxy.cn"
-    TEST_PGSQL_HOST: pgsql
-    TEST_PGSQL_DBNAME: xorm_test
-    TEST_PGSQL_USERNAME: postgres
-    TEST_PGSQL_PASSWORD: postgres
-    TEST_CACHE_ENABLE: true
-  commands:
-  - make test-postgres
+  - TEST_CACHE_ENABLE=true make test-postgres
   when:
     event:
     - push
@@ -201,28 +106,8 @@ steps:
 - name: test-postgres-schema
   pull: default
   image: golang:1.12
-  environment:
-    GO111MODULE: "on"
-    GOPROXY: "https://goproxy.cn"
-    TEST_PGSQL_HOST: pgsql
-    TEST_PGSQL_SCHEMA: xorm
-    TEST_PGSQL_DBNAME: xorm_test
-    TEST_PGSQL_USERNAME: postgres
-    TEST_PGSQL_PASSWORD: postgres
-    TEST_CACHE_ENABLE: false
-    SCHEMA: xorm
-  commands:
-  - make test-postgres
-  when:
-    event:
-    - push
-    - pull_request
-
-- name: test-postgres-schema-cache
-  pull: default
-  image: golang:1.12
   depends_on:
-    - test-postgres-schema
+  - test-postgres
   environment:
     GO111MODULE: "on"
     GOPROXY: "https://goproxy.cn"
@@ -231,10 +116,9 @@ steps:
     TEST_PGSQL_DBNAME: xorm_test
     TEST_PGSQL_USERNAME: postgres
     TEST_PGSQL_PASSWORD: postgres
-    TEST_CACHE_ENABLE: true
-    SCHEMA: xorm
   commands:
   - make test-postgres
+  - TEST_CACHE_ENABLE=true make test-postgres
   when:
     event:
     - push
@@ -250,29 +134,9 @@ steps:
     TEST_MSSQL_DBNAME: xorm_test
     TEST_MSSQL_USERNAME: sa
     TEST_MSSQL_PASSWORD: "yourStrong(!)Password"
-    TEST_CACHE_ENABLE: false
   commands:
   - make test-mssql
-  when:
-    event:
-    - push
-    - pull_request
-
-- name: test-mssql-cache
-  pull: default
-  image: golang:1.12
-  depends_on:
-    - test-mssql
-  environment:
-    GO111MODULE: "on"
-    GOPROXY: "https://goproxy.cn"
-    TEST_MSSQL_HOST: mssql
-    TEST_MSSQL_DBNAME: xorm_test
-    TEST_MSSQL_USERNAME: sa
-    TEST_MSSQL_PASSWORD: "yourStrong(!)Password"
-    TEST_CACHE_ENABLE: true
-  commands:
-  - make test-mssql
+  - TEST_CACHE_ENABLE=true make test-mssql
   when:
     event:
     - push
@@ -288,29 +152,9 @@ steps:
     TEST_TIDB_DBNAME: xorm_test
     TEST_TIDB_USERNAME: root
     TEST_TIDB_PASSWORD:
-    TEST_CACHE_ENABLE: false
   commands:
   - make test-tidb
-  when:
-    event:
-    - push
-    - pull_request
-
-- name: test-tidb-cache
-  pull: default
-  image: golang:1.12
-  depends_on:
-    - test-tidb
-  environment:
-    GO111MODULE: "on"
-    GOPROXY: "https://goproxy.cn"
-    TEST_TIDB_HOST: "tidb:4000"
-    TEST_TIDB_DBNAME: xorm_test
-    TEST_TIDB_USERNAME: root
-    TEST_TIDB_PASSWORD:
-    TEST_CACHE_ENABLE: true
-  commands:
-  - make test-tidb
+  - TEST_CACHE_ENABLE=true make test-tidb
   when:
     event:
     - push
@@ -325,21 +169,12 @@ steps:
   depends_on:
   - test-vet
   - test-sqlite
-  - test-sqlite-cache
   - test-mysql
-  - test-mysql-cache
-  - test-mysql-utf8mb4
-  - test-mysql-utf8mb4-cache
   - test-mymysql
-  - test-mymysql-cache
   - test-postgres
-  - test-postgres-cache
   - test-postgres-schema
-  - test-postgres-schema-cache
   - test-mssql
-  - test-mssql-cache
   - test-tidb
-  - test-tidb-cache
   commands:
   - make coverage
   when:

@@ -117,71 +117,71 @@ test: test-sqlite
 
 .PNONY: test-mssql
 test-mssql: go-check
-	$(GO) test -race -db=mssql -cache=$(TEST_CACHE_ENABLE) \
+	$(GO) test -v -race -db=mssql -cache=$(TEST_CACHE_ENABLE) \
 	-conn_str="server=$(TEST_MSSQL_HOST);user id=$(TEST_MSSQL_USERNAME);password=$(TEST_MSSQL_PASSWORD);database=$(TEST_MSSQL_DBNAME)" \
 	-coverprofile=mssql.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PNONY: test-mssql\#%
 test-mssql\#%: go-check
-	$(GO) test -race -run $* -db=mssql -cache=$(TEST_CACHE_ENABLE) \
+	$(GO) test -v -race -run $* -db=mssql -cache=$(TEST_CACHE_ENABLE) \
 	-conn_str="server=$(TEST_MSSQL_HOST);user id=$(TEST_MSSQL_USERNAME);password=$(TEST_MSSQL_PASSWORD);database=$(TEST_MSSQL_DBNAME)" \
 	-coverprofile=mssql.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PNONY: test-mymysql
 test-mymysql: go-check
-	$(GO) test -race -db=mymysql -cache=$(TEST_CACHE_ENABLE) \
+	$(GO) test -v -race -db=mymysql -cache=$(TEST_CACHE_ENABLE) \
 	-conn_str="tcp:$(TEST_MYSQL_HOST)*$(TEST_MYSQL_DBNAME)/$(TEST_MYSQL_USERNAME)/$(TEST_MYSQL_PASSWORD)" \
 	-coverprofile=mymysql.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PNONY: test-mymysql\#%
 test-mymysql\#%: go-check
-	$(GO) test -race -run $* -db=mymysql -cache=$(TEST_CACHE_ENABLE) \
+	$(GO) test -v -race -run $* -db=mymysql -cache=$(TEST_CACHE_ENABLE) \
 	-conn_str="tcp:$(TEST_MYSQL_HOST)*$(TEST_MYSQL_DBNAME)/$(TEST_MYSQL_USERNAME)/$(TEST_MYSQL_PASSWORD)" \
 	-coverprofile=mymysql.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PNONY: test-mysql
 test-mysql: go-check
-	$(GO) test -race -db=mysql -cache=$(TEST_CACHE_ENABLE) \
+	$(GO) test -v -race -db=mysql -cache=$(TEST_CACHE_ENABLE) \
 	-conn_str="$(TEST_MYSQL_USERNAME):$(TEST_MYSQL_PASSWORD)@tcp($(TEST_MYSQL_HOST))/$(TEST_MYSQL_DBNAME)?charset=$(TEST_MYSQL_CHARSET)" \
 	-coverprofile=mysql.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PHONY: test-mysql\#%
 test-mysql\#%: go-check
-	$(GO) test -race -run $* -db=mysql -cache=$(TEST_CACHE_ENABLE) \
+	$(GO) test -v -race -run $* -db=mysql -cache=$(TEST_CACHE_ENABLE) \
 	-conn_str="$(TEST_MYSQL_USERNAME):$(TEST_MYSQL_PASSWORD)@tcp($(TEST_MYSQL_HOST))/$(TEST_MYSQL_DBNAME)?charset=$(TEST_MYSQL_CHARSET)" \
 	-coverprofile=mysql.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PNONY: test-postgres
 test-postgres: go-check
-	$(GO) test -race -db=postgres -schema='$(TEST_PGSQL_SCHEMA)' -cache=$(TEST_CACHE_ENABLE) \
+	$(GO) test -v -race -db=postgres -schema='$(TEST_PGSQL_SCHEMA)' -cache=$(TEST_CACHE_ENABLE) \
 	-conn_str="postgres://$(TEST_PGSQL_USERNAME):$(TEST_PGSQL_PASSWORD)@$(TEST_PGSQL_HOST)/$(TEST_PGSQL_DBNAME)?sslmode=disable" \
 	-coverprofile=postgres.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PHONY: test-postgres\#%
 test-postgres\#%: go-check
-	$(GO) test -race -run $* -db=postgres -schema='$(TEST_PGSQL_SCHEMA)' -cache=$(TEST_CACHE_ENABLE) \
+	$(GO) test -v -race -run $* -db=postgres -schema='$(TEST_PGSQL_SCHEMA)' -cache=$(TEST_CACHE_ENABLE) \
 	-conn_str="postgres://$(TEST_PGSQL_USERNAME):$(TEST_PGSQL_PASSWORD)@$(TEST_PGSQL_HOST)/$(TEST_PGSQL_DBNAME)?sslmode=disable" \
 	-coverprofile=postgres.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PHONY: test-sqlite
 test-sqlite: go-check
-	$(GO) test -race -cache=$(TEST_CACHE_ENABLE) -db=sqlite3 -conn_str="./test.db?cache=shared&mode=rwc" \
+	$(GO) test -v -race -cache=$(TEST_CACHE_ENABLE) -db=sqlite3 -conn_str="./test.db?cache=shared&mode=rwc" \
 	-coverprofile=sqlite.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PHONY: test-sqlite\#%
 test-sqlite\#%: go-check
-	$(GO) test -race -run $* -cache=$(TEST_CACHE_ENABLE) -db=sqlite3 -conn_str="./test.db?cache=shared&mode=rwc" \
+	$(GO) test -v -race -run $* -cache=$(TEST_CACHE_ENABLE) -db=sqlite3 -conn_str="./test.db?cache=shared&mode=rwc" \
 	-coverprofile=sqlite.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PNONY: test-tidb
 test-tidb: go-check
-	$(GO) test -race -db=mysql -cache=$(TEST_CACHE_ENABLE) -ignore_select_update=true \
+	$(GO) test -v -race -db=mysql -cache=$(TEST_CACHE_ENABLE) -ignore_select_update=true \
 	-conn_str="$(TEST_TIDB_USERNAME):$(TEST_TIDB_PASSWORD)@tcp($(TEST_TIDB_HOST))/$(TEST_TIDB_DBNAME)" \
 	-coverprofile=tidb.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PHONY: test-tidb\#%
 test-tidb\#%: go-check
-	$(GO) test -race -run $* -db=mysql -cache=$(TEST_CACHE_ENABLE) -ignore_select_update=true \
+	$(GO) test -v -race -run $* -db=mysql -cache=$(TEST_CACHE_ENABLE) -ignore_select_update=true \
 	-conn_str="$(TEST_TIDB_USERNAME):$(TEST_TIDB_PASSWORD)@tcp($(TEST_TIDB_HOST))/$(TEST_TIDB_DBNAME)" \
 	-coverprofile=tidb.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
