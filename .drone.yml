@@ -45,6 +45,24 @@ steps:
     - push
     - pull_request
 
+- name: test-mysql8
+  image: golang:1.12
+  environment:
+    GO111MODULE: "on"
+    GOPROXY: "https://goproxy.cn"
+    TEST_MYSQL_HOST: mysql8
+    TEST_MYSQL_CHARSET: utf8mb4
+    TEST_MYSQL_DBNAME: xorm_test
+    TEST_MYSQL_USERNAME: root
+    TEST_MYSQL_PASSWORD:
+  commands:
+  - make test-mysql
+  - TEST_CACHE_ENABLE=true make test-mysql
+  when:
+    event:
+    - push
+    - pull_request
+
 - name: test-mysql-utf8mb4
   image: golang:1.12
   depends_on:
@@ -170,6 +188,7 @@ steps:
   - test-vet
   - test-sqlite
   - test-mysql
+  - test-mysql8
   - test-mymysql
   - test-postgres
   - test-postgres-schema
@@ -187,6 +206,18 @@ services:
 - name: mysql
   pull: default
   image: mysql:5.7
+  environment:
+    MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    MYSQL_DATABASE: xorm_test
+  when:
+    event:
+    - push
+    - tag
+    - pull_request
+
+- name: mysql8
+  pull: default
+  image: mysql:8.0
   environment:
     MYSQL_ALLOW_EMPTY_PASSWORD: yes
     MYSQL_DATABASE: xorm_test
