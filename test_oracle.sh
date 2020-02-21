@@ -1,1 +1,0 @@
-go test -tags=oracle -db=oci8 -conn_str="system/oracle@localhost:1521/xe"
