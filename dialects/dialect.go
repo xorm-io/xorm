@@ -263,6 +263,7 @@ func (db *Base) CreateTableIfNotExists(table *Table, tableName, storeEngine, cha
 }*/
 
 func (db *Base) CreateIndexSQL(tableName string, index *schemas.Index) string {
+	quotes := db.dialect.Quote("")
 	quote := db.dialect.Quote
 	var unique string
 	var idxName string
@@ -272,7 +273,7 @@ func (db *Base) CreateIndexSQL(tableName string, index *schemas.Index) string {
 	idxName = index.XName(tableName)
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v)", unique,
 		quote(idxName), quote(tableName),
-		quote(strings.Join(index.Cols, quote(","))))
+		quote(strings.Join(index.Cols, fmt.Sprintf("%c,%c", quotes[1], quotes[0]))))
 }
 
 func (db *Base) DropIndexSQL(tableName string, index *schemas.Index) string {
@@ -300,6 +301,8 @@ func (b *Base) CreateTableSQL(table *schemas.Table, tableName, storeEngine, char
 	sql += b.dialect.Quote(tableName)
 	sql += " ("
 
+	quotes := b.dialect.Quote("")
+
 	if len(table.ColumnsSeq()) > 0 {
 		pkList := table.PrimaryKeys
 
@@ -319,7 +322,7 @@ func (b *Base) CreateTableSQL(table *schemas.Table, tableName, storeEngine, char
 
 		if len(pkList) > 1 {
 			sql += "PRIMARY KEY ( "
-			sql += b.dialect.Quote(strings.Join(pkList, b.dialect.Quote(",")))
+			sql += b.dialect.Quote(strings.Join(pkList, fmt.Sprintf("%c,%c", quotes[1], quotes[0])))
 			sql += " ), "
 		}
 

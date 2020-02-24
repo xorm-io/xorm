@@ -577,8 +577,7 @@ func (db *oracle) DropTableSQL(tableName string) string {
 }
 
 func (db *oracle) CreateTableSQL(table *schemas.Table, tableName, storeEngine, charset string) string {
-	var sql string
-	sql = "CREATE TABLE "
+	var sql = "CREATE TABLE "
 	if tableName == "" {
 		tableName = table.Name
 	}
@@ -598,9 +597,11 @@ func (db *oracle) CreateTableSQL(table *schemas.Table, tableName, storeEngine, c
 		sql += ", "
 	}
 
+	quotes := db.Quote("")
+
 	if len(pkList) > 0 {
 		sql += "PRIMARY KEY ( "
-		sql += db.Quote(strings.Join(pkList, db.Quote(",")))
+		sql += db.Quote(strings.Join(pkList, fmt.Sprintf("%c,%c", quotes[1], quotes[0])))
 		sql += " ), "
 	}
 
