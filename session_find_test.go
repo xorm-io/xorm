@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"xorm.io/core"
+	"xorm.io/xorm/names"
 )
 
 func TestJoinLimit(t *testing.T) {
@@ -300,7 +300,7 @@ func TestOrderSameMapper(t *testing.T) {
 	testEngine.UnMapType(rValue(new(Userinfo)).Type())
 
 	mapper := testEngine.GetTableMapper()
-	testEngine.SetMapper(core.SameMapper{})
+	testEngine.SetMapper(names.SameMapper{})
 
 	defer func() {
 		testEngine.UnMapType(rValue(new(Userinfo)).Type())
@@ -325,7 +325,7 @@ func TestHavingSameMapper(t *testing.T) {
 	testEngine.UnMapType(rValue(new(Userinfo)).Type())
 
 	mapper := testEngine.GetTableMapper()
-	testEngine.SetMapper(core.SameMapper{})
+	testEngine.SetMapper(names.SameMapper{})
 	defer func() {
 		testEngine.UnMapType(rValue(new(Userinfo)).Type())
 		testEngine.SetMapper(mapper)

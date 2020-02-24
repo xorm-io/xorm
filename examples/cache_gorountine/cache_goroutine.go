@@ -8,6 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
+	"xorm.io/xorm/caches"
 )
 
 // User describes a user
@@ -87,7 +88,7 @@ func main() {
 		return
 	}
 	engine.ShowSQL(true)
-	cacher := xorm.NewLRUCacher2(xorm.NewMemoryStore(), time.Hour, 1000)
+	cacher := caches.NewLRUCacher2(caches.NewMemoryStore(), time.Hour, 1000)
 	engine.SetDefaultCacher(cacher)
 	fmt.Println(engine)
 	test(engine)
@@ -97,7 +98,7 @@ func main() {
 	fmt.Println("-----start mysql go routines-----")
 	engine, err = mysqlEngine()
 	engine.ShowSQL(true)
-	cacher = xorm.NewLRUCacher2(xorm.NewMemoryStore(), time.Hour, 1000)
+	cacher = caches.NewLRUCacher2(caches.NewMemoryStore(), time.Hour, 1000)
 	engine.SetDefaultCacher(cacher)
 	if err != nil {
 		fmt.Println(err)

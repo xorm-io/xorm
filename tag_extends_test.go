@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"xorm.io/core"
+	"xorm.io/xorm/schemas"
 )
 
 type tempUser struct {
@@ -269,7 +269,7 @@ func TestExtends2(t *testing.T) {
 	defer session.Close()
 
 	// MSSQL deny insert identity column excep declare as below
-	if testEngine.Dialect().DBType() == core.MSSQL {
+	if testEngine.Dialect().DBType() == schemas.MSSQL {
 		err = session.Begin()
 		assert.NoError(t, err)
 		_, err = session.Exec("SET IDENTITY_INSERT message ON")
@@ -279,7 +279,7 @@ func TestExtends2(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, cnt)
 
-	if testEngine.Dialect().DBType() == core.MSSQL {
+	if testEngine.Dialect().DBType() == schemas.MSSQL {
 		err = session.Commit()
 		assert.NoError(t, err)
 	}
@@ -339,7 +339,7 @@ func TestExtends3(t *testing.T) {
 	defer session.Close()
 
 	// MSSQL deny insert identity column excep declare as below
-	if testEngine.Dialect().DBType() == core.MSSQL {
+	if testEngine.Dialect().DBType() == schemas.MSSQL {
 		err = session.Begin()
 		assert.NoError(t, err)
 		_, err = session.Exec("SET IDENTITY_INSERT message ON")
@@ -348,7 +348,7 @@ func TestExtends3(t *testing.T) {
 	_, err = session.Insert(&msg)
 	assert.NoError(t, err)
 
-	if testEngine.Dialect().DBType() == core.MSSQL {
+	if testEngine.Dialect().DBType() == schemas.MSSQL {
 		err = session.Commit()
 		assert.NoError(t, err)
 	}
@@ -433,7 +433,7 @@ func TestExtends4(t *testing.T) {
 	defer session.Close()
 
 	// MSSQL deny insert identity column excep declare as below
-	if testEngine.Dialect().DBType() == core.MSSQL {
+	if testEngine.Dialect().DBType() == schemas.MSSQL {
 		err = session.Begin()
 		assert.NoError(t, err)
 		_, err = session.Exec("SET IDENTITY_INSERT message ON")
@@ -442,7 +442,7 @@ func TestExtends4(t *testing.T) {
 	_, err = session.Insert(&msg)
 	assert.NoError(t, err)
 
-	if testEngine.Dialect().DBType() == core.MSSQL {
+	if testEngine.Dialect().DBType() == schemas.MSSQL {
 		err = session.Commit()
 		assert.NoError(t, err)
 	}

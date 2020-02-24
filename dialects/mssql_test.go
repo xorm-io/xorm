@@ -2,13 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package dialects
 
 import (
 	"reflect"
 	"testing"
-
-	"xorm.io/core"
 )
 
 func TestParseMSSQL(t *testing.T) {
@@ -21,15 +19,15 @@ func TestParseMSSQL(t *testing.T) {
 		{"server=localhost;user id=sa;password=yourStrong(!)Password;database=db", "db", true},
 	}
 
-	driver := core.QueryDriver("mssql")
+	driver := QueryDriver("mssql")
 
 	for _, test := range tests {
 		uri, err := driver.Parse("mssql", test.in)
 
 		if err != nil && test.valid {
 			t.Errorf("%q got unexpected error: %s", test.in, err)
-		} else if err == nil && !reflect.DeepEqual(test.expected, uri.DbName) {
-			t.Errorf("%q got: %#v want: %#v", test.in, uri.DbName, test.expected)
+		} else if err == nil && !reflect.DeepEqual(test.expected, uri.DBName) {
+			t.Errorf("%q got: %#v want: %#v", test.in, uri.DBName, test.expected)
 		}
 	}
 }

@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package caches
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"xorm.io/core"
+	"xorm.io/xorm/schemas"
 )
 
 func TestLRUCache(t *testing.T) {
@@ -20,7 +20,7 @@ func TestLRUCache(t *testing.T) {
 	cacher := NewLRUCacher(store, 10000)
 
 	tableName := "cache_object1"
-	pks := []core.PK{
+	pks := []schemas.PK{
 		{1},
 		{2},
 	}

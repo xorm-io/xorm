@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
+	"xorm.io/xorm/caches"
 )
 
 // User describes a user
@@ -15,7 +16,7 @@ type User struct {
 }
 
 func main() {
-	f := "cache.db"
+	f := "caches.db"
 	os.Remove(f)
 
 	Orm, err := xorm.NewEngine("sqlite3", f)
@@ -24,7 +25,7 @@ func main() {
 		return
 	}
 	Orm.ShowSQL(true)
-	cacher := xorm.NewLRUCacher(xorm.NewMemoryStore(), 1000)
+	cacher := caches.NewLRUCacher(caches.NewMemoryStore(), 1000)
 	Orm.SetDefaultCacher(cacher)
 
 	err = Orm.CreateTables(&User{})

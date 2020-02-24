@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"xorm.io/xorm/caches"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +23,7 @@ func TestCacheFind(t *testing.T) {
 	}
 
 	oldCacher := testEngine.GetDefaultCacher()
-	cacher := NewLRUCacher2(NewMemoryStore(), time.Hour, 10000)
+	cacher := caches.NewLRUCacher2(caches.NewMemoryStore(), time.Hour, 10000)
 	testEngine.SetDefaultCacher(cacher)
 
 	assert.NoError(t, testEngine.Sync2(new(MailBox)))
@@ -96,7 +98,7 @@ func TestCacheFind2(t *testing.T) {
 	}
 
 	oldCacher := testEngine.GetDefaultCacher()
-	cacher := NewLRUCacher2(NewMemoryStore(), time.Hour, 10000)
+	cacher := caches.NewLRUCacher2(caches.NewMemoryStore(), time.Hour, 10000)
 	testEngine.SetDefaultCacher(cacher)
 
 	assert.NoError(t, testEngine.Sync2(new(MailBox2)))
@@ -147,7 +149,7 @@ func TestCacheGet(t *testing.T) {
 	}
 
 	oldCacher := testEngine.GetDefaultCacher()
-	cacher := NewLRUCacher2(NewMemoryStore(), time.Hour, 10000)
+	cacher := caches.NewLRUCacher2(caches.NewMemoryStore(), time.Hour, 10000)
 	testEngine.SetDefaultCacher(cacher)
 
 	assert.NoError(t, testEngine.Sync2(new(MailBox3)))

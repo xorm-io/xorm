@@ -11,7 +11,8 @@ import (
 	"strings"
 
 	"xorm.io/builder"
-	"xorm.io/core"
+	"xorm.io/xorm/caches"
+	"xorm.io/xorm/schemas"
 )
 
 const (
@@ -197,7 +198,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 	return session.noCacheFind(table, sliceValue, sqlStr, args...)
 }
 
-func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Value, sqlStr string, args ...interface{}) error {
+func (session *Session) noCacheFind(table *schemas.Table, containerValue reflect.Value, sqlStr string, args ...interface{}) error {
 	rows, err := session.queryRows(sqlStr, args...)
 	if err != nil {
 		return err
@@ -236,10 +237,10 @@ func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Va
 		return reflect.New(elemType)
 	}
 
-	var containerValueSetFunc func(*reflect.Value, core.PK) error
+	var containerValueSetFunc func(*reflect.Value, schemas.PK) error
 
 	if containerValue.Kind() == reflect.Slice {
-		containerValueSetFunc = func(newValue *reflect.Value, pk core.PK) error {
+		containerValueSetFunc = func(newValue *reflect.Value, pk schemas.PK) error {
 			if isPointer {
 				containerValue.Set(reflect.Append(containerValue, newValue.Elem().Addr()))
 			} else {
@@ -256,7 +257,7 @@ func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Va
 			return errors.New("don't support multiple primary key's map has non-slice key type")
 		}
 
-		containerValueSetFunc = func(newValue *reflect.Value, pk core.PK) error {
+		containerValueSetFunc = func(newValue *reflect.Value, pk schemas.PK) error {
 			keyValue := reflect.New(keyType)
 			err := convertPKToValue(table, keyValue.Interface(), pk)
 			if err != nil {
@@ -310,7 +311,7 @@ func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Va
 	return nil
 }
 
-func convertPKToValue(table *core.Table, dst interface{}, pk core.PK) error {
+func convertPKToValue(table *schemas.Table, dst interface{}, pk schemas.PK) error {
 	cols := table.PKColumns()
 	if len(cols) == 1 {
 		return convertAssign(dst, pk[0])
@@ -343,7 +344,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 	}
 
 	table := session.statement.RefTable
-	ids, err := core.GetCacheSql(cacher, tableName, newsql, args)
+	ids, err := caches.GetCacheSql(cacher, tableName, newsql, args)
 	if err != nil {
 		rows, err := session.queryRows(newsql, args...)
 		if err != nil {
@@ -352,7 +353,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 		defer rows.Close()
 
 		var i int
-		ids = make([]core.PK, 0)
+		ids = make([]schemas.PK, 0)
 		for rows.Next() {
 			i++
 			if i > 500 {
@@ -364,7 +365,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 			if err != nil {
 				return err
 			}
-			var pk core.PK = make([]interface{}, len(table.PrimaryKeys))
+			var pk schemas.PK = make([]interface{}, len(table.PrimaryKeys))
 			for i, col := range table.PKColumns() {
 				pk[i], err = session.engine.idTypeAssertion(col, res[i])
 				if err != nil {
@@ -376,7 +377,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 		}
 
 		session.engine.logger.Debug("[cacheFind] cache sql:", ids, tableName, sqlStr, newsql, args)
-		err = core.PutCacheSql(cacher, ids, tableName, newsql, args)
+		err = caches.PutCacheSql(cacher, ids, tableName, newsql, args)
 		if err != nil {
 			return err
 		}
@@ -387,7 +388,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 	sliceValue := reflect.Indirect(reflect.ValueOf(rowsSlicePtr))
 
 	ididxes := make(map[string]int)
-	var ides []core.PK
+	var ides []schemas.PK
 	var temps = make([]interface{}, len(ids))
 
 	for idx, id := range ids {
@@ -502,7 +503,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 				}
 			} else {
 				if keyType.Kind() != reflect.Slice {
-					return errors.New("table have multiple primary keys, key is not core.PK or slice")
+					return errors.New("table have multiple primary keys, key is not schemas.PK or slice")
 				}
 				ikey = key
 			}

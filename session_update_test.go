@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"xorm.io/core"
+	"xorm.io/xorm/names"
 )
 
 func TestUpdateMap(t *testing.T) {
@@ -691,7 +691,7 @@ func TestUpdateSameMapper(t *testing.T) {
 	testEngine.UnMapType(rValue(new(UpdateAllCols)).Type())
 	testEngine.UnMapType(rValue(new(UpdateMustCols)).Type())
 	testEngine.UnMapType(rValue(new(UpdateIncr)).Type())
-	testEngine.SetMapper(core.SameMapper{})
+	testEngine.SetMapper(names.SameMapper{})
 	defer func() {
 		testEngine.UnMapType(rValue(new(Userinfo)).Type())
 		testEngine.UnMapType(rValue(new(Condi)).Type())
@@ -1419,7 +1419,7 @@ func TestUpdateMap3(t *testing.T) {
 		testEngine.SetColumnMapper(oldMapper)
 	}()
 
-	mapper := core.NewPrefixMapper(core.SnakeMapper{}, "F")
+	mapper := names.NewPrefixMapper(names.SnakeMapper{}, "F")
 	testEngine.SetColumnMapper(mapper)
 
 	assertSync(t, new(UpdateMapUser))

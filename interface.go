@@ -10,7 +10,11 @@ import (
 	"reflect"
 	"time"
 
-	"xorm.io/core"
+	"xorm.io/xorm/caches"
+	"xorm.io/xorm/dialects"
+	"xorm.io/xorm/log"
+	"xorm.io/xorm/names"
+	"xorm.io/xorm/schemas"
 )
 
 // Interface defines the interface which Engine, EngineGroup and Session will implementate.
@@ -76,31 +80,31 @@ type EngineInterface interface {
 	ClearCache(...interface{}) error
 	Context(context.Context) *Session
 	CreateTables(...interface{}) error
-	DBMetas() ([]*core.Table, error)
-	Dialect() core.Dialect
+	DBMetas() ([]*schemas.Table, error)
+	Dialect() dialects.Dialect
 	DropTables(...interface{}) error
-	DumpAllToFile(fp string, tp ...core.DbType) error
-	GetCacher(string) core.Cacher
-	GetColumnMapper() core.IMapper
-	GetDefaultCacher() core.Cacher
-	GetTableMapper() core.IMapper
+	DumpAllToFile(fp string, tp ...dialects.DBType) error
+	GetCacher(string) caches.Cacher
+	GetColumnMapper() names.Mapper
+	GetDefaultCacher() caches.Cacher
+	GetTableMapper() names.Mapper
 	GetTZDatabase() *time.Location
 	GetTZLocation() *time.Location
-	MapCacher(interface{}, core.Cacher) error
+	MapCacher(interface{}, caches.Cacher) error
 	NewSession() *Session
 	NoAutoTime() *Session
 	Quote(string) string
-	SetCacher(string, core.Cacher)
+	SetCacher(string, caches.Cacher)
 	SetConnMaxLifetime(time.Duration)
-	SetColumnMapper(core.IMapper)
-	SetDefaultCacher(core.Cacher)
-	SetLogger(logger core.ILogger)
-	SetLogLevel(core.LogLevel)
-	SetMapper(core.IMapper)
+	SetColumnMapper(names.Mapper)
+	SetDefaultCacher(caches.Cacher)
+	SetLogger(logger log.Logger)
+	SetLogLevel(log.LogLevel)
+	SetMapper(names.Mapper)
 	SetMaxOpenConns(int)
 	SetMaxIdleConns(int)
 	SetSchema(string)
-	SetTableMapper(core.IMapper)
+	SetTableMapper(names.Mapper)
 	SetTZDatabase(tz *time.Location)
 	SetTZLocation(tz *time.Location)
 	ShowExecTime(...bool)

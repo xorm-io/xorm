@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"xorm.io/builder"
-	"xorm.io/core"
+	"xorm.io/xorm/schemas"
 )
 
 // ErrNoElementsOnSlice represents an error there is no element when insert
@@ -127,7 +127,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 	var colNames []string
 	var colMultiPlaces []string
 	var args []interface{}
-	var cols []*core.Column
+	var cols []*schemas.Column
 
 	for i := 0; i < size; i++ {
 		v := sliceValue.Index(i)
@@ -156,7 +156,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 				if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
 					continue
 				}
-				if col.MapType == core.ONLYFROMDB {
+				if col.MapType == schemas.ONLYFROMDB {
 					continue
 				}
 				if col.IsDeleted {
@@ -207,7 +207,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 				if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
 					continue
 				}
-				if col.MapType == core.ONLYFROMDB {
+				if col.MapType == schemas.ONLYFROMDB {
 					continue
 				}
 				if col.IsDeleted {
@@ -251,7 +251,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 	cleanupProcessorsClosures(&session.beforeClosures)
 
 	var sql string
-	if session.engine.dialect.DBType() == core.ORACLE {
+	if session.engine.dialect.DBType() == schemas.ORACLE {
 		temp := fmt.Sprintf(") INTO %s (%v) VALUES (",
 			session.engine.Quote(tableName),
 			quoteColumns(colNames, session.engine.Quote, ","))
@@ -358,7 +358,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 	var tableName = session.statement.TableName()
 	var output string
-	if session.engine.dialect.DBType() == core.MSSQL && len(table.AutoIncrement) > 0 {
+	if session.engine.dialect.DBType() == schemas.MSSQL && len(table.AutoIncrement) > 0 {
 		output = fmt.Sprintf(" OUTPUT Inserted.%s", table.AutoIncrement)
 	}
 
@@ -368,7 +368,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 	}
 
 	if len(colPlaces) <= 0 {
-		if session.engine.dialect.DBType() == core.MYSQL {
+		if session.engine.dialect.DBType() == schemas.MYSQL {
 			if _, err := buf.WriteString(" VALUES ()"); err != nil {
 				return 0, err
 			}
@@ -430,7 +430,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		}
 	}
 
-	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == core.POSTGRES {
+	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == schemas.POSTGRES {
 		if _, err := buf.WriteString(" RETURNING " + session.engine.Quote(table.AutoIncrement)); err != nil {
 			return 0, err
 		}
@@ -469,7 +469,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 	// for postgres, many of them didn't implement lastInsertId, so we should
 	// implemented it ourself.
-	if session.engine.dialect.DBType() == core.ORACLE && len(table.AutoIncrement) > 0 {
+	if session.engine.dialect.DBType() == schemas.ORACLE && len(table.AutoIncrement) > 0 {
 		res, err := session.queryBytes("select seq_atable.currval from dual", args...)
 		if err != nil {
 			return 0, err
@@ -510,7 +510,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
 
 		return 1, nil
-	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES || session.engine.dialect.DBType() == core.MSSQL) {
+	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == schemas.POSTGRES || session.engine.dialect.DBType() == schemas.MSSQL) {
 		res, err := session.queryBytes(sqlStr, args...)
 
 		if err != nil {
@@ -626,7 +626,7 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 	args := make([]interface{}, 0, len(table.ColumnsSeq()))
 
 	for _, col := range table.Columns() {
-		if col.MapType == core.ONLYFROMDB {
+		if col.MapType == schemas.ONLYFROMDB {
 			continue
 		}
 

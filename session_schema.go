@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"xorm.io/core"
+	"xorm.io/xorm/schemas"
 )
 
 // Ping test if database is ok
@@ -125,7 +125,7 @@ func (session *Session) dropTable(beanOrTableName interface{}) error {
 	tableName := session.engine.TableName(beanOrTableName)
 	var needDrop = true
 	if !session.engine.dialect.SupportDropIfExists() {
-		sqlStr, args := session.engine.dialect.TableCheckSql(tableName)
+		sqlStr, args := session.engine.dialect.TableCheckSQL(tableName)
 		results, err := session.queryBytes(sqlStr, args...)
 		if err != nil {
 			return err
@@ -134,7 +134,7 @@ func (session *Session) dropTable(beanOrTableName interface{}) error {
 	}
 
 	if needDrop {
-		sqlStr := session.engine.Dialect().DropTableSql(session.engine.TableName(tableName, true))
+		sqlStr := session.engine.Dialect().DropTableSQL(session.engine.TableName(tableName, true))
 		_, err := session.exec(sqlStr)
 		return err
 	}
@@ -153,7 +153,7 @@ func (session *Session) IsTableExist(beanOrTableName interface{}) (bool, error) 
 }
 
 func (session *Session) isTableExist(tableName string) (bool, error) {
-	sqlStr, args := session.engine.dialect.TableCheckSql(tableName)
+	sqlStr, args := session.engine.dialect.TableCheckSQL(tableName)
 	results, err := session.queryBytes(sqlStr, args...)
 	return len(results) > 0, err
 }
@@ -190,9 +190,9 @@ func (session *Session) isIndexExist2(tableName string, cols []string, unique bo
 	for _, index := range indexes {
 		if sliceEq(index.Cols, cols) {
 			if unique {
-				return index.Type == core.UniqueType, nil
+				return index.Type == schemas.UniqueType, nil
 			}
-			return index.Type == core.IndexType, nil
+			return index.Type == schemas.IndexType, nil
 		}
 	}
 	return false, nil
@@ -207,14 +207,14 @@ func (session *Session) addColumn(colName string) error {
 
 func (session *Session) addIndex(tableName, idxName string) error {
 	index := session.statement.RefTable.Indexes[idxName]
-	sqlStr := session.engine.dialect.CreateIndexSql(tableName, index)
+	sqlStr := session.engine.dialect.CreateIndexSQL(tableName, index)
 	_, err := session.exec(sqlStr)
 	return err
 }
 
 func (session *Session) addUnique(tableName, uqeName string) error {
 	index := session.statement.RefTable.Indexes[uqeName]
-	sqlStr := session.engine.dialect.CreateIndexSql(tableName, index)
+	sqlStr := session.engine.dialect.CreateIndexSQL(tableName, index)
 	_, err := session.exec(sqlStr)
 	return err
 }
@@ -253,7 +253,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 		}
 		tbNameWithSchema := engine.tbNameWithSchema(tbName)
 
-		var oriTable *core.Table
+		var oriTable *schemas.Table
 		for _, tb := range tables {
 			if strings.EqualFold(engine.tbNameWithSchema(tb.Name), engine.tbNameWithSchema(tbName)) {
 				oriTable = tb
@@ -287,7 +287,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 
 		// check columns
 		for _, col := range table.Columns() {
-			var oriCol *core.Column
+			var oriCol *schemas.Column
 			for _, col2 := range oriTable.Columns() {
 				if strings.EqualFold(col.Name, col2.Name) {
 					oriCol = col2
@@ -306,27 +306,27 @@ func (session *Session) Sync2(beans ...interface{}) error {
 			}
 
 			err = nil
-			expectedType := engine.dialect.SqlType(col)
-			curType := engine.dialect.SqlType(oriCol)
+			expectedType := engine.dialect.SQLType(col)
+			curType := engine.dialect.SQLType(oriCol)
 			if expectedType != curType {
-				if expectedType == core.Text &&
-					strings.HasPrefix(curType, core.Varchar) {
+				if expectedType == schemas.Text &&
+					strings.HasPrefix(curType, schemas.Varchar) {
 					// currently only support mysql & postgres
-					if engine.dialect.DBType() == core.MYSQL ||
-						engine.dialect.DBType() == core.POSTGRES {
+					if engine.dialect.DBType() == schemas.MYSQL ||
+						engine.dialect.DBType() == schemas.POSTGRES {
 						engine.logger.Infof("Table %s column %s change type from %s to %s\n",
 							tbNameWithSchema, col.Name, curType, expectedType)
-						_, err = session.exec(engine.dialect.ModifyColumnSql(tbNameWithSchema, col))
+						_, err = session.exec(engine.dialect.ModifyColumnSQL(tbNameWithSchema, col))
 					} else {
 						engine.logger.Warnf("Table %s column %s db type is %s, struct type is %s\n",
 							tbNameWithSchema, col.Name, curType, expectedType)
 					}
-				} else if strings.HasPrefix(curType, core.Varchar) && strings.HasPrefix(expectedType, core.Varchar) {
-					if engine.dialect.DBType() == core.MYSQL {
+				} else if strings.HasPrefix(curType, schemas.Varchar) && strings.HasPrefix(expectedType, schemas.Varchar) {
+					if engine.dialect.DBType() == schemas.MYSQL {
 						if oriCol.Length < col.Length {
 							engine.logger.Infof("Table %s column %s change type from varchar(%d) to varchar(%d)\n",
 								tbNameWithSchema, col.Name, oriCol.Length, col.Length)
-							_, err = session.exec(engine.dialect.ModifyColumnSql(tbNameWithSchema, col))
+							_, err = session.exec(engine.dialect.ModifyColumnSQL(tbNameWithSchema, col))
 						}
 					}
 				} else {
@@ -335,12 +335,12 @@ func (session *Session) Sync2(beans ...interface{}) error {
 							tbNameWithSchema, col.Name, curType, expectedType)
 					}
 				}
-			} else if expectedType == core.Varchar {
-				if engine.dialect.DBType() == core.MYSQL {
+			} else if expectedType == schemas.Varchar {
+				if engine.dialect.DBType() == schemas.MYSQL {
 					if oriCol.Length < col.Length {
 						engine.logger.Infof("Table %s column %s change type from varchar(%d) to varchar(%d)\n",
 							tbNameWithSchema, col.Name, oriCol.Length, col.Length)
-						_, err = session.exec(engine.dialect.ModifyColumnSql(tbNameWithSchema, col))
+						_, err = session.exec(engine.dialect.ModifyColumnSQL(tbNameWithSchema, col))
 					}
 				}
 			}
@@ -348,7 +348,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 			if col.Default != oriCol.Default {
 				switch {
 				case col.IsAutoIncrement: // For autoincrement column, don't check default
-				case (col.SQLType.Name == core.Bool || col.SQLType.Name == core.Boolean) &&
+				case (col.SQLType.Name == schemas.Bool || col.SQLType.Name == schemas.Boolean) &&
 					((strings.EqualFold(col.Default, "true") && oriCol.Default == "1") ||
 						(strings.EqualFold(col.Default, "false") && oriCol.Default == "0")):
 				default:
@@ -367,10 +367,10 @@ func (session *Session) Sync2(beans ...interface{}) error {
 		}
 
 		var foundIndexNames = make(map[string]bool)
-		var addedNames = make(map[string]*core.Index)
+		var addedNames = make(map[string]*schemas.Index)
 
 		for name, index := range table.Indexes {
-			var oriIndex *core.Index
+			var oriIndex *schemas.Index
 			for name2, index2 := range oriTable.Indexes {
 				if index.Equal(index2) {
 					oriIndex = index2
@@ -381,7 +381,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 
 			if oriIndex != nil {
 				if oriIndex.Type != index.Type {
-					sql := engine.dialect.DropIndexSql(tbNameWithSchema, oriIndex)
+					sql := engine.dialect.DropIndexSQL(tbNameWithSchema, oriIndex)
 					_, err = session.exec(sql)
 					if err != nil {
 						return err
@@ -397,7 +397,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 
 		for name2, index2 := range oriTable.Indexes {
 			if _, ok := foundIndexNames[name2]; !ok {
-				sql := engine.dialect.DropIndexSql(tbNameWithSchema, index2)
+				sql := engine.dialect.DropIndexSQL(tbNameWithSchema, index2)
 				_, err = session.exec(sql)
 				if err != nil {
 					return err
@@ -406,11 +406,11 @@ func (session *Session) Sync2(beans ...interface{}) error {
 		}
 
 		for name, index := range addedNames {
-			if index.Type == core.UniqueType {
+			if index.Type == schemas.UniqueType {
 				session.statement.RefTable = table
 				session.statement.tableName = tbNameWithSchema
 				err = session.addUnique(tbNameWithSchema, name)
-			} else if index.Type == core.IndexType {
+			} else if index.Type == schemas.IndexType {
 				session.statement.RefTable = table
 				session.statement.tableName = tbNameWithSchema
 				err = session.addIndex(tbNameWithSchema, name)

@@ -12,16 +12,17 @@ import (
 	"time"
 
 	"xorm.io/builder"
-	"xorm.io/core"
+	"xorm.io/xorm/dialects"
+	"xorm.io/xorm/schemas"
 )
 
 // Statement save all the sql info for executing SQL
 type Statement struct {
-	RefTable        *core.Table
+	RefTable        *schemas.Table
 	Engine          *Engine
 	Start           int
 	LimitN          *int
-	idParam         *core.PK
+	idParam         *schemas.PK
 	OrderStr        string
 	JoinStr         string
 	joinArgs        []interface{}
@@ -266,7 +267,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 			continue
 		}
 
-		if col.MapType == core.ONLYFROMDB {
+		if col.MapType == schemas.ONLYFROMDB {
 			continue
 		}
 
@@ -314,7 +315,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 		var val interface{}
 
 		if fieldValue.CanAddr() {
-			if structConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
+			if structConvert, ok := fieldValue.Addr().Interface().(Conversion); ok {
 				data, err := structConvert.ToDB()
 				if err != nil {
 					engine.logger.Error(err)
@@ -325,7 +326,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 			}
 		}
 
-		if structConvert, ok := fieldValue.Interface().(core.Conversion); ok {
+		if structConvert, ok := fieldValue.Interface().(Conversion); ok {
 			data, err := structConvert.ToDB()
 			if err != nil {
 				engine.logger.Error(err)
@@ -388,8 +389,8 @@ func (statement *Statement) buildUpdates(bean interface{},
 			t := int64(fieldValue.Uint())
 			val = reflect.ValueOf(&t).Interface()
 		case reflect.Struct:
-			if fieldType.ConvertibleTo(core.TimeType) {
-				t := fieldValue.Convert(core.TimeType).Interface().(time.Time)
+			if fieldType.ConvertibleTo(schemas.TimeType) {
+				t := fieldValue.Convert(schemas.TimeType).Interface().(time.Time)
 				if !requiredField && (t.IsZero() || !fieldValue.IsValid()) {
 					continue
 				}
@@ -496,7 +497,7 @@ func (statement *Statement) needTableName() bool {
 	return len(statement.JoinStr) > 0
 }
 
-func (statement *Statement) colName(col *core.Column, tableName string) string {
+func (statement *Statement) colName(col *schemas.Column, tableName string) string {
 	if statement.needTableName() {
 		var nm = tableName
 		if len(statement.TableAlias) > 0 {
@@ -523,12 +524,12 @@ func (statement *Statement) ID(id interface{}) *Statement {
 
 	switch idType {
 	case ptrPkType:
-		if pkPtr, ok := (id).(*core.PK); ok {
+		if pkPtr, ok := (id).(*schemas.PK); ok {
 			statement.idParam = pkPtr
 			return statement
 		}
 	case pkType:
-		if pk, ok := (id).(core.PK); ok {
+		if pk, ok := (id).(schemas.PK); ok {
 			statement.idParam = &pk
 			return statement
 		}
@@ -536,11 +537,11 @@ func (statement *Statement) ID(id interface{}) *Statement {
 
 	switch idType.Kind() {
 	case reflect.String:
-		statement.idParam = &core.PK{idValue.Convert(reflect.TypeOf("")).Interface()}
+		statement.idParam = &schemas.PK{idValue.Convert(reflect.TypeOf("")).Interface()}
 		return statement
 	}
 
-	statement.idParam = &core.PK{id}
+	statement.idParam = &schemas.PK{id}
 	return statement
 }
 
@@ -807,7 +808,7 @@ func (statement *Statement) genColumnStr() string {
 			continue
 		}
 
-		if col.MapType == core.ONLYTODB {
+		if col.MapType == schemas.ONLYTODB {
 			continue
 		}
 
@@ -832,7 +833,7 @@ func (statement *Statement) genColumnStr() string {
 }
 
 func (statement *Statement) genCreateTableSQL() string {
-	return statement.Engine.dialect.CreateTableSql(statement.RefTable, statement.TableName(),
+	return statement.Engine.dialect.CreateTableSQL(statement.RefTable, statement.TableName(),
 		statement.StoreEngine, statement.Charset)
 }
 
@@ -840,8 +841,8 @@ func (statement *Statement) genIndexSQL() []string {
 	var sqls []string
 	tbName := statement.TableName()
 	for _, index := range statement.RefTable.Indexes {
-		if index.Type == core.IndexType {
-			sql := statement.Engine.dialect.CreateIndexSql(tbName, index)
+		if index.Type == schemas.IndexType {
+			sql := statement.Engine.dialect.CreateIndexSQL(tbName, index)
 			/*idxTBName := strings.Replace(tbName, ".", "_", -1)
 			idxTBName = strings.Replace(idxTBName, `"`, "", -1)
 			sql := fmt.Sprintf("CREATE INDEX %v ON %v (%v);", quote(indexName(idxTBName, idxName)),
@@ -860,8 +861,8 @@ func (statement *Statement) genUniqueSQL() []string {
 	var sqls []string
 	tbName := statement.TableName()
 	for _, index := range statement.RefTable.Indexes {
-		if index.Type == core.UniqueType {
-			sql := statement.Engine.dialect.CreateIndexSql(tbName, index)
+		if index.Type == schemas.UniqueType {
+			sql := statement.Engine.dialect.CreateIndexSQL(tbName, index)
 			sqls = append(sqls, sql)
 		}
 	}
@@ -871,13 +872,17 @@ func (statement *Statement) genUniqueSQL() []string {
 func (statement *Statement) genDelIndexSQL() []string {
 	var sqls []string
 	tbName := statement.TableName()
+	idx := strings.Index(tbName, ".")
+	if idx > -1 {
+		tbName = tbName[idx+1:]
+	}
 	idxPrefixName := strings.Replace(tbName, `"`, "", -1)
 	idxPrefixName = strings.Replace(idxPrefixName, `.`, "_", -1)
 	for idxName, index := range statement.RefTable.Indexes {
 		var rIdxName string
-		if index.Type == core.UniqueType {
+		if index.Type == schemas.UniqueType {
 			rIdxName = uniqueName(idxPrefixName, idxName)
-		} else if index.Type == core.IndexType {
+		} else if index.Type == schemas.IndexType {
 			rIdxName = indexName(idxPrefixName, idxName)
 		}
 		sql := fmt.Sprintf("DROP INDEX %v", statement.Engine.Quote(statement.Engine.TableName(rIdxName, true)))
@@ -889,18 +894,18 @@ func (statement *Statement) genDelIndexSQL() []string {
 	return sqls
 }
 
-func (statement *Statement) genAddColumnStr(col *core.Column) (string, []interface{}) {
+func (statement *Statement) genAddColumnStr(col *schemas.Column) (string, []interface{}) {
 	quote := statement.Engine.Quote
 	sql := fmt.Sprintf("ALTER TABLE %v ADD %v", quote(statement.TableName()),
-		col.String(statement.Engine.dialect))
-	if statement.Engine.dialect.DBType() == core.MYSQL && len(col.Comment) > 0 {
+		dialects.String(statement.Engine.dialect, col))
+	if statement.Engine.dialect.DBType() == schemas.MYSQL && len(col.Comment) > 0 {
 		sql += " COMMENT '" + col.Comment + "'"
 	}
 	sql += ";"
 	return sql, []interface{}{}
 }
 
-func (statement *Statement) buildConds(table *core.Table, bean interface{}, includeVersion bool, includeUpdated bool, includeNil bool, includeAutoIncr bool, addedTableName bool) (builder.Cond, error) {
+func (statement *Statement) buildConds(table *schemas.Table, bean interface{}, includeVersion bool, includeUpdated bool, includeNil bool, includeAutoIncr bool, addedTableName bool) (builder.Cond, error) {
 	return statement.Engine.buildConds(table, bean, includeVersion, includeUpdated, includeNil, includeAutoIncr, statement.allUseBool, statement.useAllCols,
 		statement.unscoped, statement.mustColumnMap, statement.TableName(), statement.TableAlias, addedTableName)
 }
@@ -1054,14 +1059,14 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 		whereStr = " WHERE " + condSQL
 	}
 
-	if dialect.DBType() == core.MSSQL && strings.Contains(statement.TableName(), "..") {
+	if dialect.DBType() == schemas.MSSQL && strings.Contains(statement.TableName(), "..") {
 		fromStr += statement.TableName()
 	} else {
 		fromStr += quote(statement.TableName())
 	}
 
 	if statement.TableAlias != "" {
-		if dialect.DBType() == core.ORACLE {
+		if dialect.DBType() == schemas.ORACLE {
 			fromStr += " " + quote(statement.TableAlias)
 		} else {
 			fromStr += " AS " + quote(statement.TableAlias)
@@ -1072,7 +1077,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 	}
 
 	pLimitN := statement.LimitN
-	if dialect.DBType() == core.MSSQL {
+	if dialect.DBType() == schemas.MSSQL {
 		if pLimitN != nil {
 			LimitNValue := *pLimitN
 			top = fmt.Sprintf("TOP %d ", LimitNValue)
@@ -1134,7 +1139,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 		fmt.Fprint(&buf, " ORDER BY ", statement.OrderStr)
 	}
 	if needLimit {
-		if dialect.DBType() != core.MSSQL && dialect.DBType() != core.ORACLE {
+		if dialect.DBType() != schemas.MSSQL && dialect.DBType() != schemas.ORACLE {
 			if statement.Start > 0 {
 				if pLimitN != nil {
 					fmt.Fprintf(&buf, " LIMIT %v OFFSET %v", *pLimitN, statement.Start)
@@ -1144,7 +1149,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 			} else if pLimitN != nil {
 				fmt.Fprint(&buf, " LIMIT ", *pLimitN)
 			}
-		} else if dialect.DBType() == core.ORACLE {
+		} else if dialect.DBType() == schemas.ORACLE {
 			if statement.Start != 0 || pLimitN != nil {
 				oldString := buf.String()
 				buf.Reset()
@@ -1158,7 +1163,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 		}
 	}
 	if statement.IsForUpdate {
-		return dialect.ForUpdateSql(buf.String()), nil
+		return dialect.ForUpdateSQL(buf.String()), nil
 	}
 
 	return buf.String(), nil
@@ -1183,7 +1188,7 @@ func (statement *Statement) processIDParam() error {
 	return nil
 }
 
-func (statement *Statement) joinColumns(cols []*core.Column, includeTableName bool) string {
+func (statement *Statement) joinColumns(cols []*schemas.Column, includeTableName bool) string {
 	var colnames = make([]string, len(cols))
 	for i, col := range cols {
 		if includeTableName {
@@ -1211,7 +1216,7 @@ func (statement *Statement) convertIDSQL(sqlStr string) string {
 
 		var top string
 		pLimitN := statement.LimitN
-		if pLimitN != nil && statement.Engine.dialect.DBType() == core.MSSQL {
+		if pLimitN != nil && statement.Engine.dialect.DBType() == schemas.MSSQL {
 			top = fmt.Sprintf("TOP %d ", *pLimitN)
 		}
 
@@ -1240,9 +1245,9 @@ func (statement *Statement) convertUpdateSQL(sqlStr string) (string, string) {
 
 	// TODO: for postgres only, if any other database?
 	var paraStr string
-	if statement.Engine.dialect.DBType() == core.POSTGRES {
+	if statement.Engine.dialect.DBType() == schemas.POSTGRES {
 		paraStr = "$"
-	} else if statement.Engine.dialect.DBType() == core.MSSQL {
+	} else if statement.Engine.dialect.DBType() == schemas.MSSQL {
 		paraStr = ":"
 	}
 

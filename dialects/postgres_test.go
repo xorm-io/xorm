@@ -1,11 +1,10 @@
-package xorm
+package dialects
 
 import (
 	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"xorm.io/core"
 )
 
 func TestParsePostgres(t *testing.T) {
@@ -27,15 +26,15 @@ func TestParsePostgres(t *testing.T) {
 		{"dbname=db =disable", "db", false},
 	}
 
-	driver := core.QueryDriver("postgres")
+	driver := QueryDriver("postgres")
 
 	for _, test := range tests {
 		uri, err := driver.Parse("postgres", test.in)
 
 		if err != nil && test.valid {
 			t.Errorf("%q got unexpected error: %s", test.in, err)
-		} else if err == nil && !reflect.DeepEqual(test.expected, uri.DbName) {
-			t.Errorf("%q got: %#v want: %#v", test.in, uri.DbName, test.expected)
+		} else if err == nil && !reflect.DeepEqual(test.expected, uri.DBName) {
+			t.Errorf("%q got: %#v want: %#v", test.in, uri.DBName, test.expected)
 		}
 	}
 }
@@ -59,23 +58,23 @@ func TestParsePgx(t *testing.T) {
 		{"dbname=db =disable", "db", false},
 	}
 
-	driver := core.QueryDriver("pgx")
+	driver := QueryDriver("pgx")
 
 	for _, test := range tests {
 		uri, err := driver.Parse("pgx", test.in)
 
 		if err != nil && test.valid {
 			t.Errorf("%q got unexpected error: %s", test.in, err)
-		} else if err == nil && !reflect.DeepEqual(test.expected, uri.DbName) {
-			t.Errorf("%q got: %#v want: %#v", test.in, uri.DbName, test.expected)
+		} else if err == nil && !reflect.DeepEqual(test.expected, uri.DBName) {
+			t.Errorf("%q got: %#v want: %#v", test.in, uri.DBName, test.expected)
 		}
 
 		// Register DriverConfig
 		uri, err = driver.Parse("pgx", test.in)
 		if err != nil && test.valid {
 			t.Errorf("%q got unexpected error: %s", test.in, err)
-		} else if err == nil && !reflect.DeepEqual(test.expected, uri.DbName) {
-			t.Errorf("%q got: %#v want: %#v", test.in, uri.DbName, test.expected)
+		} else if err == nil && !reflect.DeepEqual(test.expected, uri.DBName) {
+			t.Errorf("%q got: %#v want: %#v", test.in, uri.DBName, test.expected)
 		}
 
 	}

@@ -32,3 +32,5 @@ xorm.test
 test.db.sql
 
 .idea/
+
+*coverage.out

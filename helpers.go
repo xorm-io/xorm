@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"xorm.io/core"
+	"xorm.io/xorm/schemas"
 )
 
 // str2PK convert string value to primary key value according to tp
@@ -93,26 +93,6 @@ func str2PK(s string, tp reflect.Type) (interface{}, error) {
 		return nil, err
 	}
 	return v.Interface(), nil
-}
-
-func splitTag(tag string) (tags []string) {
-	tag = strings.TrimSpace(tag)
-	var hasQuote = false
-	var lastIdx = 0
-	for i, t := range tag {
-		if t == '\'' {
-			hasQuote = !hasQuote
-		} else if t == ' ' {
-			if lastIdx < i && !hasQuote {
-				tags = append(tags, strings.TrimSpace(tag[lastIdx:i]))
-				lastIdx = i + 1
-			}
-		}
-	}
-	if lastIdx < len(tag) {
-		tags = append(tags, strings.TrimSpace(tag[lastIdx:]))
-	}
-	return
 }
 
 type zeroable interface {
@@ -249,7 +229,7 @@ func int64ToInt(id int64, tp reflect.Type) interface{} {
 	return int64ToIntValue(id, tp).Interface()
 }
 
-func isPKZero(pk core.PK) bool {
+func isPKZero(pk schemas.PK) bool {
 	for _, k := range pk {
 		if isZero(k) {
 			return true

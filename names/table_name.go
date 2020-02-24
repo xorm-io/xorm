@@ -2,15 +2,22 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package names
 
 import (
 	"reflect"
-
-	"xorm.io/core"
 )
 
-func getTableName(mapper core.IMapper, v reflect.Value) string {
+// TableName table name interface to define customerize table name
+type TableName interface {
+	TableName() string
+}
+
+var (
+	tpTableName = reflect.TypeOf((*TableName)(nil)).Elem()
+)
+
+func GetTableName(mapper Mapper, v reflect.Value) string {
 	if t, ok := v.Interface().(TableName); ok {
 		return t.TableName()
 	}

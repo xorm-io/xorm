@@ -213,7 +213,7 @@ func TestCustomTableName(t *testing.T) {
 func TestDump(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
-	fp := testEngine.Dialect().URI().DbName + ".sql"
+	fp := testEngine.Dialect().URI().DBName + ".sql"
 	os.Remove(fp)
 	assert.NoError(t, testEngine.DumpAllToFile(fp))
 }

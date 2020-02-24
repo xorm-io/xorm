@@ -10,6 +10,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/stretchr/testify v1.4.0
 	github.com/ziutek/mymysql v1.5.4
+	google.golang.org/appengine v1.6.0 // indirect
 	xorm.io/builder v0.3.6
-	xorm.io/core v0.7.2
 )

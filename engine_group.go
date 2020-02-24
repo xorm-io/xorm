@@ -8,7 +8,9 @@ import (
 	"context"
 	"time"
 
-	"xorm.io/core"
+	"xorm.io/xorm/caches"
+	"xorm.io/xorm/log"
+	"xorm.io/xorm/names"
 )
 
 // EngineGroup defines an engine group
@@ -109,7 +111,7 @@ func (eg *EngineGroup) Ping() error {
 }
 
 // SetColumnMapper set the column name mapping rule
-func (eg *EngineGroup) SetColumnMapper(mapper core.IMapper) {
+func (eg *EngineGroup) SetColumnMapper(mapper names.Mapper) {
 	eg.Engine.ColumnMapper = mapper
 	for i := 0; i < len(eg.slaves); i++ {
 		eg.slaves[i].ColumnMapper = mapper
@@ -125,7 +127,7 @@ func (eg *EngineGroup) SetConnMaxLifetime(d time.Duration) {
 }
 
 // SetDefaultCacher set the default cacher
-func (eg *EngineGroup) SetDefaultCacher(cacher core.Cacher) {
+func (eg *EngineGroup) SetDefaultCacher(cacher caches.Cacher) {
 	eg.Engine.SetDefaultCacher(cacher)
 	for i := 0; i < len(eg.slaves); i++ {
 		eg.slaves[i].SetDefaultCacher(cacher)
@@ -133,7 +135,7 @@ func (eg *EngineGroup) SetDefaultCacher(cacher core.Cacher) {
 }
 
 // SetLogger set the new logger
-func (eg *EngineGroup) SetLogger(logger core.ILogger) {
+func (eg *EngineGroup) SetLogger(logger log.Logger) {
 	eg.Engine.SetLogger(logger)
 	for i := 0; i < len(eg.slaves); i++ {
 		eg.slaves[i].SetLogger(logger)
@@ -141,7 +143,7 @@ func (eg *EngineGroup) SetLogger(logger core.ILogger) {
 }
 
 // SetLogLevel sets the logger level
-func (eg *EngineGroup) SetLogLevel(level core.LogLevel) {
+func (eg *EngineGroup) SetLogLevel(level log.LogLevel) {
 	eg.Engine.SetLogLevel(level)
 	for i := 0; i < len(eg.slaves); i++ {
 		eg.slaves[i].SetLogLevel(level)
@@ -149,7 +151,7 @@ func (eg *EngineGroup) SetLogLevel(level core.LogLevel) {
 }
 
 // SetMapper set the name mapping rules
-func (eg *EngineGroup) SetMapper(mapper core.IMapper) {
+func (eg *EngineGroup) SetMapper(mapper names.Mapper) {
 	eg.Engine.SetMapper(mapper)
 	for i := 0; i < len(eg.slaves); i++ {
 		eg.slaves[i].SetMapper(mapper)
@@ -179,7 +181,7 @@ func (eg *EngineGroup) SetPolicy(policy GroupPolicy) *EngineGroup {
 }
 
 // SetTableMapper set the table name mapping rule
-func (eg *EngineGroup) SetTableMapper(mapper core.IMapper) {
+func (eg *EngineGroup) SetTableMapper(mapper names.Mapper) {
 	eg.Engine.TableMapper = mapper
 	for i := 0; i < len(eg.slaves); i++ {
 		eg.slaves[i].TableMapper = mapper

@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/core"
+	"xorm.io/xorm/schemas"
 )
 
-func setColumnInt(bean interface{}, col *core.Column, t int64) {
+func setColumnInt(bean interface{}, col *schemas.Column, t int64) {
 	v, err := col.ValueOf(bean)
 	if err != nil {
 		return
@@ -27,7 +27,7 @@ func setColumnInt(bean interface{}, col *core.Column, t int64) {
 	}
 }
 
-func setColumnTime(bean interface{}, col *core.Column, t time.Time) {
+func setColumnTime(bean interface{}, col *schemas.Column, t time.Time) {
 	v, err := col.ValueOf(bean)
 	if err != nil {
 		return
@@ -44,7 +44,7 @@ func setColumnTime(bean interface{}, col *core.Column, t time.Time) {
 	}
 }
 
-func getFlagForColumn(m map[string]bool, col *core.Column) (val bool, has bool) {
+func getFlagForColumn(m map[string]bool, col *schemas.Column) (val bool, has bool) {
 	if len(m) == 0 {
 		return false, false
 	}

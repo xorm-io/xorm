@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package dialects
 
 import (
 	"errors"
@@ -11,7 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"xorm.io/core"
+	"xorm.io/xorm/core"
+	"xorm.io/xorm/schemas"
 )
 
 var (
@@ -499,29 +500,29 @@ var (
 )
 
 type oracle struct {
-	core.Base
+	Base
 }
 
-func (db *oracle) Init(d *core.DB, uri *core.Uri, drivername, dataSourceName string) error {
+func (db *oracle) Init(d *core.DB, uri *URI, drivername, dataSourceName string) error {
 	return db.Base.Init(d, db, uri, drivername, dataSourceName)
 }
 
-func (db *oracle) SqlType(c *core.Column) string {
+func (db *oracle) SQLType(c *schemas.Column) string {
 	var res string
 	switch t := c.SQLType.Name; t {
-	case core.Bit, core.TinyInt, core.SmallInt, core.MediumInt, core.Int, core.Integer, core.BigInt, core.Bool, core.Serial, core.BigSerial:
+	case schemas.Bit, schemas.TinyInt, schemas.SmallInt, schemas.MediumInt, schemas.Int, schemas.Integer, schemas.BigInt, schemas.Bool, schemas.Serial, schemas.BigSerial:
 		res = "NUMBER"
-	case core.Binary, core.VarBinary, core.Blob, core.TinyBlob, core.MediumBlob, core.LongBlob, core.Bytea:
-		return core.Blob
-	case core.Time, core.DateTime, core.TimeStamp:
-		res = core.TimeStamp
-	case core.TimeStampz:
+	case schemas.Binary, schemas.VarBinary, schemas.Blob, schemas.TinyBlob, schemas.MediumBlob, schemas.LongBlob, schemas.Bytea:
+		return schemas.Blob
+	case schemas.Time, schemas.DateTime, schemas.TimeStamp:
+		res = schemas.TimeStamp
+	case schemas.TimeStampz:
 		res = "TIMESTAMP WITH TIME ZONE"
-	case core.Float, core.Double, core.Numeric, core.Decimal:
+	case schemas.Float, schemas.Double, schemas.Numeric, schemas.Decimal:
 		res = "NUMBER"
-	case core.Text, core.MediumText, core.LongText, core.Json:
+	case schemas.Text, schemas.MediumText, schemas.LongText, schemas.Json:
 		res = "CLOB"
-	case core.Char, core.Varchar, core.TinyText:
+	case schemas.Char, schemas.Varchar, schemas.TinyText:
 		res = "VARCHAR2"
 	default:
 		res = t
@@ -571,11 +572,11 @@ func (db *oracle) IndexOnTable() bool {
 	return false
 }
 
-func (db *oracle) DropTableSql(tableName string) string {
+func (db *oracle) DropTableSQL(tableName string) string {
 	return fmt.Sprintf("DROP TABLE `%s`", tableName)
 }
 
-func (db *oracle) CreateTableSql(table *core.Table, tableName, storeEngine, charset string) string {
+func (db *oracle) CreateTableSQL(table *schemas.Table, tableName, storeEngine, charset string) string {
 	var sql string
 	sql = "CREATE TABLE "
 	if tableName == "" {
@@ -591,7 +592,7 @@ func (db *oracle) CreateTableSql(table *core.Table, tableName, storeEngine, char
 		/*if col.IsPrimaryKey && len(pkList) == 1 {
 			sql += col.String(b.dialect)
 		} else {*/
-		sql += col.StringNoPk(db)
+		sql += StringNoPk(db, col)
 		// }
 		sql = strings.TrimSpace(sql)
 		sql += ", "
@@ -618,19 +619,19 @@ func (db *oracle) CreateTableSql(table *core.Table, tableName, storeEngine, char
 	return sql
 }
 
-func (db *oracle) IndexCheckSql(tableName, idxName string) (string, []interface{}) {
+func (db *oracle) IndexCheckSQL(tableName, idxName string) (string, []interface{}) {
 	args := []interface{}{tableName, idxName}
 	return `SELECT INDEX_NAME FROM USER_INDEXES ` +
 		`WHERE TABLE_NAME = :1 AND INDEX_NAME = :2`, args
 }
 
-func (db *oracle) TableCheckSql(tableName string) (string, []interface{}) {
+func (db *oracle) TableCheckSQL(tableName string) (string, []interface{}) {
 	args := []interface{}{tableName}
 	return `SELECT table_name FROM user_tables WHERE table_name = :1`, args
 }
 
 func (db *oracle) MustDropTable(tableName string) error {
-	sql, args := db.TableCheckSql(tableName)
+	sql, args := db.TableCheckSQL(tableName)
 	db.LogSQL(sql, args)
 
 	rows, err := db.DB().Query(sql, args...)
@@ -674,7 +675,7 @@ func (db *oracle) IsColumnExist(tableName, colName string) (bool, error) {
 	return false, nil
 }
 
-func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
+func (db *oracle) GetColumns(tableName string) ([]string, map[string]*schemas.Column, error) {
 	args := []interface{}{tableName}
 	s := "SELECT column_name,data_default,data_type,data_length,data_precision,data_scale," +
 		"nullable FROM USER_TAB_COLUMNS WHERE table_name = :1"
@@ -686,10 +687,10 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 	}
 	defer rows.Close()
 
-	cols := make(map[string]*core.Column)
+	cols := make(map[string]*schemas.Column)
 	colSeq := make([]string, 0)
 	for rows.Next() {
-		col := new(core.Column)
+		col := new(schemas.Column)
 		col.Indexes = make(map[string]int)
 
 		var colName, colDefault, nullable, dataType, dataPrecision, dataScale *string
@@ -731,30 +732,30 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 
 		switch dt {
 		case "VARCHAR2":
-			col.SQLType = core.SQLType{Name: core.Varchar, DefaultLength: len1, DefaultLength2: len2}
+			col.SQLType = schemas.SQLType{Name: schemas.Varchar, DefaultLength: len1, DefaultLength2: len2}
 		case "NVARCHAR2":
-			col.SQLType = core.SQLType{Name: core.NVarchar, DefaultLength: len1, DefaultLength2: len2}
+			col.SQLType = schemas.SQLType{Name: schemas.NVarchar, DefaultLength: len1, DefaultLength2: len2}
 		case "TIMESTAMP WITH TIME ZONE":
-			col.SQLType = core.SQLType{Name: core.TimeStampz, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = schemas.SQLType{Name: schemas.TimeStampz, DefaultLength: 0, DefaultLength2: 0}
 		case "NUMBER":
-			col.SQLType = core.SQLType{Name: core.Double, DefaultLength: len1, DefaultLength2: len2}
+			col.SQLType = schemas.SQLType{Name: schemas.Double, DefaultLength: len1, DefaultLength2: len2}
 		case "LONG", "LONG RAW":
-			col.SQLType = core.SQLType{Name: core.Text, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = schemas.SQLType{Name: schemas.Text, DefaultLength: 0, DefaultLength2: 0}
 		case "RAW":
-			col.SQLType = core.SQLType{Name: core.Binary, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = schemas.SQLType{Name: schemas.Binary, DefaultLength: 0, DefaultLength2: 0}
 		case "ROWID":
-			col.SQLType = core.SQLType{Name: core.Varchar, DefaultLength: 18, DefaultLength2: 0}
+			col.SQLType = schemas.SQLType{Name: schemas.Varchar, DefaultLength: 18, DefaultLength2: 0}
 		case "AQ$_SUBSCRIBERS":
 			ignore = true
 		default:
-			col.SQLType = core.SQLType{Name: strings.ToUpper(dt), DefaultLength: len1, DefaultLength2: len2}
+			col.SQLType = schemas.SQLType{Name: strings.ToUpper(dt), DefaultLength: len1, DefaultLength2: len2}
 		}
 
 		if ignore {
 			continue
 		}
 
-		if _, ok := core.SqlTypes[col.SQLType.Name]; !ok {
+		if _, ok := schemas.SqlTypes[col.SQLType.Name]; !ok {
 			return nil, nil, fmt.Errorf("Unknown colType %v %v", *dataType, col.SQLType)
 		}
 
@@ -772,7 +773,7 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 	return colSeq, cols, nil
 }
 
-func (db *oracle) GetTables() ([]*core.Table, error) {
+func (db *oracle) GetTables() ([]*schemas.Table, error) {
 	args := []interface{}{}
 	s := "SELECT table_name FROM user_tables"
 	db.LogSQL(s, args)
@@ -783,9 +784,9 @@ func (db *oracle) GetTables() ([]*core.Table, error) {
 	}
 	defer rows.Close()
 
-	tables := make([]*core.Table, 0)
+	tables := make([]*schemas.Table, 0)
 	for rows.Next() {
-		table := core.NewEmptyTable()
+		table := schemas.NewEmptyTable()
 		err = rows.Scan(&table.Name)
 		if err != nil {
 			return nil, err
@@ -796,7 +797,7 @@ func (db *oracle) GetTables() ([]*core.Table, error) {
 	return tables, nil
 }
 
-func (db *oracle) GetIndexes(tableName string) (map[string]*core.Index, error) {
+func (db *oracle) GetIndexes(tableName string) (map[string]*schemas.Index, error) {
 	args := []interface{}{tableName}
 	s := "SELECT t.column_name,i.uniqueness,i.index_name FROM user_ind_columns t,user_indexes i " +
 		"WHERE t.index_name = i.index_name and t.table_name = i.table_name and t.table_name =:1"
@@ -808,7 +809,7 @@ func (db *oracle) GetIndexes(tableName string) (map[string]*core.Index, error) {
 	}
 	defer rows.Close()
 
-	indexes := make(map[string]*core.Index, 0)
+	indexes := make(map[string]*schemas.Index, 0)
 	for rows.Next() {
 		var indexType int
 		var indexName, colName, uniqueness string
@@ -827,15 +828,15 @@ func (db *oracle) GetIndexes(tableName string) (map[string]*core.Index, error) {
 		}
 
 		if uniqueness == "UNIQUE" {
-			indexType = core.UniqueType
+			indexType = schemas.UniqueType
 		} else {
-			indexType = core.IndexType
+			indexType = schemas.IndexType
 		}
 
-		var index *core.Index
+		var index *schemas.Index
 		var ok bool
 		if index, ok = indexes[indexName]; !ok {
-			index = new(core.Index)
+			index = new(schemas.Index)
 			index.Type = indexType
 			index.Name = indexName
 			index.IsRegular = isRegular
@@ -846,15 +847,15 @@ func (db *oracle) GetIndexes(tableName string) (map[string]*core.Index, error) {
 	return indexes, nil
 }
 
-func (db *oracle) Filters() []core.Filter {
-	return []core.Filter{&core.QuoteFilter{}, &core.SeqFilter{Prefix: ":", Start: 1}, &core.IdFilter{}}
+func (db *oracle) Filters() []Filter {
+	return []Filter{&QuoteFilter{}, &SeqFilter{Prefix: ":", Start: 1}, &IdFilter{}}
 }
 
 type goracleDriver struct {
 }
 
-func (cfg *goracleDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
-	db := &core.Uri{DbType: core.ORACLE}
+func (cfg *goracleDriver) Parse(driverName, dataSourceName string) (*URI, error) {
+	db := &URI{DBType: schemas.ORACLE}
 	dsnPattern := regexp.MustCompile(
 		`^(?:(?P<user>.*?)(?::(?P<passwd>.*))?@)?` + // [user[:password]@]
 			`(?:(?P<net>[^\(]*)(?:\((?P<addr>[^\)]*)\))?)?` + // [net[(addr)]]
@@ -867,10 +868,10 @@ func (cfg *goracleDriver) Parse(driverName, dataSourceName string) (*core.Uri, e
 	for i, match := range matches {
 		switch names[i] {
 		case "dbname":
-			db.DbName = match
+			db.DBName = match
 		}
 	}
-	if db.DbName == "" {
+	if db.DBName == "" {
 		return nil, errors.New("dbname is empty")
 	}
 	return db, nil
@@ -881,8 +882,8 @@ type oci8Driver struct {
 
 // dataSourceName=user/password@ipv4:port/dbname
 // dataSourceName=user/password@[ipv6]:port/dbname
-func (p *oci8Driver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
-	db := &core.Uri{DbType: core.ORACLE}
+func (p *oci8Driver) Parse(driverName, dataSourceName string) (*URI, error) {
+	db := &URI{DBType: schemas.ORACLE}
 	dsnPattern := regexp.MustCompile(
 		`^(?P<user>.*)\/(?P<password>.*)@` + // user:password@
 			`(?P<net>.*)` + // ip:port
@@ -892,10 +893,10 @@ func (p *oci8Driver) Parse(driverName, dataSourceName string) (*core.Uri, error)
 	for i, match := range matches {
 		switch names[i] {
 		case "dbname":
-			db.DbName = match
+			db.DBName = match
 		}
 	}
-	if db.DbName == "" {
+	if db.DBName == "" {
 		return nil, errors.New("dbname is empty")
 	}
 	return db, nil

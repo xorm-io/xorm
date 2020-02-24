@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"xorm.io/builder"
-	"xorm.io/core"
+	"xorm.io/xorm/core"
+	"xorm.io/xorm/schemas"
 )
 
 func (session *Session) genQuerySQL(sqlOrArgs ...interface{}) (string, []interface{}, error) {
@@ -116,8 +117,8 @@ func value2String(rawValue *reflect.Value) (str string, err error) {
 		}
 	// time type
 	case reflect.Struct:
-		if aa.ConvertibleTo(core.TimeType) {
-			str = vv.Convert(core.TimeType).Interface().(time.Time).Format(time.RFC3339Nano)
+		if aa.ConvertibleTo(schemas.TimeType) {
+			str = vv.Convert(schemas.TimeType).Interface().(time.Time).Format(time.RFC3339Nano)
 		} else {
 			err = fmt.Errorf("Unsupported struct type %v", vv.Type().Name())
 		}

@@ -7,10 +7,10 @@ package xorm
 import (
 	"reflect"
 
-	"xorm.io/core"
+	"xorm.io/xorm/schemas"
 )
 
 var (
-	ptrPkType = reflect.TypeOf(&core.PK{})
-	pkType    = reflect.TypeOf(core.PK{})
+	ptrPkType = reflect.TypeOf(&schemas.PK{})
+	pkType    = reflect.TypeOf(schemas.PK{})
 )

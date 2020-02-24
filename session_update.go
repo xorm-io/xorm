@@ -12,10 +12,11 @@ import (
 	"strings"
 
 	"xorm.io/builder"
-	"xorm.io/core"
+	"xorm.io/xorm/caches"
+	"xorm.io/xorm/schemas"
 )
 
-func (session *Session) cacheUpdate(table *core.Table, tableName, sqlStr string, args ...interface{}) error {
+func (session *Session) cacheUpdate(table *schemas.Table, tableName, sqlStr string, args ...interface{}) error {
 	if table == nil ||
 		session.tx != nil {
 		return ErrCacheFailed
@@ -42,7 +43,7 @@ func (session *Session) cacheUpdate(table *core.Table, tableName, sqlStr string,
 
 	cacher := session.engine.getCacher(tableName)
 	session.engine.logger.Debug("[cacheUpdate] get cache sql", newsql, args[nStart:])
-	ids, err := core.GetCacheSql(cacher, tableName, newsql, args[nStart:])
+	ids, err := caches.GetCacheSql(cacher, tableName, newsql, args[nStart:])
 	if err != nil {
 		rows, err := session.NoCache().queryRows(newsql, args[nStart:]...)
 		if err != nil {
@@ -50,14 +51,14 @@ func (session *Session) cacheUpdate(table *core.Table, tableName, sqlStr string,
 		}
 		defer rows.Close()
 
-		ids = make([]core.PK, 0)
+		ids = make([]schemas.PK, 0)
 		for rows.Next() {
 			var res = make([]string, len(table.PrimaryKeys))
 			err = rows.ScanSlice(&res)
 			if err != nil {
 				return err
 			}
-			var pk core.PK = make([]interface{}, len(table.PrimaryKeys))
+			var pk schemas.PK = make([]interface{}, len(table.PrimaryKeys))
 			for i, col := range table.PKColumns() {
 				if col.SQLType.IsNumeric() {
 					n, err := strconv.ParseInt(res[i], 10, 64)
@@ -339,9 +340,9 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	var top string
 	if st.LimitN != nil {
 		limitValue := *st.LimitN
-		if st.Engine.dialect.DBType() == core.MYSQL {
+		if st.Engine.dialect.DBType() == schemas.MYSQL {
 			condSQL = condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
-		} else if st.Engine.dialect.DBType() == core.SQLITE {
+		} else if st.Engine.dialect.DBType() == schemas.SQLITE {
 			tempCondSQL := condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
 			cond = cond.And(builder.Expr(fmt.Sprintf("rowid IN (SELECT rowid FROM %v %v)",
 				session.engine.Quote(tableName), tempCondSQL), condArgs...))
@@ -352,7 +353,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 			if len(condSQL) > 0 {
 				condSQL = "WHERE " + condSQL
 			}
-		} else if st.Engine.dialect.DBType() == core.POSTGRES {
+		} else if st.Engine.dialect.DBType() == schemas.POSTGRES {
 			tempCondSQL := condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
 			cond = cond.And(builder.Expr(fmt.Sprintf("CTID IN (SELECT CTID FROM %v %v)",
 				session.engine.Quote(tableName), tempCondSQL), condArgs...))
@@ -364,8 +365,8 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 			if len(condSQL) > 0 {
 				condSQL = "WHERE " + condSQL
 			}
-		} else if st.Engine.dialect.DBType() == core.MSSQL {
-			if st.OrderStr != "" && st.Engine.dialect.DBType() == core.MSSQL &&
+		} else if st.Engine.dialect.DBType() == schemas.MSSQL {
+			if st.OrderStr != "" && st.Engine.dialect.DBType() == schemas.MSSQL &&
 				table != nil && len(table.PrimaryKeys) == 1 {
 				cond = builder.Expr(fmt.Sprintf("%s IN (SELECT TOP (%d) %s FROM %v%v)",
 					table.PrimaryKeys[0], limitValue, table.PrimaryKeys[0],
@@ -392,7 +393,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	var fromSQL string
 	if session.statement.TableAlias != "" {
 		switch session.engine.dialect.DBType() {
-		case core.MSSQL:
+		case schemas.MSSQL:
 			fromSQL = fmt.Sprintf("FROM %s %s ", tableAlias, session.statement.TableAlias)
 			tableAlias = session.statement.TableAlias
 		default:
@@ -467,7 +468,7 @@ func (session *Session) genUpdateColumns(bean interface{}) ([]string, []interfac
 				continue
 			}
 		}
-		if col.MapType == core.ONLYFROMDB {
+		if col.MapType == schemas.ONLYFROMDB {
 			continue
 		}
 

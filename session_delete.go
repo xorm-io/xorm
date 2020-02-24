@@ -9,10 +9,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"xorm.io/core"
+	"xorm.io/xorm/caches"
+	"xorm.io/xorm/schemas"
 )
 
-func (session *Session) cacheDelete(table *core.Table, tableName, sqlStr string, args ...interface{}) error {
+func (session *Session) cacheDelete(table *schemas.Table, tableName, sqlStr string, args ...interface{}) error {
 	if table == nil ||
 		session.tx != nil {
 		return ErrCacheFailed
@@ -29,17 +30,17 @@ func (session *Session) cacheDelete(table *core.Table, tableName, sqlStr string,
 
 	cacher := session.engine.getCacher(tableName)
 	pkColumns := table.PKColumns()
-	ids, err := core.GetCacheSql(cacher, tableName, newsql, args)
+	ids, err := caches.GetCacheSql(cacher, tableName, newsql, args)
 	if err != nil {
 		resultsSlice, err := session.queryBytes(newsql, args...)
 		if err != nil {
 			return err
 		}
-		ids = make([]core.PK, 0)
+		ids = make([]schemas.PK, 0)
 		if len(resultsSlice) > 0 {
 			for _, data := range resultsSlice {
 				var id int64
-				var pk core.PK = make([]interface{}, 0)
+				var pk schemas.PK = make([]interface{}, 0)
 				for _, col := range pkColumns {
 					if v, ok := data[col.Name]; !ok {
 						return errors.New("no id")
@@ -127,14 +128,14 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 
 	if len(orderSQL) > 0 {
 		switch session.engine.dialect.DBType() {
-		case core.POSTGRES:
+		case schemas.POSTGRES:
 			inSQL := fmt.Sprintf("ctid IN (SELECT ctid FROM %s%s)", tableName, orderSQL)
 			if len(condSQL) > 0 {
 				deleteSQL += " AND " + inSQL
 			} else {
 				deleteSQL += " WHERE " + inSQL
 			}
-		case core.SQLITE:
+		case schemas.SQLITE:
 			inSQL := fmt.Sprintf("rowid IN (SELECT rowid FROM %s%s)", tableName, orderSQL)
 			if len(condSQL) > 0 {
 				deleteSQL += " AND " + inSQL
@@ -142,7 +143,7 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 				deleteSQL += " WHERE " + inSQL
 			}
 			// TODO: how to handle delete limit on mssql?
-		case core.MSSQL:
+		case schemas.MSSQL:
 			return 0, ErrNotImplemented
 		default:
 			deleteSQL += orderSQL
@@ -156,7 +157,7 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 		copy(argsForCache, condArgs)
 		argsForCache = append(condArgs, argsForCache...)
 	} else {
-		// !oinume! sqlStrForCache and argsForCache is needed to behave as executing "DELETE FROM ..." for cache.
+		// !oinume! sqlStrForCache and argsForCache is needed to behave as executing "DELETE FROM ..." for caches.
 		copy(argsForCache, condArgs)
 		argsForCache = append(condArgs, argsForCache...)
 
@@ -168,14 +169,14 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 
 		if len(orderSQL) > 0 {
 			switch session.engine.dialect.DBType() {
-			case core.POSTGRES:
+			case schemas.POSTGRES:
 				inSQL := fmt.Sprintf("ctid IN (SELECT ctid FROM %s%s)", tableName, orderSQL)
 				if len(condSQL) > 0 {
 					realSQL += " AND " + inSQL
 				} else {
 					realSQL += " WHERE " + inSQL
 				}
-			case core.SQLITE:
+			case schemas.SQLITE:
 				inSQL := fmt.Sprintf("rowid IN (SELECT rowid FROM %s%s)", tableName, orderSQL)
 				if len(condSQL) > 0 {
 					realSQL += " AND " + inSQL
@@ -183,7 +184,7 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 					realSQL += " WHERE " + inSQL
 				}
 				// TODO: how to handle delete limit on mssql?
-			case core.MSSQL:
+			case schemas.MSSQL:
 				return 0, ErrNotImplemented
 			default:
 				realSQL += orderSQL

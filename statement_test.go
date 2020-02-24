@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"xorm.io/core"
+	"xorm.io/xorm/schemas"
 )
 
 var colStrTests = []struct {
@@ -42,7 +42,7 @@ func TestColumnsStringGeneration(t *testing.T) {
 
 		columns := statement.RefTable.Columns()
 		if testCase.onlyToDBColumnNdx >= 0 {
-			columns[testCase.onlyToDBColumnNdx].MapType = core.ONLYTODB
+			columns[testCase.onlyToDBColumnNdx].MapType = schemas.ONLYTODB
 		}
 
 		actual := statement.genColumnStr()
@@ -51,7 +51,7 @@ func TestColumnsStringGeneration(t *testing.T) {
 			t.Errorf("[test #%d] Unexpected columns string:\nwant:\t%s\nhave:\t%s", ndx, testCase.expected, actual)
 		}
 		if testCase.onlyToDBColumnNdx >= 0 {
-			columns[testCase.onlyToDBColumnNdx].MapType = core.TWOSIDES
+			columns[testCase.onlyToDBColumnNdx].MapType = schemas.TWOSIDES
 		}
 	}
 }
@@ -69,7 +69,7 @@ func BenchmarkColumnsStringGeneration(b *testing.B) {
 
 	if testCase.onlyToDBColumnNdx >= 0 {
 		columns := statement.RefTable.Columns()
-		columns[testCase.onlyToDBColumnNdx].MapType = core.ONLYTODB // !nemec784! Column must be skipped
+		columns[testCase.onlyToDBColumnNdx].MapType = schemas.ONLYTODB // !nemec784! Column must be skipped
 	}
 
 	b.StartTimer()
@@ -88,7 +88,7 @@ func BenchmarkGetFlagForColumnWithICKey_ContainsKey(b *testing.B) {
 	b.StopTimer()
 
 	mapCols := make(map[string]bool)
-	cols := []*core.Column{
+	cols := []*schemas.Column{
 		{Name: `ID`},
 		{Name: `IsDeleted`},
 		{Name: `Caption`},
@@ -122,7 +122,7 @@ func BenchmarkGetFlagForColumnWithICKey_EmptyMap(b *testing.B) {
 	b.StopTimer()
 
 	mapCols := make(map[string]bool)
-	cols := []*core.Column{
+	cols := []*schemas.Column{
 		{Name: `ID`},
 		{Name: `IsDeleted`},
 		{Name: `Caption`},

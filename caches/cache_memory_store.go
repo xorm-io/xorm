@@ -2,15 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package caches
 
 import (
 	"sync"
-
-	"xorm.io/core"
 )
 
-var _ core.CacheStore = NewMemoryStore()
+var _ CacheStore = NewMemoryStore()
 
 // MemoryStore represents in-memory store
 type MemoryStore struct {

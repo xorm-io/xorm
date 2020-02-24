@@ -21,27 +21,32 @@ import (
 	"time"
 
 	"xorm.io/builder"
-	"xorm.io/core"
+	"xorm.io/xorm/caches"
+	"xorm.io/xorm/core"
+	"xorm.io/xorm/dialects"
+	"xorm.io/xorm/log"
+	"xorm.io/xorm/names"
+	"xorm.io/xorm/schemas"
 )
 
 // Engine is the major struct of xorm, it means a database manager.
 // Commonly, an application only need one engine
 type Engine struct {
 	db      *core.DB
-	dialect core.Dialect
+	dialect dialects.Dialect
 
-	ColumnMapper  core.IMapper
-	TableMapper   core.IMapper
+	ColumnMapper  names.Mapper
+	TableMapper   names.Mapper
 	TagIdentifier string
-	Tables        map[reflect.Type]*core.Table
+	Tables        map[reflect.Type]*schemas.Table
 
 	mutex  *sync.RWMutex
-	Cacher core.Cacher
+	Cacher caches.Cacher
 
 	showSQL      bool
 	showExecTime bool
 
-	logger     core.ILogger
+	logger     log.Logger
 	TZLocation *time.Location // The timezone of the application
 	DatabaseTZ *time.Location // The timezone of the database
 
@@ -51,24 +56,24 @@ type Engine struct {
 
 	engineGroup *EngineGroup
 
-	cachers    map[string]core.Cacher
+	cachers    map[string]caches.Cacher
 	cacherLock sync.RWMutex
 
 	defaultContext context.Context
 }
 
-func (engine *Engine) setCacher(tableName string, cacher core.Cacher) {
+func (engine *Engine) setCacher(tableName string, cacher caches.Cacher) {
 	engine.cacherLock.Lock()
 	engine.cachers[tableName] = cacher
 	engine.cacherLock.Unlock()
 }
 
-func (engine *Engine) SetCacher(tableName string, cacher core.Cacher) {
+func (engine *Engine) SetCacher(tableName string, cacher caches.Cacher) {
 	engine.setCacher(tableName, cacher)
 }
 
-func (engine *Engine) getCacher(tableName string) core.Cacher {
-	var cacher core.Cacher
+func (engine *Engine) getCacher(tableName string) caches.Cacher {
+	var cacher caches.Cacher
 	var ok bool
 	engine.cacherLock.RLock()
 	cacher, ok = engine.cachers[tableName]
@@ -79,7 +84,7 @@ func (engine *Engine) getCacher(tableName string) core.Cacher {
 	return cacher
 }
 
-func (engine *Engine) GetCacher(tableName string) core.Cacher {
+func (engine *Engine) GetCacher(tableName string) caches.Cacher {
 	return engine.getCacher(tableName)
 }
 
@@ -91,13 +96,13 @@ func (engine *Engine) BufferSize(size int) *Session {
 }
 
 // CondDeleted returns the conditions whether a record is soft deleted.
-func (engine *Engine) CondDeleted(col *core.Column) builder.Cond {
+func (engine *Engine) CondDeleted(col *schemas.Column) builder.Cond {
 	var cond = builder.NewCond()
 	if col.SQLType.IsNumeric() {
 		cond = builder.Eq{col.Name: 0}
 	} else {
 		// FIXME: mssql: The conversion of a nvarchar data type to a datetime data type resulted in an out-of-range value.
-		if engine.dialect.DBType() != core.MSSQL {
+		if engine.dialect.DBType() != schemas.MSSQL {
 			cond = builder.Eq{col.Name: zeroTime1}
 		}
 	}
@@ -129,19 +134,19 @@ func (engine *Engine) ShowExecTime(show ...bool) {
 }
 
 // Logger return the logger interface
-func (engine *Engine) Logger() core.ILogger {
+func (engine *Engine) Logger() log.Logger {
 	return engine.logger
 }
 
 // SetLogger set the new logger
-func (engine *Engine) SetLogger(logger core.ILogger) {
+func (engine *Engine) SetLogger(logger log.Logger) {
 	engine.logger = logger
 	engine.showSQL = logger.IsShowSQL()
 	engine.dialect.SetLogger(logger)
 }
 
 // SetLogLevel sets the logger level
-func (engine *Engine) SetLogLevel(level core.LogLevel) {
+func (engine *Engine) SetLogLevel(level log.LogLevel) {
 	engine.logger.SetLevel(level)
 }
 
@@ -163,18 +168,18 @@ func (engine *Engine) DataSourceName() string {
 }
 
 // SetMapper set the name mapping rules
-func (engine *Engine) SetMapper(mapper core.IMapper) {
+func (engine *Engine) SetMapper(mapper names.Mapper) {
 	engine.SetTableMapper(mapper)
 	engine.SetColumnMapper(mapper)
 }
 
 // SetTableMapper set the table name mapping rule
-func (engine *Engine) SetTableMapper(mapper core.IMapper) {
+func (engine *Engine) SetTableMapper(mapper names.Mapper) {
 	engine.TableMapper = mapper
 }
 
 // SetColumnMapper set the column name mapping rule
-func (engine *Engine) SetColumnMapper(mapper core.IMapper) {
+func (engine *Engine) SetColumnMapper(mapper names.Mapper) {
 	engine.ColumnMapper = mapper
 }
 
@@ -268,13 +273,13 @@ func (engine *Engine) quote(sql string) string {
 // SqlType will be deprecated, please use SQLType instead
 //
 // Deprecated: use SQLType instead
-func (engine *Engine) SqlType(c *core.Column) string {
+func (engine *Engine) SqlType(c *schemas.Column) string {
 	return engine.SQLType(c)
 }
 
 // SQLType A simple wrapper to dialect's core.SqlType method
-func (engine *Engine) SQLType(c *core.Column) string {
-	return engine.dialect.SqlType(c)
+func (engine *Engine) SQLType(c *schemas.Column) string {
+	return engine.dialect.SQLType(c)
 }
 
 // AutoIncrStr Database's autoincrement statement
@@ -298,12 +303,12 @@ func (engine *Engine) SetMaxIdleConns(conns int) {
 }
 
 // SetDefaultCacher set the default cacher. Xorm's default not enable cacher.
-func (engine *Engine) SetDefaultCacher(cacher core.Cacher) {
+func (engine *Engine) SetDefaultCacher(cacher caches.Cacher) {
 	engine.Cacher = cacher
 }
 
 // GetDefaultCacher returns the default cacher
-func (engine *Engine) GetDefaultCacher() core.Cacher {
+func (engine *Engine) GetDefaultCacher() caches.Cacher {
 	return engine.Cacher
 }
 
@@ -323,14 +328,14 @@ func (engine *Engine) NoCascade() *Session {
 }
 
 // MapCacher Set a table use a special cacher
-func (engine *Engine) MapCacher(bean interface{}, cacher core.Cacher) error {
+func (engine *Engine) MapCacher(bean interface{}, cacher caches.Cacher) error {
 	engine.setCacher(engine.TableName(bean, true), cacher)
 	return nil
 }
 
 // NewDB provides an interface to operate database directly
 func (engine *Engine) NewDB() (*core.DB, error) {
-	return core.OpenDialect(engine.dialect)
+	return dialects.OpenDialect(engine.dialect)
 }
 
 // DB return the wrapper of sql.DB
@@ -339,7 +344,7 @@ func (engine *Engine) DB() *core.DB {
 }
 
 // Dialect return database dialect
-func (engine *Engine) Dialect() core.Dialect {
+func (engine *Engine) Dialect() dialects.Dialect {
 	return engine.dialect
 }
 
@@ -409,7 +414,7 @@ func (engine *Engine) NoAutoCondition(no ...bool) *Session {
 	return session.NoAutoCondition(no...)
 }
 
-func (engine *Engine) loadTableInfo(table *core.Table) error {
+func (engine *Engine) loadTableInfo(table *schemas.Table) error {
 	colSeq, cols, err := engine.dialect.GetColumns(table.Name)
 	if err != nil {
 		return err
@@ -436,7 +441,7 @@ func (engine *Engine) loadTableInfo(table *core.Table) error {
 }
 
 // DBMetas Retrieve all tables, columns, indexes' informations from database.
-func (engine *Engine) DBMetas() ([]*core.Table, error) {
+func (engine *Engine) DBMetas() ([]*schemas.Table, error) {
 	tables, err := engine.dialect.GetTables()
 	if err != nil {
 		return nil, err
@@ -451,7 +456,7 @@ func (engine *Engine) DBMetas() ([]*core.Table, error) {
 }
 
 // DumpAllToFile dump database all table structs and data to a file
-func (engine *Engine) DumpAllToFile(fp string, tp ...core.DbType) error {
+func (engine *Engine) DumpAllToFile(fp string, tp ...dialects.DBType) error {
 	f, err := os.Create(fp)
 	if err != nil {
 		return err
@@ -461,7 +466,7 @@ func (engine *Engine) DumpAllToFile(fp string, tp ...core.DbType) error {
 }
 
 // DumpAll dump database all table structs and data to w
-func (engine *Engine) DumpAll(w io.Writer, tp ...core.DbType) error {
+func (engine *Engine) DumpAll(w io.Writer, tp ...dialects.DBType) error {
 	tables, err := engine.DBMetas()
 	if err != nil {
 		return err
@@ -470,7 +475,7 @@ func (engine *Engine) DumpAll(w io.Writer, tp ...core.DbType) error {
 }
 
 // DumpTablesToFile dump specified tables to SQL file.
-func (engine *Engine) DumpTablesToFile(tables []*core.Table, fp string, tp ...core.DbType) error {
+func (engine *Engine) DumpTablesToFile(tables []*schemas.Table, fp string, tp ...dialects.DBType) error {
 	f, err := os.Create(fp)
 	if err != nil {
 		return err
@@ -480,19 +485,19 @@ func (engine *Engine) DumpTablesToFile(tables []*core.Table, fp string, tp ...co
 }
 
 // DumpTables dump specify tables to io.Writer
-func (engine *Engine) DumpTables(tables []*core.Table, w io.Writer, tp ...core.DbType) error {
+func (engine *Engine) DumpTables(tables []*schemas.Table, w io.Writer, tp ...dialects.DBType) error {
 	return engine.dumpTables(tables, w, tp...)
 }
 
 // dumpTables dump database all table structs and data to w with specify db type
-func (engine *Engine) dumpTables(tables []*core.Table, w io.Writer, tp ...core.DbType) error {
-	var dialect core.Dialect
+func (engine *Engine) dumpTables(tables []*schemas.Table, w io.Writer, tp ...dialects.DBType) error {
+	var dialect dialects.Dialect
 	var distDBName string
 	if len(tp) == 0 {
 		dialect = engine.dialect
 		distDBName = string(engine.dialect.DBType())
 	} else {
-		dialect = core.QueryDialect(tp[0])
+		dialect = dialects.QueryDialect(tp[0])
 		if dialect == nil {
 			return errors.New("Unsupported database type")
 		}
@@ -513,12 +518,12 @@ func (engine *Engine) dumpTables(tables []*core.Table, w io.Writer, tp ...core.D
 				return err
 			}
 		}
-		_, err = io.WriteString(w, dialect.CreateTableSql(table, "", table.StoreEngine, "")+";\n")
+		_, err = io.WriteString(w, dialect.CreateTableSQL(table, "", table.StoreEngine, "")+";\n")
 		if err != nil {
 			return err
 		}
 		for _, index := range table.Indexes {
-			_, err = io.WriteString(w, dialect.CreateIndexSql(table.Name, index)+";\n")
+			_, err = io.WriteString(w, dialect.CreateIndexSQL(table.Name, index)+";\n")
 			if err != nil {
 				return err
 			}
@@ -571,19 +576,19 @@ func (engine *Engine) dumpTables(tables []*core.Table, w io.Writer, tp ...core.D
 				} else if col.SQLType.IsNumeric() {
 					switch reflect.TypeOf(d).Kind() {
 					case reflect.Slice:
-						if col.SQLType.Name == core.Bool {
+						if col.SQLType.Name == schemas.Bool {
 							temp += fmt.Sprintf(", %v", strconv.FormatBool(d.([]byte)[0] != byte('0')))
 						} else {
 							temp += fmt.Sprintf(", %s", string(d.([]byte)))
 						}
 					case reflect.Int16, reflect.Int8, reflect.Int32, reflect.Int64, reflect.Int:
-						if col.SQLType.Name == core.Bool {
+						if col.SQLType.Name == schemas.Bool {
 							temp += fmt.Sprintf(", %v", strconv.FormatBool(reflect.ValueOf(d).Int() > 0))
 						} else {
 							temp += fmt.Sprintf(", %v", d)
 						}
 					case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-						if col.SQLType.Name == core.Bool {
+						if col.SQLType.Name == schemas.Bool {
 							temp += fmt.Sprintf(", %v", strconv.FormatBool(reflect.ValueOf(d).Uint() > 0))
 						} else {
 							temp += fmt.Sprintf(", %v", d)
@@ -611,7 +616,7 @@ func (engine *Engine) dumpTables(tables []*core.Table, w io.Writer, tp ...core.D
 		}
 
 		// FIXME: Hack for postgres
-		if string(dialect.DBType()) == core.POSTGRES && table.AutoIncrColumn() != nil {
+		if string(dialect.DBType()) == schemas.POSTGRES && table.AutoIncrColumn() != nil {
 			_, err = io.WriteString(w, "SELECT setval('"+table.Name+"_id_seq', COALESCE((SELECT MAX("+table.AutoIncrColumn().Name+") + 1 FROM "+dialect.Quote(table.Name)+"), 1), false);\n")
 			if err != nil {
 				return err
@@ -856,7 +861,7 @@ func (engine *Engine) UnMapType(t reflect.Type) {
 	delete(engine.Tables, t)
 }
 
-func (engine *Engine) autoMapType(v reflect.Value) (*core.Table, error) {
+func (engine *Engine) autoMapType(v reflect.Value) (*schemas.Table, error) {
 	t := v.Type()
 	engine.mutex.Lock()
 	defer engine.mutex.Unlock()
@@ -888,7 +893,7 @@ func (engine *Engine) GobRegister(v interface{}) *Engine {
 
 // Table table struct
 type Table struct {
-	*core.Table
+	*schemas.Table
 	Name string
 }
 
@@ -907,12 +912,12 @@ func (engine *Engine) TableInfo(bean interface{}) *Table {
 	return &Table{tb, engine.TableName(bean)}
 }
 
-func addIndex(indexName string, table *core.Table, col *core.Column, indexType int) {
+func addIndex(indexName string, table *schemas.Table, col *schemas.Column, indexType int) {
 	if index, ok := table.Indexes[indexName]; ok {
 		index.AddColumn(col.Name)
 		col.Indexes[index.Name] = indexType
 	} else {
-		index := core.NewIndex(indexName, indexType)
+		index := schemas.NewIndex(indexName, indexType)
 		index.AddColumn(col.Name)
 		table.AddIndex(index)
 		col.Indexes[index.Name] = indexType
@@ -928,11 +933,11 @@ var (
 	tpTableName = reflect.TypeOf((*TableName)(nil)).Elem()
 )
 
-func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
+func (engine *Engine) mapType(v reflect.Value) (*schemas.Table, error) {
 	t := v.Type()
-	table := core.NewEmptyTable()
+	table := schemas.NewEmptyTable()
 	table.Type = t
-	table.Name = getTableName(engine.TableMapper, v)
+	table.Name = names.GetTableName(engine.TableMapper, v)
 
 	var idFieldColName string
 	var hasCacheTag, hasNoCacheTag bool
@@ -941,17 +946,17 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 		tag := t.Field(i).Tag
 
 		ormTagStr := tag.Get(engine.TagIdentifier)
-		var col *core.Column
+		var col *schemas.Column
 		fieldValue := v.Field(i)
 		fieldType := fieldValue.Type()
 
 		if ormTagStr != "" {
-			col = &core.Column{
+			col = &schemas.Column{
 				FieldName:       t.Field(i).Name,
 				Nullable:        true,
 				IsPrimaryKey:    false,
 				IsAutoIncrement: false,
-				MapType:         core.TWOSIDES,
+				MapType:         schemas.TWOSIDES,
 				Indexes:         make(map[string]int),
 				DefaultIsEmpty:  true,
 			}
@@ -1039,9 +1044,9 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 				}
 
 				if col.SQLType.Name == "" {
-					col.SQLType = core.Type2SQLType(fieldType)
+					col.SQLType = schemas.Type2SQLType(fieldType)
 				}
-				engine.dialect.SqlType(col)
+				engine.dialect.SQLType(col)
 				if col.Length == 0 {
 					col.Length = col.SQLType.DefaultLength
 				}
@@ -1053,9 +1058,9 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 				}
 
 				if ctx.isUnique {
-					ctx.indexNames[col.Name] = core.UniqueType
+					ctx.indexNames[col.Name] = schemas.UniqueType
 				} else if ctx.isIndex {
-					ctx.indexNames[col.Name] = core.IndexType
+					ctx.indexNames[col.Name] = schemas.IndexType
 				}
 
 				for indexName, indexType := range ctx.indexNames {
@@ -1063,18 +1068,18 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 				}
 			}
 		} else {
-			var sqlType core.SQLType
+			var sqlType schemas.SQLType
 			if fieldValue.CanAddr() {
-				if _, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
-					sqlType = core.SQLType{Name: core.Text}
+				if _, ok := fieldValue.Addr().Interface().(Conversion); ok {
+					sqlType = schemas.SQLType{Name: schemas.Text}
 				}
 			}
-			if _, ok := fieldValue.Interface().(core.Conversion); ok {
-				sqlType = core.SQLType{Name: core.Text}
+			if _, ok := fieldValue.Interface().(Conversion); ok {
+				sqlType = schemas.SQLType{Name: schemas.Text}
 			} else {
-				sqlType = core.Type2SQLType(fieldType)
+				sqlType = schemas.Type2SQLType(fieldType)
 			}
-			col = core.NewColumn(engine.ColumnMapper.Obj2Table(t.Field(i).Name),
+			col = schemas.NewColumn(engine.ColumnMapper.Obj2Table(t.Field(i).Name),
 				t.Field(i).Name, sqlType, sqlType.DefaultLength,
 				sqlType.DefaultLength2, true)
 
@@ -1105,7 +1110,7 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 			engine.setCacher(table.Name, engine.Cacher)
 		} else {
 			engine.logger.Info("enable LRU cache on table:", table.Name)
-			engine.setCacher(table.Name, NewLRUCacher2(NewMemoryStore(), time.Hour, 10000))
+			engine.setCacher(table.Name, caches.NewLRUCacher2(caches.NewMemoryStore(), time.Hour, 10000))
 		}
 	}
 	if hasNoCacheTag {
@@ -1133,24 +1138,24 @@ func (engine *Engine) IsTableExist(beanOrTableName interface{}) (bool, error) {
 // IdOf get id from one struct
 //
 // Deprecated: use IDOf instead.
-func (engine *Engine) IdOf(bean interface{}) core.PK {
+func (engine *Engine) IdOf(bean interface{}) schemas.PK {
 	return engine.IDOf(bean)
 }
 
 // IDOf get id from one struct
-func (engine *Engine) IDOf(bean interface{}) core.PK {
+func (engine *Engine) IDOf(bean interface{}) schemas.PK {
 	return engine.IdOfV(reflect.ValueOf(bean))
 }
 
 // IdOfV get id from one value of struct
 //
 // Deprecated: use IDOfV instead.
-func (engine *Engine) IdOfV(rv reflect.Value) core.PK {
+func (engine *Engine) IdOfV(rv reflect.Value) schemas.PK {
 	return engine.IDOfV(rv)
 }
 
 // IDOfV get id from one value of struct
-func (engine *Engine) IDOfV(rv reflect.Value) core.PK {
+func (engine *Engine) IDOfV(rv reflect.Value) schemas.PK {
 	pk, err := engine.idOfV(rv)
 	if err != nil {
 		engine.logger.Error(err)
@@ -1159,7 +1164,7 @@ func (engine *Engine) IDOfV(rv reflect.Value) core.PK {
 	return pk
 }
 
-func (engine *Engine) idOfV(rv reflect.Value) (core.PK, error) {
+func (engine *Engine) idOfV(rv reflect.Value) (schemas.PK, error) {
 	v := reflect.Indirect(rv)
 	table, err := engine.autoMapType(v)
 	if err != nil {
@@ -1202,10 +1207,10 @@ func (engine *Engine) idOfV(rv reflect.Value) (core.PK, error) {
 			return nil, err
 		}
 	}
-	return core.PK(pk), nil
+	return schemas.PK(pk), nil
 }
 
-func (engine *Engine) idTypeAssertion(col *core.Column, sid string) (interface{}, error) {
+func (engine *Engine) idTypeAssertion(col *schemas.Column, sid string) (interface{}, error) {
 	if col.SQLType.IsNumeric() {
 		n, err := strconv.ParseInt(sid, 10, 64)
 		if err != nil {
@@ -1317,7 +1322,7 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 				if err := session.statement.setRefBean(bean); err != nil {
 					return err
 				}
-				if index.Type == core.UniqueType {
+				if index.Type == schemas.UniqueType {
 					isExist, err := session.isIndexExist2(tableNameNoSchema, index.Cols, true)
 					if err != nil {
 						return err
@@ -1332,7 +1337,7 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 							return err
 						}
 					}
-				} else if index.Type == core.IndexType {
+				} else if index.Type == schemas.IndexType {
 					isExist, err := session.isIndexExist2(tableNameNoSchema, index.Cols, false)
 					if err != nil {
 						return err
@@ -1601,7 +1606,7 @@ func (engine *Engine) Import(r io.Reader) ([]sql.Result, error) {
 }
 
 // nowTime return current time
-func (engine *Engine) nowTime(col *core.Column) (interface{}, time.Time) {
+func (engine *Engine) nowTime(col *schemas.Column) (interface{}, time.Time) {
 	t := time.Now()
 	var tz = engine.DatabaseTZ
 	if !col.DisableTimeZone && col.TimeZone != nil {
@@ -1610,7 +1615,7 @@ func (engine *Engine) nowTime(col *core.Column) (interface{}, time.Time) {
 	return engine.formatTime(col.SQLType.Name, t.In(tz)), t.In(engine.TZLocation)
 }
 
-func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v interface{}) {
+func (engine *Engine) formatColTime(col *schemas.Column, t time.Time) (v interface{}) {
 	if t.IsZero() {
 		if col.Nullable {
 			return nil
@@ -1627,20 +1632,20 @@ func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v interface{
 // formatTime format time as column type
 func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v interface{}) {
 	switch sqlTypeName {
-	case core.Time:
+	case schemas.Time:
 		s := t.Format("2006-01-02 15:04:05") // time.RFC3339
 		v = s[11:19]
-	case core.Date:
+	case schemas.Date:
 		v = t.Format("2006-01-02")
-	case core.DateTime, core.TimeStamp, core.Varchar: // !DarthPestilane! format time when sqlTypeName is core.Varchar.
+	case schemas.DateTime, schemas.TimeStamp, schemas.Varchar: // !DarthPestilane! format time when sqlTypeName is schemas.Varchar.
 		v = t.Format("2006-01-02 15:04:05")
-	case core.TimeStampz:
-		if engine.dialect.DBType() == core.MSSQL {
+	case schemas.TimeStampz:
+		if engine.dialect.DBType() == schemas.MSSQL {
 			v = t.Format("2006-01-02T15:04:05.9999999Z07:00")
 		} else {
 			v = t.Format(time.RFC3339Nano)
 		}
-	case core.BigInt, core.Int:
+	case schemas.BigInt, schemas.Int:
 		v = t.Unix()
 	default:
 		v = t
@@ -1649,12 +1654,12 @@ func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v interface{}
 }
 
 // GetColumnMapper returns the column name mapper
-func (engine *Engine) GetColumnMapper() core.IMapper {
+func (engine *Engine) GetColumnMapper() names.Mapper {
 	return engine.ColumnMapper
 }
 
 // GetTableMapper returns the table name mapper
-func (engine *Engine) GetTableMapper() core.IMapper {
+func (engine *Engine) GetTableMapper() names.Mapper {
 	return engine.TableMapper
 }
 

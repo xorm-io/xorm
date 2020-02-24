@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package dialects
 
 import (
 	"errors"
@@ -11,7 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"xorm.io/core"
+	"xorm.io/xorm/core"
+	"xorm.io/xorm/schemas"
 )
 
 var (
@@ -205,64 +206,64 @@ var (
 )
 
 type mssql struct {
-	core.Base
+	Base
 }
 
-func (db *mssql) Init(d *core.DB, uri *core.Uri, drivername, dataSourceName string) error {
+func (db *mssql) Init(d *core.DB, uri *URI, drivername, dataSourceName string) error {
 	return db.Base.Init(d, db, uri, drivername, dataSourceName)
 }
 
-func (db *mssql) SqlType(c *core.Column) string {
+func (db *mssql) SQLType(c *schemas.Column) string {
 	var res string
 	switch t := c.SQLType.Name; t {
-	case core.Bool:
-		res = core.Bit
+	case schemas.Bool:
+		res = schemas.Bit
 		if strings.EqualFold(c.Default, "true") {
 			c.Default = "1"
 		} else if strings.EqualFold(c.Default, "false") {
 			c.Default = "0"
 		}
-	case core.Serial:
+	case schemas.Serial:
 		c.IsAutoIncrement = true
 		c.IsPrimaryKey = true
 		c.Nullable = false
-		res = core.Int
-	case core.BigSerial:
+		res = schemas.Int
+	case schemas.BigSerial:
 		c.IsAutoIncrement = true
 		c.IsPrimaryKey = true
 		c.Nullable = false
-		res = core.BigInt
-	case core.Bytea, core.Blob, core.Binary, core.TinyBlob, core.MediumBlob, core.LongBlob:
-		res = core.VarBinary
+		res = schemas.BigInt
+	case schemas.Bytea, schemas.Blob, schemas.Binary, schemas.TinyBlob, schemas.MediumBlob, schemas.LongBlob:
+		res = schemas.VarBinary
 		if c.Length == 0 {
 			c.Length = 50
 		}
-	case core.TimeStamp:
-		res = core.DateTime
-	case core.TimeStampz:
+	case schemas.TimeStamp:
+		res = schemas.DateTime
+	case schemas.TimeStampz:
 		res = "DATETIMEOFFSET"
 		c.Length = 7
-	case core.MediumInt:
-		res = core.Int
-	case core.Text, core.MediumText, core.TinyText, core.LongText, core.Json:
-		res = core.Varchar + "(MAX)"
-	case core.Double:
-		res = core.Real
-	case core.Uuid:
-		res = core.Varchar
+	case schemas.MediumInt:
+		res = schemas.Int
+	case schemas.Text, schemas.MediumText, schemas.TinyText, schemas.LongText, schemas.Json:
+		res = schemas.Varchar + "(MAX)"
+	case schemas.Double:
+		res = schemas.Real
+	case schemas.Uuid:
+		res = schemas.Varchar
 		c.Length = 40
-	case core.TinyInt:
-		res = core.TinyInt
+	case schemas.TinyInt:
+		res = schemas.TinyInt
 		c.Length = 0
-	case core.BigInt:
-		res = core.BigInt
+	case schemas.BigInt:
+		res = schemas.BigInt
 		c.Length = 0
 	default:
 		res = t
 	}
 
-	if res == core.Int {
-		return core.Int
+	if res == schemas.Int {
+		return schemas.Int
 	}
 
 	hasLen1 := (c.Length > 0)
@@ -297,7 +298,7 @@ func (db *mssql) AutoIncrStr() string {
 	return "IDENTITY"
 }
 
-func (db *mssql) DropTableSql(tableName string) string {
+func (db *mssql) DropTableSQL(tableName string) string {
 	return fmt.Sprintf("IF EXISTS (SELECT * FROM sysobjects WHERE id = "+
 		"object_id(N'%s') and OBJECTPROPERTY(id, N'IsUserTable') = 1) "+
 		"DROP TABLE \"%s\"", tableName, tableName)
@@ -311,7 +312,7 @@ func (db *mssql) IndexOnTable() bool {
 	return true
 }
 
-func (db *mssql) IndexCheckSql(tableName, idxName string) (string, []interface{}) {
+func (db *mssql) IndexCheckSQL(tableName, idxName string) (string, []interface{}) {
 	args := []interface{}{idxName}
 	sql := "select name from sysindexes where id=object_id('" + tableName + "') and name=?"
 	return sql, args
@@ -329,13 +330,13 @@ func (db *mssql) IsColumnExist(tableName, colName string) (bool, error) {
 	return db.HasRecords(query, tableName, colName)
 }
 
-func (db *mssql) TableCheckSql(tableName string) (string, []interface{}) {
+func (db *mssql) TableCheckSQL(tableName string) (string, []interface{}) {
 	args := []interface{}{}
 	sql := "select * from sysobjects where id = object_id(N'" + tableName + "') and OBJECTPROPERTY(id, N'IsUserTable') = 1"
 	return sql, args
 }
 
-func (db *mssql) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
+func (db *mssql) GetColumns(tableName string) ([]string, map[string]*schemas.Column, error) {
 	args := []interface{}{}
 	s := `select a.name as name, b.name as ctype,a.max_length,a.precision,a.scale,a.is_nullable as nullable,
 		  "default_is_null" = (CASE WHEN c.text is null THEN 1 ELSE 0 END),
@@ -357,7 +358,7 @@ func (db *mssql) GetColumns(tableName string) ([]string, map[string]*core.Column
 	}
 	defer rows.Close()
 
-	cols := make(map[string]*core.Column)
+	cols := make(map[string]*schemas.Column)
 	colSeq := make([]string, 0)
 	for rows.Next() {
 		var name, ctype, vdefault string
@@ -368,7 +369,7 @@ func (db *mssql) GetColumns(tableName string) ([]string, map[string]*core.Column
 			return nil, nil, err
 		}
 
-		col := new(core.Column)
+		col := new(schemas.Column)
 		col.Indexes = make(map[string]int)
 		col.Name = strings.Trim(name, "` ")
 		col.Nullable = nullable
@@ -387,14 +388,14 @@ func (db *mssql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		}
 		switch ct {
 		case "DATETIMEOFFSET":
-			col.SQLType = core.SQLType{Name: core.TimeStampz, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = schemas.SQLType{Name: schemas.TimeStampz, DefaultLength: 0, DefaultLength2: 0}
 		case "NVARCHAR":
-			col.SQLType = core.SQLType{Name: core.NVarchar, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = schemas.SQLType{Name: schemas.NVarchar, DefaultLength: 0, DefaultLength2: 0}
 		case "IMAGE":
-			col.SQLType = core.SQLType{Name: core.VarBinary, DefaultLength: 0, DefaultLength2: 0}
+			col.SQLType = schemas.SQLType{Name: schemas.VarBinary, DefaultLength: 0, DefaultLength2: 0}
 		default:
-			if _, ok := core.SqlTypes[ct]; ok {
-				col.SQLType = core.SQLType{Name: ct, DefaultLength: 0, DefaultLength2: 0}
+			if _, ok := schemas.SqlTypes[ct]; ok {
+				col.SQLType = schemas.SQLType{Name: ct, DefaultLength: 0, DefaultLength2: 0}
 			} else {
 				return nil, nil, fmt.Errorf("Unknown colType %v for %v - %v", ct, tableName, col.Name)
 			}
@@ -406,7 +407,7 @@ func (db *mssql) GetColumns(tableName string) ([]string, map[string]*core.Column
 	return colSeq, cols, nil
 }
 
-func (db *mssql) GetTables() ([]*core.Table, error) {
+func (db *mssql) GetTables() ([]*schemas.Table, error) {
 	args := []interface{}{}
 	s := `select name from sysobjects where xtype ='U'`
 	db.LogSQL(s, args)
@@ -417,9 +418,9 @@ func (db *mssql) GetTables() ([]*core.Table, error) {
 	}
 	defer rows.Close()
 
-	tables := make([]*core.Table, 0)
+	tables := make([]*schemas.Table, 0)
 	for rows.Next() {
-		table := core.NewEmptyTable()
+		table := schemas.NewEmptyTable()
 		var name string
 		err = rows.Scan(&name)
 		if err != nil {
@@ -431,7 +432,7 @@ func (db *mssql) GetTables() ([]*core.Table, error) {
 	return tables, nil
 }
 
-func (db *mssql) GetIndexes(tableName string) (map[string]*core.Index, error) {
+func (db *mssql) GetIndexes(tableName string) (map[string]*schemas.Index, error) {
 	args := []interface{}{tableName}
 	s := `SELECT
 IXS.NAME                    AS  [INDEX_NAME],
@@ -452,7 +453,7 @@ WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 	}
 	defer rows.Close()
 
-	indexes := make(map[string]*core.Index, 0)
+	indexes := make(map[string]*schemas.Index, 0)
 	for rows.Next() {
 		var indexType int
 		var indexName, colName, isUnique string
@@ -468,9 +469,9 @@ WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 		}
 
 		if i {
-			indexType = core.UniqueType
+			indexType = schemas.UniqueType
 		} else {
-			indexType = core.IndexType
+			indexType = schemas.IndexType
 		}
 
 		colName = strings.Trim(colName, "` ")
@@ -480,10 +481,10 @@ WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 			isRegular = true
 		}
 
-		var index *core.Index
+		var index *schemas.Index
 		var ok bool
 		if index, ok = indexes[indexName]; !ok {
-			index = new(core.Index)
+			index = new(schemas.Index)
 			index.Type = indexType
 			index.Name = indexName
 			index.IsRegular = isRegular
@@ -494,7 +495,7 @@ WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 	return indexes, nil
 }
 
-func (db *mssql) CreateTableSql(table *core.Table, tableName, storeEngine, charset string) string {
+func (db *mssql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, charset string) string {
 	var sql string
 	if tableName == "" {
 		tableName = table.Name
@@ -509,9 +510,9 @@ func (db *mssql) CreateTableSql(table *core.Table, tableName, storeEngine, chars
 	for _, colName := range table.ColumnsSeq() {
 		col := table.GetColumn(colName)
 		if col.IsPrimaryKey && len(pkList) == 1 {
-			sql += col.String(db)
+			sql += String(db, col)
 		} else {
-			sql += col.StringNoPk(db)
+			sql += StringNoPk(db, col)
 		}
 		sql = strings.TrimSpace(sql)
 		sql += ", "
@@ -528,18 +529,18 @@ func (db *mssql) CreateTableSql(table *core.Table, tableName, storeEngine, chars
 	return sql
 }
 
-func (db *mssql) ForUpdateSql(query string) string {
+func (db *mssql) ForUpdateSQL(query string) string {
 	return query
 }
 
-func (db *mssql) Filters() []core.Filter {
-	return []core.Filter{&core.IdFilter{}, &core.QuoteFilter{}}
+func (db *mssql) Filters() []Filter {
+	return []Filter{&IdFilter{}, &QuoteFilter{}}
 }
 
 type odbcDriver struct {
 }
 
-func (p *odbcDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
+func (p *odbcDriver) Parse(driverName, dataSourceName string) (*URI, error) {
 	var dbName string
 
 	if strings.HasPrefix(dataSourceName, "sqlserver://") {
@@ -563,5 +564,5 @@ func (p *odbcDriver) Parse(driverName, dataSourceName string) (*core.Uri, error)
 	if dbName == "" {
 		return nil, errors.New("no db name provided")
 	}
-	return &core.Uri{DbName: dbName, DbType: core.MSSQL}, nil
+	return &URI{DBName: dbName, DBType: schemas.MSSQL}, nil
 }

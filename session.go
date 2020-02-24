@@ -14,7 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/core"
+	"xorm.io/xorm/core"
+	"xorm.io/xorm/schemas"
 )
 
 type sessionType int
@@ -306,8 +307,8 @@ func (session *Session) doPrepare(db *core.DB, sqlStr string) (stmt *core.Stmt, 
 	return
 }
 
-func (session *Session) getField(dataStruct *reflect.Value, key string, table *core.Table, idx int) (*reflect.Value, error) {
-	var col *core.Column
+func (session *Session) getField(dataStruct *reflect.Value, key string, table *schemas.Table, idx int) (*reflect.Value, error) {
+	var col *schemas.Column
 	if col = table.GetColumnIdx(key, idx); col == nil {
 		return nil, ErrFieldIsNotExist{key, table.Name}
 	}
@@ -328,8 +329,8 @@ func (session *Session) getField(dataStruct *reflect.Value, key string, table *c
 type Cell *interface{}
 
 func (session *Session) rows2Beans(rows *core.Rows, fields []string,
-	table *core.Table, newElemFunc func([]string) reflect.Value,
-	sliceValueSetFunc func(*reflect.Value, core.PK) error) error {
+	table *schemas.Table, newElemFunc func([]string) reflect.Value,
+	sliceValueSetFunc func(*reflect.Value, schemas.PK) error) error {
 	for rows.Next() {
 		var newValue = newElemFunc(fields)
 		bean := newValue.Interface()
@@ -377,7 +378,7 @@ func (session *Session) row2Slice(rows *core.Rows, fields []string, bean interfa
 	return scanResults, nil
 }
 
-func (session *Session) slice2Bean(scanResults []interface{}, fields []string, bean interface{}, dataStruct *reflect.Value, table *core.Table) (core.PK, error) {
+func (session *Session) slice2Bean(scanResults []interface{}, fields []string, bean interface{}, dataStruct *reflect.Value, table *schemas.Table) (schemas.PK, error) {
 	defer func() {
 		if b, hasAfterSet := bean.(AfterSetProcessor); hasAfterSet {
 			for ii, key := range fields {
@@ -421,7 +422,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 	}
 
 	var tempMap = make(map[string]int)
-	var pk core.PK
+	var pk schemas.PK
 	for ii, key := range fields {
 		var idx int
 		var ok bool
@@ -451,7 +452,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 		}
 
 		if fieldValue.CanAddr() {
-			if structConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
+			if structConvert, ok := fieldValue.Addr().Interface().(Conversion); ok {
 				if data, err := value2Bytes(&rawValue); err == nil {
 					if err := structConvert.FromDB(data); err != nil {
 						return nil, err
@@ -463,12 +464,12 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 			}
 		}
 
-		if _, ok := fieldValue.Interface().(core.Conversion); ok {
+		if _, ok := fieldValue.Interface().(Conversion); ok {
 			if data, err := value2Bytes(&rawValue); err == nil {
 				if fieldValue.Kind() == reflect.Ptr && fieldValue.IsNil() {
 					fieldValue.Set(reflect.New(fieldValue.Type().Elem()))
 				}
-				fieldValue.Interface().(core.Conversion).FromDB(data)
+				fieldValue.Interface().(Conversion).FromDB(data)
 			} else {
 				return nil, err
 			}
@@ -488,7 +489,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 			var bs []byte
 			if rawValueType.Kind() == reflect.String {
 				bs = []byte(vv.String())
-			} else if rawValueType.ConvertibleTo(core.BytesType) {
+			} else if rawValueType.ConvertibleTo(schemas.BytesType) {
 				bs = vv.Bytes()
 			} else {
 				return nil, fmt.Errorf("unsupported database data type: %s %v", key, rawValueType.Kind())
@@ -525,7 +526,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 			var bs []byte
 			if rawValueType.Kind() == reflect.String {
 				bs = []byte(vv.String())
-			} else if rawValueType.ConvertibleTo(core.BytesType) {
+			} else if rawValueType.ConvertibleTo(schemas.BytesType) {
 				bs = vv.Bytes()
 			}
 
@@ -607,16 +608,16 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 				fieldValue.SetUint(uint64(vv.Int()))
 			}
 		case reflect.Struct:
-			if fieldType.ConvertibleTo(core.TimeType) {
+			if fieldType.ConvertibleTo(schemas.TimeType) {
 				dbTZ := session.engine.DatabaseTZ
 				if col.TimeZone != nil {
 					dbTZ = col.TimeZone
 				}
 
-				if rawValueType == core.TimeType {
+				if rawValueType == schemas.TimeType {
 					hasAssigned = true
 
-					t := vv.Convert(core.TimeType).Interface().(time.Time)
+					t := vv.Convert(schemas.TimeType).Interface().(time.Time)
 
 					z, _ := t.Zone()
 					// set new location if database don't save timezone or give an incorrect timezone
@@ -628,8 +629,8 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 
 					t = t.In(session.engine.TZLocation)
 					fieldValue.Set(reflect.ValueOf(t).Convert(fieldType))
-				} else if rawValueType == core.IntType || rawValueType == core.Int64Type ||
-					rawValueType == core.Int32Type {
+				} else if rawValueType == schemas.IntType || rawValueType == schemas.Int64Type ||
+					rawValueType == schemas.Int32Type {
 					hasAssigned = true
 
 					t := time.Unix(vv.Int(), 0).In(session.engine.TZLocation)
@@ -696,7 +697,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 				if len(table.PrimaryKeys) != 1 {
 					return nil, errors.New("unsupported non or composited primary key cascade")
 				}
-				var pk = make(core.PK, len(table.PrimaryKeys))
+				var pk = make(schemas.PK, len(table.PrimaryKeys))
 				pk[0], err = asKind(vv, rawValueType)
 				if err != nil {
 					return nil, err
@@ -722,97 +723,97 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 			// !nashtsai! TODO merge duplicated codes above
 			switch fieldType {
 			// following types case matching ptr's native type, therefore assign ptr directly
-			case core.PtrStringType:
+			case schemas.PtrStringType:
 				if rawValueType.Kind() == reflect.String {
 					x := vv.String()
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrBoolType:
+			case schemas.PtrBoolType:
 				if rawValueType.Kind() == reflect.Bool {
 					x := vv.Bool()
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrTimeType:
-				if rawValueType == core.PtrTimeType {
+			case schemas.PtrTimeType:
+				if rawValueType == schemas.PtrTimeType {
 					hasAssigned = true
 					var x = rawValue.Interface().(time.Time)
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrFloat64Type:
+			case schemas.PtrFloat64Type:
 				if rawValueType.Kind() == reflect.Float64 {
 					x := vv.Float()
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrUint64Type:
+			case schemas.PtrUint64Type:
 				if rawValueType.Kind() == reflect.Int64 {
 					var x = uint64(vv.Int())
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrInt64Type:
+			case schemas.PtrInt64Type:
 				if rawValueType.Kind() == reflect.Int64 {
 					x := vv.Int()
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrFloat32Type:
+			case schemas.PtrFloat32Type:
 				if rawValueType.Kind() == reflect.Float64 {
 					var x = float32(vv.Float())
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrIntType:
+			case schemas.PtrIntType:
 				if rawValueType.Kind() == reflect.Int64 {
 					var x = int(vv.Int())
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrInt32Type:
+			case schemas.PtrInt32Type:
 				if rawValueType.Kind() == reflect.Int64 {
 					var x = int32(vv.Int())
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrInt8Type:
+			case schemas.PtrInt8Type:
 				if rawValueType.Kind() == reflect.Int64 {
 					var x = int8(vv.Int())
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrInt16Type:
+			case schemas.PtrInt16Type:
 				if rawValueType.Kind() == reflect.Int64 {
 					var x = int16(vv.Int())
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrUintType:
+			case schemas.PtrUintType:
 				if rawValueType.Kind() == reflect.Int64 {
 					var x = uint(vv.Int())
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.PtrUint32Type:
+			case schemas.PtrUint32Type:
 				if rawValueType.Kind() == reflect.Int64 {
 					var x = uint32(vv.Int())
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.Uint8Type:
+			case schemas.Uint8Type:
 				if rawValueType.Kind() == reflect.Int64 {
 					var x = uint8(vv.Int())
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.Uint16Type:
+			case schemas.Uint16Type:
 				if rawValueType.Kind() == reflect.Int64 {
 					var x = uint16(vv.Int())
 					hasAssigned = true
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
-			case core.Complex64Type:
+			case schemas.Complex64Type:
 				var x complex64
 				if len([]byte(vv.String())) > 0 {
 					err := DefaultJSONHandler.Unmarshal([]byte(vv.String()), &x)
@@ -822,7 +823,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 					fieldValue.Set(reflect.ValueOf(&x))
 				}
 				hasAssigned = true
-			case core.Complex128Type:
+			case schemas.Complex128Type:
 				var x complex128
 				if len([]byte(vv.String())) > 0 {
 					err := DefaultJSONHandler.Unmarshal([]byte(vv.String()), &x)

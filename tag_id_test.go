@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"xorm.io/core"
+	"xorm.io/xorm/names"
 )
 
 type IDGonicMapper struct {
@@ -20,7 +20,7 @@ func TestGonicMapperID(t *testing.T) {
 
 	oldMapper := testEngine.GetColumnMapper()
 	testEngine.UnMapType(rValue(new(IDGonicMapper)).Type())
-	testEngine.SetMapper(core.LintGonicMapper)
+	testEngine.SetMapper(names.LintGonicMapper)
 	defer func() {
 		testEngine.UnMapType(rValue(new(IDGonicMapper)).Type())
 		testEngine.SetMapper(oldMapper)
@@ -57,7 +57,7 @@ func TestSameMapperID(t *testing.T) {
 
 	oldMapper := testEngine.GetColumnMapper()
 	testEngine.UnMapType(rValue(new(IDSameMapper)).Type())
-	testEngine.SetMapper(core.SameMapper{})
+	testEngine.SetMapper(names.SameMapper{})
 	defer func() {
 		testEngine.UnMapType(rValue(new(IDSameMapper)).Type())
 		testEngine.SetMapper(oldMapper)
