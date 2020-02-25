@@ -201,7 +201,7 @@ func TestInsertDefault(t *testing.T) {
 	_, err = testEngine.Omit(testEngine.GetColumnMapper().Obj2Table("Status")).Insert(&di2)
 	assert.NoError(t, err)
 
-	has, err := testEngine.Desc("(id)").Get(di)
+	has, err := testEngine.Desc("id").Get(di)
 	assert.NoError(t, err)
 	if !has {
 		err = errors.New("error with no data")
@@ -247,7 +247,7 @@ func TestInsertDefault2(t *testing.T) {
 		t.Error(err)
 	}
 
-	has, err := testEngine.Desc("(id)").Get(di)
+	has, err := testEngine.Desc("id").Get(di)
 	if err != nil {
 		t.Error(err)
 	}
@@ -257,7 +257,7 @@ func TestInsertDefault2(t *testing.T) {
 		panic(err)
 	}
 
-	has, err = testEngine.NoAutoCondition().Desc("(id)").Get(&di2)
+	has, err = testEngine.NoAutoCondition().Desc("id").Get(&di2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -330,7 +330,7 @@ func TestInsertCreated(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	has, err := testEngine.Desc("(id)").Get(di)
+	has, err := testEngine.Desc("id").Get(di)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -352,7 +352,7 @@ func TestInsertCreated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	has, err = testEngine.Desc("(id)").Get(di2)
+	has, err = testEngine.Desc("id").Get(di2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +374,7 @@ func TestInsertCreated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	has, err = testEngine.Desc("(id)").Get(di3)
+	has, err = testEngine.Desc("id").Get(di3)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -396,7 +396,7 @@ func TestInsertCreated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	has, err = testEngine.Desc("(id)").Get(di4)
+	has, err = testEngine.Desc("id").Get(di4)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -418,7 +418,7 @@ func TestInsertCreated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	has, err = testEngine.Desc("(id)").Get(di5)
+	has, err = testEngine.Desc("id").Get(di5)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -442,7 +442,7 @@ func TestInsertCreated(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	has, err = testEngine.Desc("(id)").Get(di6)
+	has, err = testEngine.Desc("id").Get(di6)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -517,7 +517,7 @@ func TestCreatedJsonTime(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	has, err := testEngine.Desc("(id)").Get(di5)
+	has, err := testEngine.Desc("id").Get(di5)
 	if err != nil {
 		t.Fatal(err)
 	}

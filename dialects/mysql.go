@@ -275,8 +275,8 @@ func (db *mysql) IsReserved(name string) bool {
 	return ok
 }
 
-func (db *mysql) Quote(name string) string {
-	return "`" + name + "`"
+func (db *mysql) Quoter() schemas.Quoter {
+	return schemas.Quoter{"`", "`"}
 }
 
 func (db *mysql) SupportEngine() bool {
@@ -512,9 +512,9 @@ func (db *mysql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, ch
 		tableName = table.Name
 	}
 
-	quotes := db.Quote("")
+	quoter := db.Quoter()
 
-	sql += db.Quote(tableName)
+	sql += quoter.Quote(tableName)
 	sql += " ("
 
 	if len(table.ColumnsSeq()) > 0 {
@@ -536,7 +536,7 @@ func (db *mysql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, ch
 
 		if len(pkList) > 1 {
 			sql += "PRIMARY KEY ( "
-			sql += db.Quote(strings.Join(pkList, fmt.Sprintf("%c,%c", quotes[1], quotes[0])))
+			sql += quoter.Quote(strings.Join(pkList, quoter.ReverseQuote(",")))
 			sql += " ), "
 		}
 
@@ -562,7 +562,7 @@ func (db *mysql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, ch
 }
 
 func (db *mysql) Filters() []Filter {
-	return []Filter{&IdFilter{}}
+	return []Filter{}
 }
 
 type mymysqlDriver struct {

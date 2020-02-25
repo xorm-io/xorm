@@ -45,11 +45,8 @@ type Dialect interface {
 	DataSourceName() string
 
 	IsReserved(string) bool
-	Quote(string) string
+	Quoter() schemas.Quoter
 
-	AndStr() string
-	OrStr() string
-	EqStr() string
 	RollBackStr() string
 	AutoIncrStr() string
 
@@ -101,7 +98,7 @@ type Base struct {
 
 // String generate column description string according dialect
 func String(d Dialect, col *schemas.Column) string {
-	sql := d.Quote(col.Name) + " "
+	sql := d.Quoter().Quote(col.Name) + " "
 
 	sql += d.SQLType(col) + " "
 
@@ -129,7 +126,7 @@ func String(d Dialect, col *schemas.Column) string {
 
 // StringNoPk generate column description string according dialect without primary keys
 func StringNoPk(d Dialect, col *schemas.Column) string {
-	sql := d.Quote(col.Name) + " "
+	sql := d.Quoter().Quote(col.Name) + " "
 
 	sql += d.SQLType(col) + " "
 
@@ -186,18 +183,6 @@ func (b *Base) DataSourceName() string {
 	return b.dataSourceName
 }
 
-func (b *Base) AndStr() string {
-	return "AND"
-}
-
-func (b *Base) OrStr() string {
-	return "OR"
-}
-
-func (b *Base) EqStr() string {
-	return "="
-}
-
 func (db *Base) RollBackStr() string {
 	return "ROLL BACK"
 }
@@ -207,7 +192,7 @@ func (db *Base) SupportDropIfExists() bool {
 }
 
 func (db *Base) DropTableSQL(tableName string) string {
-	quote := db.dialect.Quote
+	quote := db.dialect.Quoter().Quote
 	return fmt.Sprintf("DROP TABLE IF EXISTS %s", quote(tableName))
 }
 
@@ -226,14 +211,15 @@ func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
 }
 
 func (db *Base) IsColumnExist(tableName, colName string) (bool, error) {
+	quote := db.dialect.Quoter().Quote
 	query := fmt.Sprintf(
 		"SELECT %v FROM %v.%v WHERE %v = ? AND %v = ? AND %v = ?",
-		db.dialect.Quote("COLUMN_NAME"),
-		db.dialect.Quote("INFORMATION_SCHEMA"),
-		db.dialect.Quote("COLUMNS"),
-		db.dialect.Quote("TABLE_SCHEMA"),
-		db.dialect.Quote("TABLE_NAME"),
-		db.dialect.Quote("COLUMN_NAME"),
+		quote("COLUMN_NAME"),
+		quote("INFORMATION_SCHEMA"),
+		quote("COLUMNS"),
+		quote("TABLE_SCHEMA"),
+		quote("TABLE_NAME"),
+		quote("COLUMN_NAME"),
 	)
 	return db.HasRecords(query, db.uri.DBName, tableName, colName)
 }
@@ -263,8 +249,7 @@ func (db *Base) CreateTableIfNotExists(table *Table, tableName, storeEngine, cha
 }*/
 
 func (db *Base) CreateIndexSQL(tableName string, index *schemas.Index) string {
-	quotes := db.dialect.Quote("")
-	quote := db.dialect.Quote
+	quoter := db.dialect.Quoter()
 	var unique string
 	var idxName string
 	if index.Type == schemas.UniqueType {
@@ -272,12 +257,12 @@ func (db *Base) CreateIndexSQL(tableName string, index *schemas.Index) string {
 	}
 	idxName = index.XName(tableName)
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v)", unique,
-		quote(idxName), quote(tableName),
-		quote(strings.Join(index.Cols, fmt.Sprintf("%c,%c", quotes[1], quotes[0]))))
+		quoter.Quote(idxName), quoter.Quote(tableName),
+		quoter.Quote(strings.Join(index.Cols, quoter.ReverseQuote(","))))
 }
 
 func (db *Base) DropIndexSQL(tableName string, index *schemas.Index) string {
-	quote := db.dialect.Quote
+	quote := db.dialect.Quoter().Quote
 	var name string
 	if index.IsRegular {
 		name = index.XName(tableName)
@@ -298,10 +283,9 @@ func (b *Base) CreateTableSQL(table *schemas.Table, tableName, storeEngine, char
 		tableName = table.Name
 	}
 
-	sql += b.dialect.Quote(tableName)
+	quoter := b.dialect.Quoter()
+	sql += quoter.Quote(tableName)
 	sql += " ("
-
-	quotes := b.dialect.Quote("")
 
 	if len(table.ColumnsSeq()) > 0 {
 		pkList := table.PrimaryKeys
@@ -322,7 +306,7 @@ func (b *Base) CreateTableSQL(table *schemas.Table, tableName, storeEngine, char
 
 		if len(pkList) > 1 {
 			sql += "PRIMARY KEY ( "
-			sql += b.dialect.Quote(strings.Join(pkList, fmt.Sprintf("%c,%c", quotes[1], quotes[0])))
+			sql += quoter.Quote(strings.Join(pkList, quoter.ReverseQuote(",")))
 			sql += " ), "
 		}
 

@@ -618,7 +618,7 @@ func (statement *Statement) Cols(columns ...string) *Statement {
 	newColumns := statement.colmap2NewColsWithQuote()
 
 	statement.ColumnStr = strings.Join(newColumns, ", ")
-	statement.ColumnStr = strings.Replace(statement.ColumnStr, statement.Engine.quote("*"), "*", -1)
+	statement.ColumnStr = strings.Replace(statement.ColumnStr, statement.Engine.dialect.Quoter().Quote("*"), "*", -1)
 	return statement
 }
 
@@ -765,6 +765,11 @@ func (statement *Statement) Join(joinOP string, tablename interface{}, condition
 		statement.joinArgs = append(statement.joinArgs, subQueryArgs...)
 	default:
 		tbName := statement.Engine.TableName(tablename, true)
+		if !isSubQuery(tbName) {
+			var buf strings.Builder
+			statement.Engine.QuoteTo(&buf, tbName)
+			tbName = buf.String()
+		}
 		fmt.Fprintf(&buf, "%s ON %v", tbName, condition)
 	}
 

@@ -193,10 +193,7 @@ func (engine *Engine) SupportInsertMany() bool {
 
 func (engine *Engine) quoteColumns(columnStr string) string {
 	columns := strings.Split(columnStr, ",")
-	for i := 0; i < len(columns); i++ {
-		columns[i] = engine.Quote(strings.TrimSpace(columns[i]))
-	}
-	return strings.Join(columns, ",")
+	return engine.dialect.Quoter().Join(columns, ",")
 }
 
 // Quote Use QuoteStr quote the string sql
@@ -222,53 +219,13 @@ func (engine *Engine) QuoteTo(buf *strings.Builder, value string) {
 	if value == "" {
 		return
 	}
-
-	quoteTo(buf, engine.dialect.Quote(""), value)
+	engine.dialect.Quoter().QuoteTo(buf, value)
 }
 
-func quoteTo(buf *strings.Builder, quotePair string, value string) {
-	if len(quotePair) < 2 { // no quote
-		_, _ = buf.WriteString(value)
-		return
-	}
-
-	prefix, suffix := quotePair[0], quotePair[1]
-
-	i := 0
-	for i < len(value) {
-		// start of a token; might be already quoted
-		if value[i] == '.' {
-			_ = buf.WriteByte('.')
-			i++
-		} else if value[i] == prefix || value[i] == '`' {
-			// Has quotes; skip/normalize `name` to prefix+name+sufix
-			var ch byte
-			if value[i] == prefix {
-				ch = suffix
-			} else {
-				ch = '`'
-			}
-			i++
-			_ = buf.WriteByte(prefix)
-			for ; i < len(value) && value[i] != ch; i++ {
-				_ = buf.WriteByte(value[i])
-			}
-			_ = buf.WriteByte(suffix)
-			i++
-		} else {
-			// Requires quotes
-			_ = buf.WriteByte(prefix)
-			for ; i < len(value) && value[i] != '.'; i++ {
-				_ = buf.WriteByte(value[i])
-			}
-			_ = buf.WriteByte(suffix)
-		}
-	}
-}
-
+/*
 func (engine *Engine) quote(sql string) string {
 	return engine.dialect.Quote(sql)
-}
+}*/
 
 // SqlType will be deprecated, please use SQLType instead
 //
@@ -530,8 +487,8 @@ func (engine *Engine) dumpTables(tables []*schemas.Table, w io.Writer, tp ...dia
 		}
 
 		cols := table.ColumnsSeq()
-		colNames := engine.dialect.Quote(strings.Join(cols, engine.dialect.Quote(", ")))
-		destColNames := dialect.Quote(strings.Join(cols, dialect.Quote(", ")))
+		colNames := engine.dialect.Quoter().Join(cols, ", ")
+		destColNames := dialect.Quoter().Join(cols, ", ")
 
 		rows, err := engine.DB().Query("SELECT " + colNames + " FROM " + engine.Quote(table.Name))
 		if err != nil {
@@ -546,7 +503,7 @@ func (engine *Engine) dumpTables(tables []*schemas.Table, w io.Writer, tp ...dia
 				return err
 			}
 
-			_, err = io.WriteString(w, "INSERT INTO "+dialect.Quote(table.Name)+" ("+destColNames+") VALUES (")
+			_, err = io.WriteString(w, "INSERT INTO "+dialect.Quoter().Quote(table.Name)+" ("+destColNames+") VALUES (")
 			if err != nil {
 				return err
 			}
@@ -617,7 +574,7 @@ func (engine *Engine) dumpTables(tables []*schemas.Table, w io.Writer, tp ...dia
 
 		// FIXME: Hack for postgres
 		if string(dialect.DBType()) == schemas.POSTGRES && table.AutoIncrColumn() != nil {
-			_, err = io.WriteString(w, "SELECT setval('"+table.Name+"_id_seq', COALESCE((SELECT MAX("+table.AutoIncrColumn().Name+") + 1 FROM "+dialect.Quote(table.Name)+"), 1), false);\n")
+			_, err = io.WriteString(w, "SELECT setval('"+table.Name+"_id_seq', COALESCE((SELECT MAX("+table.AutoIncrColumn().Name+") + 1 FROM "+dialect.Quoter().Quote(table.Name)+"), 1), false);\n")
 			if err != nil {
 				return err
 			}

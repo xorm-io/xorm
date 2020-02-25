@@ -137,7 +137,7 @@ func TestForUpdate(t *testing.T) {
 	// use lock
 	fList := make([]ForUpdate, 0)
 	session1.ForUpdate()
-	session1.Where("(id) = ?", 1)
+	session1.Where("id = ?", 1)
 	err = session1.Find(&fList)
 	switch {
 	case err != nil:
@@ -158,7 +158,7 @@ func TestForUpdate(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		f2 := new(ForUpdate)
-		session2.Where("(id) = ?", 1).ForUpdate()
+		session2.Where("id = ?", 1).ForUpdate()
 		has, err := session2.Get(f2) // wait release lock
 		switch {
 		case err != nil:
@@ -175,7 +175,7 @@ func TestForUpdate(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		f3 := new(ForUpdate)
-		session3.Where("(id) = ?", 1)
+		session3.Where("id = ?", 1)
 		has, err := session3.Get(f3) // wait release lock
 		switch {
 		case err != nil:
@@ -193,7 +193,7 @@ func TestForUpdate(t *testing.T) {
 
 	f := new(ForUpdate)
 	f.Name = "updated by session1"
-	session1.Where("(id) = ?", 1)
+	session1.Where("id = ?", 1)
 	session1.Update(f)
 
 	// release lock

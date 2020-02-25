@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"xorm.io/builder"
+	"xorm.io/xorm/schemas"
 )
 
 type ErrUnsupportedExprType struct {
@@ -40,7 +41,7 @@ func (exprs *exprParams) addParam(colName string, arg interface{}) {
 
 func (exprs *exprParams) isColExist(colName string) bool {
 	for _, name := range exprs.colNames {
-		if strings.EqualFold(trimQuote(name), trimQuote(colName)) {
+		if strings.EqualFold(schemas.CommonQuoter.Trim(name), schemas.CommonQuoter.Trim(colName)) {
 			return true
 		}
 	}

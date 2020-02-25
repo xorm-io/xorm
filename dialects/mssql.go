@@ -286,8 +286,8 @@ func (db *mssql) IsReserved(name string) bool {
 	return ok
 }
 
-func (db *mssql) Quote(name string) string {
-	return "[" + name + "]"
+func (db *mssql) Quoter() schemas.Quoter {
+	return schemas.Quoter{"[", "]"}
 }
 
 func (db *mssql) SupportEngine() bool {
@@ -503,7 +503,7 @@ func (db *mssql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, ch
 
 	sql = "IF NOT EXISTS (SELECT [name] FROM sys.tables WHERE [name] = '" + tableName + "' ) CREATE TABLE "
 
-	sql += db.Quote(tableName) + " ("
+	sql += db.Quoter().Quote(tableName) + " ("
 
 	pkList := table.PrimaryKeys
 
@@ -534,7 +534,7 @@ func (db *mssql) ForUpdateSQL(query string) string {
 }
 
 func (db *mssql) Filters() []Filter {
-	return []Filter{&IdFilter{}, &QuoteFilter{}}
+	return []Filter{&QuoteFilter{}}
 }
 
 type odbcDriver struct {

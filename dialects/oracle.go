@@ -552,8 +552,8 @@ func (db *oracle) IsReserved(name string) bool {
 	return ok
 }
 
-func (db *oracle) Quote(name string) string {
-	return "[" + name + "]"
+func (db *oracle) Quoter() schemas.Quoter {
+	return schemas.Quoter{"[", "]"}
 }
 
 func (db *oracle) SupportEngine() bool {
@@ -582,7 +582,8 @@ func (db *oracle) CreateTableSQL(table *schemas.Table, tableName, storeEngine, c
 		tableName = table.Name
 	}
 
-	sql += db.Quote(tableName) + " ("
+	quoter := db.Quoter()
+	sql += quoter.Quote(tableName) + " ("
 
 	pkList := table.PrimaryKeys
 
@@ -597,11 +598,9 @@ func (db *oracle) CreateTableSQL(table *schemas.Table, tableName, storeEngine, c
 		sql += ", "
 	}
 
-	quotes := db.Quote("")
-
 	if len(pkList) > 0 {
 		sql += "PRIMARY KEY ( "
-		sql += db.Quote(strings.Join(pkList, fmt.Sprintf("%c,%c", quotes[1], quotes[0])))
+		sql += quoter.Quote(strings.Join(pkList, quoter.ReverseQuote(",")))
 		sql += " ), "
 	}
 
@@ -849,7 +848,7 @@ func (db *oracle) GetIndexes(tableName string) (map[string]*schemas.Index, error
 }
 
 func (db *oracle) Filters() []Filter {
-	return []Filter{&QuoteFilter{}, &SeqFilter{Prefix: ":", Start: 1}, &IdFilter{}}
+	return []Filter{&QuoteFilter{}, &SeqFilter{Prefix: ":", Start: 1}}
 }
 
 type goracleDriver struct {

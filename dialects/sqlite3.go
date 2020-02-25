@@ -199,8 +199,8 @@ func (db *sqlite3) IsReserved(name string) bool {
 	return ok
 }
 
-func (db *sqlite3) Quote(name string) string {
-	return "`" + name + "`"
+func (db *sqlite3) Quoter() schemas.Quoter {
+	return schemas.Quoter{"`", "`"}
 }
 
 func (db *sqlite3) AutoIncrStr() string {
@@ -231,7 +231,6 @@ func (db *sqlite3) TableCheckSQL(tableName string) (string, []interface{}) {
 
 func (db *sqlite3) DropIndexSQL(tableName string, index *schemas.Index) string {
 	// var unique string
-	quote := db.Quote
 	idxName := index.Name
 
 	if !strings.HasPrefix(idxName, "UQE_") &&
@@ -242,7 +241,7 @@ func (db *sqlite3) DropIndexSQL(tableName string, index *schemas.Index) string {
 			idxName = fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
 		}
 	}
-	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
+	return fmt.Sprintf("DROP INDEX %v", db.Quoter().Quote(idxName))
 }
 
 func (db *sqlite3) ForUpdateSQL(query string) string {
@@ -478,7 +477,7 @@ func (db *sqlite3) GetIndexes(tableName string) (map[string]*schemas.Index, erro
 }
 
 func (db *sqlite3) Filters() []Filter {
-	return []Filter{&IdFilter{}}
+	return []Filter{}
 }
 
 type sqlite3Driver struct {
