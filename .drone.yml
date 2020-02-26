@@ -122,26 +122,7 @@ steps:
     TEST_CACHE_ENABLE: false
   commands:
   - make test-oracle
-  when:
-    event:
-    - push
-    - pull_request
-
-- name: test-oracle-cache
-  pull: default
-  image: golang:1.12
-  depends_on:
-    - test-oracle
-  environment:
-    GO111MODULE: "on"
-    GOPROXY: "https://goproxy.cn"
-    TEST_ORACLE_HOST: oracle:1521
-    TEST_ORACLE_DBNAME: xe
-    TEST_ORACLE_USERNAME: system
-    TEST_ORACLE_PASSWORD: oracle
-    TEST_CACHE_ENABLE: true
-  commands:
-  - make test-oracle
+  - TEST_CACHE_ENABLE=true make test-oracle
   when:
     event:
     - push
@@ -162,28 +143,7 @@ steps:
     SCHEMA: xorm
   commands:
   - make test-oracle
-  when:
-    event:
-    - push
-    - pull_request
-
-- name: test-oracle-schema-cache
-  pull: default
-  image: golang:1.12
-  depends_on:
-    - test-oracle-schema
-  environment:
-    GO111MODULE: "on"
-    GOPROXY: "https://goproxy.cn"
-    TEST_ORACLE_SCHEMA: xorm
-    TEST_ORACLE_HOST: oracle:1521
-    TEST_ORACLE_DBNAME: xe
-    TEST_ORACLE_USERNAME: system
-    TEST_ORACLE_PASSWORD: oracle
-    TEST_CACHE_ENABLE: true
-    SCHEMA: xorm
-  commands:
-  - make test-oracle
+  - TEST_CACHE_ENABLE=true make test-oracle
   when:
     event:
     - push
