@@ -8,7 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -802,30 +802,43 @@ func (db *oracle) Filters() []Filter {
 	}
 }
 
-type goracleDriver struct {
+// https://github.com/godror/godror
+type godrorDriver struct {
 }
 
-func (cfg *goracleDriver) Parse(driverName, dataSourceName string) (*URI, error) {
-	db := &URI{DBType: schemas.ORACLE}
-	dsnPattern := regexp.MustCompile(
-		`^(?:(?P<user>.*?)(?::(?P<passwd>.*))?@)?` + // [user[:password]@]
-			`(?:(?P<net>[^\(]*)(?:\((?P<addr>[^\)]*)\))?)?` + // [net[(addr)]]
-			`\/(?P<dbname>.*?)` + // /dbname
-			`(?:\?(?P<params>[^\?]*))?$`) // [?param1=value1&paramN=valueN]
-	matches := dsnPattern.FindStringSubmatch(dataSourceName)
-	// tlsConfigRegister := make(map[string]*tls.Config)
-	names := dsnPattern.SubexpNames()
-
-	for i, match := range matches {
-		switch names[i] {
-		case "dbname":
-			db.DBName = match
-		}
+func parseOracle(driverName, dataSourceName string) (*URI, error) {
+	var connStr = dataSourceName
+	if !strings.HasPrefix(connStr, "oracle://") {
+		connStr = fmt.Sprintf("oracle://%s", connStr)
 	}
+
+	u, err := url.Parse(connStr)
+	if err != nil {
+		return nil, err
+	}
+
+	db := &URI{
+		DBType: schemas.ORACLE,
+		Host:   u.Hostname(),
+		Port:   u.Port(),
+		DBName: strings.TrimLeft(u.RequestURI(), "/"),
+	}
+
+	if u.User != nil {
+		db.User = u.User.Username()
+		db.Passwd, _ = u.User.Password()
+	}
+
+	fmt.Printf("%#v\n", db)
+
 	if db.DBName == "" {
 		return nil, errors.New("dbname is empty")
 	}
 	return db, nil
+}
+
+func (cfg *godrorDriver) Parse(driverName, dataSourceName string) (*URI, error) {
+	return parseOracle(driverName, dataSourceName)
 }
 
 type oci8Driver struct {
@@ -834,21 +847,5 @@ type oci8Driver struct {
 // dataSourceName=user/password@ipv4:port/dbname
 // dataSourceName=user/password@[ipv6]:port/dbname
 func (p *oci8Driver) Parse(driverName, dataSourceName string) (*URI, error) {
-	db := &URI{DBType: schemas.ORACLE}
-	dsnPattern := regexp.MustCompile(
-		`^(?P<user>.*)\/(?P<password>.*)@` + // user:password@
-			`(?P<net>.*)` + // ip:port
-			`\/(?P<dbname>.*)`) // dbname
-	matches := dsnPattern.FindStringSubmatch(dataSourceName)
-	names := dsnPattern.SubexpNames()
-	for i, match := range matches {
-		switch names[i] {
-		case "dbname":
-			db.DBName = match
-		}
-	}
-	if db.DBName == "" && len(matches) != 0 {
-		return nil, errors.New("dbname is empty")
-	}
-	return db, nil
+	return parseOracle(driverName, dataSourceName)
 }
