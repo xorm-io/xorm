@@ -6,14 +6,6 @@ package xorm
 
 import "xorm.io/builder"
 
-// Sql provides raw sql input parameter. When you have a complex SQL statement
-// and cannot use Where, Id, In and etc. Methods to describe, you can use SQL.
-//
-// Deprecated: use SQL instead.
-func (session *Session) Sql(query string, args ...interface{}) *Session {
-	return session.SQL(query, args...)
-}
-
 // SQL provides raw sql input parameter. When you have a complex SQL statement
 // and cannot use Where, Id, In and etc. Methods to describe, you can use SQL.
 func (session *Session) SQL(query interface{}, args ...interface{}) *Session {
@@ -37,13 +29,6 @@ func (session *Session) And(query interface{}, args ...interface{}) *Session {
 func (session *Session) Or(query interface{}, args ...interface{}) *Session {
 	session.statement.Or(query, args...)
 	return session
-}
-
-// Id provides converting id as a query condition
-//
-// Deprecated: use ID instead
-func (session *Session) Id(id interface{}) *Session {
-	return session.ID(id)
 }
 
 // ID provides converting id as a query condition

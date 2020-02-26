@@ -224,7 +224,7 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 					return err
 				}
 
-				if !isPKZero(pk) {
+				if !pk.IsZero() {
 					// !nashtsai! TODO for hasOne relationship, it's preferred to use join query for eager fetch
 					// however, also need to consider adding a 'lazy' attribute to xorm tag which allow hasOne
 					// property to be fetched lazily
@@ -506,7 +506,7 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 						return err
 					}
 
-					if !isPKZero(pk) {
+					if !pk.IsZero() {
 						// !nashtsai! TODO for hasOne relationship, it's preferred to use join query for eager fetch
 						// however, also need to consider adding a 'lazy' attribute to xorm tag which allow hasOne
 						// property to be fetched lazily

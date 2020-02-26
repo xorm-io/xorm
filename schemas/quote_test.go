@@ -45,3 +45,13 @@ func TestQuoteTo(t *testing.T) {
 	quoter.QuoteTo(buf, "noquote")
 	assert.EqualValues(t, "noquote", buf.String())
 }
+
+func TestJoin(t *testing.T) {
+	cols := []string{"f1", "f2", "f3"}
+	quoter := Quoter{"[", "]"}
+
+	assert.EqualValues(t, "[f1], [f2], [f3]", quoter.Join(cols, ", "))
+
+	quoter = Quoter{"", ""}
+	assert.EqualValues(t, "f1, f2, f3", quoter.Join(cols, ", "))
+}

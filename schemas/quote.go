@@ -5,7 +5,6 @@
 package schemas
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -76,7 +75,7 @@ func (q Quoter) Trim(s string) string {
 	return s
 }
 
-func TrimSpaceJoin(a []string, sep string) string {
+func (q Quoter) Join(a []string, sep string) string {
 	switch len(a) {
 	case 0:
 		return ""
@@ -90,17 +89,19 @@ func TrimSpaceJoin(a []string, sep string) string {
 
 	var b strings.Builder
 	b.Grow(n)
-	b.WriteString(strings.TrimSpace(a[0]))
-	for _, s := range a[1:] {
-		b.WriteString(sep)
+	for i, s := range a {
+		if i > 0 {
+			b.WriteString(sep)
+		}
+		if q[0] != "" {
+			b.WriteString(q[0])
+		}
 		b.WriteString(strings.TrimSpace(s))
+		if q[1] != "" {
+			b.WriteString(q[1])
+		}
 	}
 	return b.String()
-}
-
-func (q Quoter) Join(s []string, splitter string) string {
-	//return fmt.Sprintf("%s%s%s", q[0], TrimSpaceJoin(s, fmt.Sprintf("%s%s%s", q[1], splitter, q[0])), q[1])
-	return q.Quote(TrimSpaceJoin(s, fmt.Sprintf("%s%s%s", q[1], splitter, q[0])))
 }
 
 func (q Quoter) QuoteTo(buf *strings.Builder, value string) {

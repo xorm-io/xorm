@@ -11,8 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"xorm.io/xorm/schemas"
 )
 
 // str2PK convert string value to primary key value according to tp
@@ -95,95 +93,6 @@ func str2PK(s string, tp reflect.Type) (interface{}, error) {
 	return v.Interface(), nil
 }
 
-type zeroable interface {
-	IsZero() bool
-}
-
-func isZero(k interface{}) bool {
-	switch k.(type) {
-	case int:
-		return k.(int) == 0
-	case int8:
-		return k.(int8) == 0
-	case int16:
-		return k.(int16) == 0
-	case int32:
-		return k.(int32) == 0
-	case int64:
-		return k.(int64) == 0
-	case uint:
-		return k.(uint) == 0
-	case uint8:
-		return k.(uint8) == 0
-	case uint16:
-		return k.(uint16) == 0
-	case uint32:
-		return k.(uint32) == 0
-	case uint64:
-		return k.(uint64) == 0
-	case float32:
-		return k.(float32) == 0
-	case float64:
-		return k.(float64) == 0
-	case bool:
-		return k.(bool) == false
-	case string:
-		return k.(string) == ""
-	case zeroable:
-		return k.(zeroable).IsZero()
-	}
-	return false
-}
-
-func isZeroValue(v reflect.Value) bool {
-	if isZero(v.Interface()) {
-		return true
-	}
-	switch v.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
-		return v.IsNil()
-	}
-	return false
-}
-
-func isStructZero(v reflect.Value) bool {
-	if !v.IsValid() {
-		return true
-	}
-
-	for i := 0; i < v.NumField(); i++ {
-		field := v.Field(i)
-		switch field.Kind() {
-		case reflect.Ptr:
-			field = field.Elem()
-			fallthrough
-		case reflect.Struct:
-			if !isStructZero(field) {
-				return false
-			}
-		default:
-			if field.CanInterface() && !isZero(field.Interface()) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func isArrayValueZero(v reflect.Value) bool {
-	if !v.IsValid() || v.Len() == 0 {
-		return true
-	}
-
-	for i := 0; i < v.Len(); i++ {
-		if !isZero(v.Index(i).Interface()) {
-			return false
-		}
-	}
-
-	return true
-}
-
 func int64ToIntValue(id int64, tp reflect.Type) reflect.Value {
 	var v interface{}
 	kind := tp.Kind()
@@ -227,15 +136,6 @@ func int64ToIntValue(id int64, tp reflect.Type) reflect.Value {
 
 func int64ToInt(id int64, tp reflect.Type) interface{} {
 	return int64ToIntValue(id, tp).Interface()
-}
-
-func isPKZero(pk schemas.PK) bool {
-	for _, k := range pk {
-		if isZero(k) {
-			return true
-		}
-	}
-	return false
 }
 
 func indexNoCase(s, sep string) int {
@@ -313,11 +213,4 @@ func eraseAny(value string, strToErase ...string) string {
 	replacer := strings.NewReplacer(replaceSeq...)
 
 	return replacer.Replace(value)
-}
-
-func quoteColumns(cols []string, quoteFunc func(string) string, sep string) string {
-	for i := range cols {
-		cols[i] = quoteFunc(cols[i])
-	}
-	return strings.Join(cols, sep+" ")
 }

@@ -7,6 +7,8 @@ package schemas
 import (
 	"bytes"
 	"encoding/gob"
+
+	"xorm.io/xorm/internal/utils"
 )
 
 type PK []interface{}
@@ -14,6 +16,15 @@ type PK []interface{}
 func NewPK(pks ...interface{}) *PK {
 	p := PK(pks)
 	return &p
+}
+
+func (p *PK) IsZero() bool {
+	for _, k := range *p {
+		if utils.IsZero(k) {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *PK) ToString() (string, error) {

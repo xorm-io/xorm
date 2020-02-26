@@ -703,7 +703,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 					return nil, err
 				}
 
-				if !isPKZero(pk) {
+				if !pk.IsZero() {
 					// !nashtsai! TODO for hasOne relationship, it's preferred to use join query for eager fetch
 					// however, also need to consider adding a 'lazy' attribute to xorm tag which allow hasOne
 					// property to be fetched lazily

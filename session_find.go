@@ -142,7 +142,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 			if session.statement.JoinStr == "" {
 				if columnStr == "" {
 					if session.statement.GroupByStr != "" {
-						columnStr = session.engine.quoteColumns(session.statement.GroupByStr)
+						columnStr = session.statement.quoteColumnStr(session.statement.GroupByStr)
 					} else {
 						columnStr = session.statement.genColumnStr()
 					}
@@ -150,7 +150,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 			} else {
 				if columnStr == "" {
 					if session.statement.GroupByStr != "" {
-						columnStr = session.engine.quoteColumns(session.statement.GroupByStr)
+						columnStr = session.statement.quoteColumnStr(session.statement.GroupByStr)
 					} else {
 						columnStr = "*"
 					}
@@ -417,7 +417,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 		} else {
 			session.engine.logger.Debug("[cacheFind] cache hit bean:", tableName, id, bean)
 
-			pk := session.engine.IdOf(bean)
+			pk := session.engine.IDOf(bean)
 			xid, err := pk.ToString()
 			if err != nil {
 				return err

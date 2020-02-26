@@ -13,6 +13,7 @@ import (
 
 	"xorm.io/builder"
 	"xorm.io/xorm/caches"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
 
@@ -518,7 +519,7 @@ func (session *Session) genUpdateColumns(bean interface{}) ([]string, []interfac
 
 		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
 		if _, ok := getFlagForColumn(session.statement.nullableMap, col); ok {
-			if col.Nullable && isZeroValue(fieldValue) {
+			if col.Nullable && utils.IsValueZero(fieldValue) {
 				var nilValue *int
 				fieldValue = reflect.ValueOf(nilValue)
 			}

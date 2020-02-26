@@ -13,6 +13,7 @@ import (
 
 	"xorm.io/builder"
 	"xorm.io/xorm/dialects"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
 
@@ -304,7 +305,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 
 		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
 		if b, ok := getFlagForColumn(nullableMap, col); ok {
-			if b && col.Nullable && isZero(fieldValue.Interface()) {
+			if b && col.Nullable && utils.IsZero(fieldValue.Interface()) {
 				var nilValue *int
 				fieldValue = reflect.ValueOf(nilValue)
 				fieldType = reflect.TypeOf(fieldValue.Interface())
@@ -404,7 +405,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 						if len(table.PrimaryKeys) == 1 {
 							pkField := reflect.Indirect(fieldValue).FieldByName(table.PKColumns()[0].FieldName)
 							// fix non-int pk issues
-							if pkField.IsValid() && (!requiredField && !isZero(pkField.Interface())) {
+							if pkField.IsValid() && (!requiredField && !utils.IsZero(pkField.Interface())) {
 								val = pkField.Interface()
 							} else {
 								continue
@@ -418,7 +419,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 					}
 				} else {
 					// Blank struct could not be as update data
-					if requiredField || !isStructZero(fieldValue) {
+					if requiredField || !utils.IsStructZero(fieldValue) {
 						bytes, err := DefaultJSONHandler.Marshal(fieldValue.Interface())
 						if err != nil {
 							panic(fmt.Sprintf("mashal %v failed", fieldValue.Interface()))
@@ -439,7 +440,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 					continue
 				}
 				if fieldType.Kind() == reflect.Array {
-					if isArrayValueZero(fieldValue) {
+					if utils.IsArrayZero(fieldValue) {
 						continue
 					}
 				} else if fieldValue.IsNil() || !fieldValue.IsValid() || fieldValue.Len() == 0 {
@@ -939,6 +940,11 @@ func (statement *Statement) genConds(bean interface{}) (string, []interface{}, e
 	return builder.ToSQL(statement.cond)
 }
 
+func (statement *Statement) quoteColumnStr(columnStr string) string {
+	columns := strings.Split(columnStr, ",")
+	return statement.Engine.dialect.Quoter().Join(columns, ",")
+}
+
 func (statement *Statement) genGetSQL(bean interface{}) (string, []interface{}, error) {
 	v := rValue(bean)
 	isStruct := v.Kind() == reflect.Struct
@@ -954,7 +960,7 @@ func (statement *Statement) genGetSQL(bean interface{}) (string, []interface{}, 
 		if len(statement.JoinStr) == 0 {
 			if len(columnStr) == 0 {
 				if len(statement.GroupByStr) > 0 {
-					columnStr = statement.Engine.quoteColumns(statement.GroupByStr)
+					columnStr = statement.quoteColumnStr(statement.GroupByStr)
 				} else {
 					columnStr = statement.genColumnStr()
 				}
@@ -962,7 +968,7 @@ func (statement *Statement) genGetSQL(bean interface{}) (string, []interface{}, 
 		} else {
 			if len(columnStr) == 0 {
 				if len(statement.GroupByStr) > 0 {
-					columnStr = statement.Engine.quoteColumns(statement.GroupByStr)
+					columnStr = statement.quoteColumnStr(statement.GroupByStr)
 				}
 			}
 		}

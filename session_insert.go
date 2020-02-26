@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"xorm.io/builder"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
 
@@ -153,7 +154,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 					return 0, err
 				}
 				fieldValue := *ptrFieldValue
-				if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
+				if col.IsAutoIncrement && utils.IsZero(fieldValue.Interface()) {
 					continue
 				}
 				if col.MapType == schemas.ONLYFROMDB {
@@ -204,7 +205,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 				}
 				fieldValue := *ptrFieldValue
 
-				if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
+				if col.IsAutoIncrement && utils.IsZero(fieldValue.Interface()) {
 					continue
 				}
 				if col.MapType == schemas.ONLYFROMDB {
@@ -250,19 +251,21 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 	}
 	cleanupProcessorsClosures(&session.beforeClosures)
 
+	quoter := session.engine.dialect.Quoter()
 	var sql string
+	colStr := quoter.Join(colNames, ",")
 	if session.engine.dialect.DBType() == schemas.ORACLE {
 		temp := fmt.Sprintf(") INTO %s (%v) VALUES (",
-			session.engine.Quote(tableName),
-			quoteColumns(colNames, session.engine.Quote, ","))
+			quoter.Quote(tableName),
+			colStr)
 		sql = fmt.Sprintf("INSERT ALL INTO %s (%v) VALUES (%v) SELECT 1 FROM DUAL",
-			session.engine.Quote(tableName),
-			quoteColumns(colNames, session.engine.Quote, ","),
+			quoter.Quote(tableName),
+			colStr,
 			strings.Join(colMultiPlaces, temp))
 	} else {
 		sql = fmt.Sprintf("INSERT INTO %s (%v) VALUES (%v)",
-			session.engine.Quote(tableName),
-			quoteColumns(colNames, session.engine.Quote, ","),
+			quoter.Quote(tableName),
+			colStr,
 			strings.Join(colMultiPlaces, "),("))
 	}
 	res, err := session.exec(sql, args...)
@@ -679,7 +682,7 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 
 		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
 		if _, ok := getFlagForColumn(session.statement.nullableMap, col); ok {
-			if col.Nullable && isZeroValue(fieldValue) {
+			if col.Nullable && utils.IsValueZero(fieldValue) {
 				var nilValue *int
 				fieldValue = reflect.ValueOf(nilValue)
 			}

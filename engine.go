@@ -191,11 +191,6 @@ func (engine *Engine) SupportInsertMany() bool {
 	return engine.dialect.SupportInsertMany()
 }
 
-func (engine *Engine) quoteColumns(columnStr string) string {
-	columns := strings.Split(columnStr, ",")
-	return engine.dialect.Quoter().Join(columns, ",")
-}
-
 // Quote Use QuoteStr quote the string sql
 func (engine *Engine) Quote(value string) string {
 	value = strings.TrimSpace(value)
@@ -220,18 +215,6 @@ func (engine *Engine) QuoteTo(buf *strings.Builder, value string) {
 		return
 	}
 	engine.dialect.Quoter().QuoteTo(buf, value)
-}
-
-/*
-func (engine *Engine) quote(sql string) string {
-	return engine.dialect.Quote(sql)
-}*/
-
-// SqlType will be deprecated, please use SQLType instead
-//
-// Deprecated: use SQLType instead
-func (engine *Engine) SqlType(c *schemas.Column) string {
-	return engine.SQLType(c)
 }
 
 // SQLType A simple wrapper to dialect's core.SqlType method
@@ -333,14 +316,6 @@ func (engine *Engine) logSQL(sqlStr string, sqlArgs ...interface{}) {
 			engine.logger.Infof("[SQL] %v", sqlStr)
 		}
 	}
-}
-
-// Sql provides raw sql input parameter. When you have a complex SQL statement
-// and cannot use Where, Id, In and etc. Methods to describe, you can use SQL.
-//
-// Deprecated: use SQL instead.
-func (engine *Engine) Sql(querystring string, args ...interface{}) *Session {
-	return engine.SQL(querystring, args...)
 }
 
 // SQL method let's you manually write raw SQL and operate
@@ -595,13 +570,6 @@ func (engine *Engine) Where(query interface{}, args ...interface{}) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Where(query, args...)
-}
-
-// Id will be deprecated, please use ID instead
-func (engine *Engine) Id(id interface{}) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Id(id)
 }
 
 // ID method provoide a condition as (id) = ?
@@ -1092,23 +1060,9 @@ func (engine *Engine) IsTableExist(beanOrTableName interface{}) (bool, error) {
 	return session.IsTableExist(beanOrTableName)
 }
 
-// IdOf get id from one struct
-//
-// Deprecated: use IDOf instead.
-func (engine *Engine) IdOf(bean interface{}) schemas.PK {
-	return engine.IDOf(bean)
-}
-
 // IDOf get id from one struct
 func (engine *Engine) IDOf(bean interface{}) schemas.PK {
-	return engine.IdOfV(reflect.ValueOf(bean))
-}
-
-// IdOfV get id from one value of struct
-//
-// Deprecated: use IDOfV instead.
-func (engine *Engine) IdOfV(rv reflect.Value) schemas.PK {
-	return engine.IDOfV(rv)
+	return engine.IDOfV(reflect.ValueOf(bean))
 }
 
 // IDOfV get id from one value of struct

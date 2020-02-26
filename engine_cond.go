@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"xorm.io/builder"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
 
@@ -169,7 +170,7 @@ func (engine *Engine) buildConds(table *schemas.Table, bean interface{},
 							pkField := reflect.Indirect(fieldValue).FieldByName(table.PKColumns()[0].FieldName)
 							// fix non-int pk issues
 							//if pkField.Int() != 0 {
-							if pkField.IsValid() && !isZero(pkField.Interface()) {
+							if pkField.IsValid() && !utils.IsZero(pkField.Interface()) {
 								val = pkField.Interface()
 							} else {
 								continue
