@@ -5,6 +5,7 @@
 package dialects
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -929,7 +930,7 @@ func (db *postgres) DropIndexSQL(tableName string, index *schemas.Index) string 
 	return fmt.Sprintf("DROP INDEX %v", db.Quoter().Quote(idxName))
 }
 
-func (db *postgres) IsColumnExist(tableName, colName string) (bool, error) {
+func (db *postgres) IsColumnExist(ctx context.Context, tableName, colName string) (bool, error) {
 	args := []interface{}{db.uri.Schema, tableName, colName}
 	query := "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = $1 AND table_name = $2" +
 		" AND column_name = $3"
@@ -940,7 +941,7 @@ func (db *postgres) IsColumnExist(tableName, colName string) (bool, error) {
 	}
 	db.LogSQL(query, args)
 
-	rows, err := db.DB().Query(query, args...)
+	rows, err := db.DB().QueryContext(ctx, query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -949,7 +950,7 @@ func (db *postgres) IsColumnExist(tableName, colName string) (bool, error) {
 	return rows.Next(), nil
 }
 
-func (db *postgres) GetColumns(tableName string) ([]string, map[string]*schemas.Column, error) {
+func (db *postgres) GetColumns(ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error) {
 	args := []interface{}{tableName}
 	s := `SELECT column_name, column_default, is_nullable, data_type, character_maximum_length,
     CASE WHEN p.contype = 'p' THEN true ELSE false END AS primarykey,
@@ -972,7 +973,7 @@ WHERE c.relkind = 'r'::char AND c.relname = $1%s AND f.attnum > 0 ORDER BY f.att
 
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1064,7 +1065,7 @@ WHERE c.relkind = 'r'::char AND c.relname = $1%s AND f.attnum > 0 ORDER BY f.att
 	return colSeq, cols, nil
 }
 
-func (db *postgres) GetTables() ([]*schemas.Table, error) {
+func (db *postgres) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	args := []interface{}{}
 	s := "SELECT tablename FROM pg_tables"
 	if len(db.uri.Schema) != 0 {
@@ -1074,7 +1075,7 @@ func (db *postgres) GetTables() ([]*schemas.Table, error) {
 
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -1105,7 +1106,7 @@ func getIndexColName(indexdef string) []string {
 	return colNames
 }
 
-func (db *postgres) GetIndexes(tableName string) (map[string]*schemas.Index, error) {
+func (db *postgres) GetIndexes(ctx context.Context, tableName string) (map[string]*schemas.Index, error) {
 	args := []interface{}{tableName}
 	s := fmt.Sprintf("SELECT indexname, indexdef FROM pg_indexes WHERE tablename=$1")
 	if len(db.uri.Schema) != 0 {
@@ -1114,7 +1115,7 @@ func (db *postgres) GetIndexes(tableName string) (map[string]*schemas.Index, err
 	}
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
 	}

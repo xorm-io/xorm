@@ -183,7 +183,7 @@ func (session *Session) isTableEmpty(tableName string) (bool, error) {
 
 // find if index is exist according cols
 func (session *Session) isIndexExist2(tableName string, cols []string, unique bool) (bool, error) {
-	indexes, err := session.engine.dialect.GetIndexes(tableName)
+	indexes, err := session.engine.dialect.GetIndexes(session.ctx, tableName)
 	if err != nil {
 		return false, err
 	}
@@ -201,8 +201,8 @@ func (session *Session) isIndexExist2(tableName string, cols []string, unique bo
 
 func (session *Session) addColumn(colName string) error {
 	col := session.statement.RefTable.GetColumn(colName)
-	sql, args := session.statement.genAddColumnStr(col)
-	_, err := session.exec(sql, args...)
+	sql := session.statement.dialect.AddColumnSQL(session.statement.TableName(), col)
+	_, err := session.exec(sql)
 	return err
 }
 
@@ -229,7 +229,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 		defer session.Close()
 	}
 
-	tables, err := engine.dialect.GetTables()
+	tables, err := engine.dialect.GetTables(session.ctx)
 	if err != nil {
 		return err
 	}

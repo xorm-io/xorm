@@ -5,6 +5,7 @@
 package dialects
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -314,13 +315,13 @@ func (db *mysql) TableCheckSQL(tableName string) (string, []interface{}) {
 	return sql, args
 }
 
-func (db *mysql) GetColumns(tableName string) ([]string, map[string]*schemas.Column, error) {
+func (db *mysql) GetColumns(ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error) {
 	args := []interface{}{db.uri.DBName, tableName}
 	s := "SELECT `COLUMN_NAME`, `IS_NULLABLE`, `COLUMN_DEFAULT`, `COLUMN_TYPE`," +
 		" `COLUMN_KEY`, `EXTRA`,`COLUMN_COMMENT` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -425,13 +426,13 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*schemas.Col
 	return colSeq, cols, nil
 }
 
-func (db *mysql) GetTables() ([]*schemas.Table, error) {
+func (db *mysql) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	args := []interface{}{db.uri.DBName}
 	s := "SELECT `TABLE_NAME`, `ENGINE`, `TABLE_ROWS`, `AUTO_INCREMENT`, `TABLE_COMMENT` from " +
 		"`INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? AND (`ENGINE`='MyISAM' OR `ENGINE` = 'InnoDB' OR `ENGINE` = 'TokuDB')"
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -455,12 +456,12 @@ func (db *mysql) GetTables() ([]*schemas.Table, error) {
 	return tables, nil
 }
 
-func (db *mysql) GetIndexes(tableName string) (map[string]*schemas.Index, error) {
+func (db *mysql) GetIndexes(ctx context.Context, tableName string) (map[string]*schemas.Index, error) {
 	args := []interface{}{db.uri.DBName, tableName}
 	s := "SELECT `INDEX_NAME`, `NON_UNIQUE`, `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`STATISTICS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -523,9 +524,9 @@ func (db *mysql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, ch
 		for _, colName := range table.ColumnsSeq() {
 			col := table.GetColumn(colName)
 			if col.IsPrimaryKey && len(pkList) == 1 {
-				sql += String(db, col)
+				sql += db.String(col)
 			} else {
-				sql += StringNoPk(db, col)
+				sql += db.StringNoPk(col)
 			}
 			sql = strings.TrimSpace(sql)
 			if len(col.Comment) > 0 {

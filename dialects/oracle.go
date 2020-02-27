@@ -5,6 +5,7 @@
 package dialects
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -592,7 +593,7 @@ func (db *oracle) CreateTableSQL(table *schemas.Table, tableName, storeEngine, c
 		/*if col.IsPrimaryKey && len(pkList) == 1 {
 			sql += col.String(b.dialect)
 		} else {*/
-		sql += StringNoPk(db, col)
+		sql += db.StringNoPk(col)
 		// }
 		sql = strings.TrimSpace(sql)
 		sql += ", "
@@ -630,40 +631,13 @@ func (db *oracle) TableCheckSQL(tableName string) (string, []interface{}) {
 	return `SELECT table_name FROM user_tables WHERE table_name = :1`, args
 }
 
-func (db *oracle) MustDropTable(tableName string) error {
-	sql, args := db.TableCheckSQL(tableName)
-	db.LogSQL(sql, args)
-
-	rows, err := db.DB().Query(sql, args...)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		return nil
-	}
-
-	sql = "Drop Table \"" + tableName + "\""
-	db.LogSQL(sql, args)
-
-	_, err = db.DB().Exec(sql)
-	return err
-}
-
-/*func (db *oracle) ColumnCheckSql(tableName, colName string) (string, []interface{}) {
-	args := []interface{}{strings.ToUpper(tableName), strings.ToUpper(colName)}
-	return "SELECT column_name FROM USER_TAB_COLUMNS WHERE table_name = ?" +
-		" AND column_name = ?", args
-}*/
-
-func (db *oracle) IsColumnExist(tableName, colName string) (bool, error) {
+func (db *oracle) IsColumnExist(ctx context.Context, tableName, colName string) (bool, error) {
 	args := []interface{}{tableName, colName}
 	query := "SELECT column_name FROM USER_TAB_COLUMNS WHERE table_name = :1" +
 		" AND column_name = :2"
 	db.LogSQL(query, args)
 
-	rows, err := db.DB().Query(query, args...)
+	rows, err := db.DB().QueryContext(ctx, query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -675,13 +649,13 @@ func (db *oracle) IsColumnExist(tableName, colName string) (bool, error) {
 	return false, nil
 }
 
-func (db *oracle) GetColumns(tableName string) ([]string, map[string]*schemas.Column, error) {
+func (db *oracle) GetColumns(ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error) {
 	args := []interface{}{tableName}
 	s := "SELECT column_name,data_default,data_type,data_length,data_precision,data_scale," +
 		"nullable FROM USER_TAB_COLUMNS WHERE table_name = :1"
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -773,12 +747,12 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*schemas.Co
 	return colSeq, cols, nil
 }
 
-func (db *oracle) GetTables() ([]*schemas.Table, error) {
+func (db *oracle) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	args := []interface{}{}
 	s := "SELECT table_name FROM user_tables"
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -797,13 +771,13 @@ func (db *oracle) GetTables() ([]*schemas.Table, error) {
 	return tables, nil
 }
 
-func (db *oracle) GetIndexes(tableName string) (map[string]*schemas.Index, error) {
+func (db *oracle) GetIndexes(ctx context.Context, tableName string) (map[string]*schemas.Index, error) {
 	args := []interface{}{tableName}
 	s := "SELECT t.column_name,i.uniqueness,i.index_name FROM user_ind_columns t,user_indexes i " +
 		"WHERE t.index_name = i.index_name and t.table_name = i.table_name and t.table_name =:1"
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@
 package dialects
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -254,11 +255,11 @@ func (db *sqlite3) ForUpdateSQL(query string) string {
 	return sql, args
 }*/
 
-func (db *sqlite3) IsColumnExist(tableName, colName string) (bool, error) {
+func (db *sqlite3) IsColumnExist(ctx context.Context, tableName, colName string) (bool, error) {
 	args := []interface{}{tableName}
 	query := "SELECT name FROM sqlite_master WHERE type='table' and name = ? and ((sql like '%`" + colName + "`%') or (sql like '%[" + colName + "]%'))"
 	db.LogSQL(query, args)
-	rows, err := db.DB().Query(query, args...)
+	rows, err := db.DB().QueryContext(ctx, query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -332,11 +333,11 @@ func parseString(colStr string) (*schemas.Column, error) {
 	return col, nil
 }
 
-func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*schemas.Column, error) {
+func (db *sqlite3) GetColumns(ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error) {
 	args := []interface{}{tableName}
 	s := "SELECT sql FROM sqlite_master WHERE type='table' and name = ?"
 	db.LogSQL(s, args)
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -389,12 +390,12 @@ func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*schemas.C
 	return colSeq, cols, nil
 }
 
-func (db *sqlite3) GetTables() ([]*schemas.Table, error) {
+func (db *sqlite3) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	args := []interface{}{}
 	s := "SELECT name FROM sqlite_master WHERE type='table'"
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -415,12 +416,12 @@ func (db *sqlite3) GetTables() ([]*schemas.Table, error) {
 	return tables, nil
 }
 
-func (db *sqlite3) GetIndexes(tableName string) (map[string]*schemas.Index, error) {
+func (db *sqlite3) GetIndexes(ctx context.Context, tableName string) (map[string]*schemas.Index, error) {
 	args := []interface{}{tableName}
 	s := "SELECT sql FROM sqlite_master WHERE type='index' and tbl_name = ?"
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
 	}

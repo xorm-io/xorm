@@ -5,6 +5,7 @@
 package dialects
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -324,10 +325,10 @@ func (db *mssql) IndexCheckSQL(tableName, idxName string) (string, []interface{}
 	return sql, args
 }*/
 
-func (db *mssql) IsColumnExist(tableName, colName string) (bool, error) {
+func (db *mssql) IsColumnExist(ctx context.Context, tableName, colName string) (bool, error) {
 	query := `SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "COLUMN_NAME" = ?`
 
-	return db.HasRecords(query, tableName, colName)
+	return db.HasRecords(ctx, query, tableName, colName)
 }
 
 func (db *mssql) TableCheckSQL(tableName string) (string, []interface{}) {
@@ -336,7 +337,7 @@ func (db *mssql) TableCheckSQL(tableName string) (string, []interface{}) {
 	return sql, args
 }
 
-func (db *mssql) GetColumns(tableName string) ([]string, map[string]*schemas.Column, error) {
+func (db *mssql) GetColumns(ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error) {
 	args := []interface{}{}
 	s := `select a.name as name, b.name as ctype,a.max_length,a.precision,a.scale,a.is_nullable as nullable,
 		  "default_is_null" = (CASE WHEN c.text is null THEN 1 ELSE 0 END),
@@ -352,7 +353,7 @@ func (db *mssql) GetColumns(tableName string) ([]string, map[string]*schemas.Col
           where a.object_id=object_id('` + tableName + `')`
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -407,12 +408,12 @@ func (db *mssql) GetColumns(tableName string) ([]string, map[string]*schemas.Col
 	return colSeq, cols, nil
 }
 
-func (db *mssql) GetTables() ([]*schemas.Table, error) {
+func (db *mssql) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	args := []interface{}{}
 	s := `select name from sysobjects where xtype ='U'`
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -432,7 +433,7 @@ func (db *mssql) GetTables() ([]*schemas.Table, error) {
 	return tables, nil
 }
 
-func (db *mssql) GetIndexes(tableName string) (map[string]*schemas.Index, error) {
+func (db *mssql) GetIndexes(ctx context.Context, tableName string) (map[string]*schemas.Index, error) {
 	args := []interface{}{tableName}
 	s := `SELECT
 IXS.NAME                    AS  [INDEX_NAME],
@@ -447,7 +448,7 @@ WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 `
 	db.LogSQL(s, args)
 
-	rows, err := db.DB().Query(s, args...)
+	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -510,9 +511,9 @@ func (db *mssql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, ch
 	for _, colName := range table.ColumnsSeq() {
 		col := table.GetColumn(colName)
 		if col.IsPrimaryKey && len(pkList) == 1 {
-			sql += String(db, col)
+			sql += db.String(col)
 		} else {
-			sql += StringNoPk(db, col)
+			sql += db.StringNoPk(col)
 		}
 		sql = strings.TrimSpace(sql)
 		sql += ", "

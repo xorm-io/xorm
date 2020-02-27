@@ -902,17 +902,6 @@ func (statement *Statement) genDelIndexSQL() []string {
 	return sqls
 }
 
-func (statement *Statement) genAddColumnStr(col *schemas.Column) (string, []interface{}) {
-	quote := statement.quote
-	sql := fmt.Sprintf("ALTER TABLE %v ADD %v", quote(statement.TableName()),
-		dialects.String(statement.dialect, col))
-	if statement.dialect.DBType() == schemas.MYSQL && len(col.Comment) > 0 {
-		sql += " COMMENT '" + col.Comment + "'"
-	}
-	sql += ";"
-	return sql, []interface{}{}
-}
-
 func (statement *Statement) buildConds(table *schemas.Table, bean interface{}, includeVersion bool, includeUpdated bool, includeNil bool, includeAutoIncr bool, addedTableName bool) (builder.Cond, error) {
 	return statement.Engine.buildConds(table, bean, includeVersion, includeUpdated, includeNil, includeAutoIncr, statement.allUseBool, statement.useAllCols,
 		statement.unscoped, statement.mustColumnMap, statement.TableName(), statement.TableAlias, addedTableName)

@@ -321,14 +321,14 @@ func (engine *Engine) NoAutoCondition(no ...bool) *Session {
 }
 
 func (engine *Engine) loadTableInfo(table *schemas.Table) error {
-	colSeq, cols, err := engine.dialect.GetColumns(table.Name)
+	colSeq, cols, err := engine.dialect.GetColumns(engine.defaultContext, table.Name)
 	if err != nil {
 		return err
 	}
 	for _, name := range colSeq {
 		table.AddColumn(cols[name])
 	}
-	indexes, err := engine.dialect.GetIndexes(table.Name)
+	indexes, err := engine.dialect.GetIndexes(engine.defaultContext, table.Name)
 	if err != nil {
 		return err
 	}
@@ -348,7 +348,7 @@ func (engine *Engine) loadTableInfo(table *schemas.Table) error {
 
 // DBMetas Retrieve all tables, columns, indexes' informations from database.
 func (engine *Engine) DBMetas() ([]*schemas.Table, error) {
-	tables, err := engine.dialect.GetTables()
+	tables, err := engine.dialect.GetTables(engine.defaultContext)
 	if err != nil {
 		return nil, err
 	}
@@ -439,7 +439,7 @@ func (engine *Engine) dumpTables(tables []*schemas.Table, w io.Writer, tp ...dia
 		colNames := engine.dialect.Quoter().Join(cols, ", ")
 		destColNames := dialect.Quoter().Join(cols, ", ")
 
-		rows, err := engine.DB().Query("SELECT " + colNames + " FROM " + engine.Quote(table.Name))
+		rows, err := engine.DB().QueryContext(engine.defaultContext, "SELECT "+colNames+" FROM "+engine.Quote(table.Name))
 		if err != nil {
 			return err
 		}
@@ -979,7 +979,7 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 			}
 		} else {
 			for _, col := range table.Columns() {
-				isExist, err := engine.dialect.IsColumnExist(tableNameNoSchema, col.Name)
+				isExist, err := engine.dialect.IsColumnExist(session.ctx, tableNameNoSchema, col.Name)
 				if err != nil {
 					return err
 				}
