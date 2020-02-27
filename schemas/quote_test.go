@@ -65,7 +65,13 @@ func TestStrings(t *testing.T) {
 }
 
 func TestTrim(t *testing.T) {
-	raw := "[table_name]"
-	assert.EqualValues(t, raw, CommonQuoter.Trim(raw))
-	assert.EqualValues(t, "table_name", Quoter{"[", "]"}.Trim(raw))
+	var kases = map[string]string{
+		"[table_name]":          "table_name",
+		"[schema].[table_name]": "schema.table_name",
+	}
+
+	for src, dst := range kases {
+		assert.EqualValues(t, src, CommonQuoter.Trim(src))
+		assert.EqualValues(t, dst, Quoter{"[", "]"}.Trim(src))
+	}
 }

@@ -66,13 +66,18 @@ func (q Quoter) Trim(s string) string {
 		return s
 	}
 
-	if s[0:1] == q[0] {
-		s = s[1:]
+	var buf strings.Builder
+	for i := 0; i < len(s); i++ {
+		switch {
+		case i == 0 && s[i:i+1] == q[0]:
+		case i == len(s)-1 && s[i:i+1] == q[1]:
+		case s[i:i+1] == q[1] && s[i+1] == '.':
+		case s[i:i+1] == q[0] && s[i-1] == '.':
+		default:
+			buf.WriteByte(s[i])
+		}
 	}
-	if len(s) > 0 && s[len(s)-1:] == q[1] {
-		return s[:len(s)-1]
-	}
-	return s
+	return buf.String()
 }
 
 func (q Quoter) Join(a []string, sep string) string {
