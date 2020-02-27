@@ -112,9 +112,9 @@ func (eg *EngineGroup) Ping() error {
 
 // SetColumnMapper set the column name mapping rule
 func (eg *EngineGroup) SetColumnMapper(mapper names.Mapper) {
-	eg.Engine.ColumnMapper = mapper
+	eg.Engine.SetColumnMapper(mapper)
 	for i := 0; i < len(eg.slaves); i++ {
-		eg.slaves[i].ColumnMapper = mapper
+		eg.slaves[i].SetColumnMapper(mapper)
 	}
 }
 
@@ -182,9 +182,9 @@ func (eg *EngineGroup) SetPolicy(policy GroupPolicy) *EngineGroup {
 
 // SetTableMapper set the table name mapping rule
 func (eg *EngineGroup) SetTableMapper(mapper names.Mapper) {
-	eg.Engine.TableMapper = mapper
+	eg.Engine.SetTableMapper(mapper)
 	for i := 0; i < len(eg.slaves); i++ {
-		eg.slaves[i].TableMapper = mapper
+		eg.slaves[i].SetTableMapper(mapper)
 	}
 }
 

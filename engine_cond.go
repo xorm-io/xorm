@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"xorm.io/builder"
+	"xorm.io/xorm/convert"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
@@ -137,7 +138,7 @@ func (engine *Engine) buildConds(table *schemas.Table, bean interface{},
 					continue
 				}
 				val = engine.formatColTime(col, t)
-			} else if _, ok := reflect.New(fieldType).Interface().(Conversion); ok {
+			} else if _, ok := reflect.New(fieldType).Interface().(convert.Conversion); ok {
 				continue
 			} else if valNul, ok := fieldValue.Interface().(driver.Valuer); ok {
 				val, _ = valNul.Value()

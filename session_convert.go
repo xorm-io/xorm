@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"xorm.io/xorm/convert"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
@@ -91,11 +92,11 @@ var (
 
 // convert a db data([]byte) to a field value
 func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Value, data []byte) error {
-	if structConvert, ok := fieldValue.Addr().Interface().(Conversion); ok {
+	if structConvert, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
 		return structConvert.FromDB(data)
 	}
 
-	if structConvert, ok := fieldValue.Interface().(Conversion); ok {
+	if structConvert, ok := fieldValue.Interface().(convert.Conversion); ok {
 		return structConvert.FromDB(data)
 	}
 
@@ -539,7 +540,7 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 // convert a field value of a struct to interface for put into db
 func (session *Session) value2Interface(col *schemas.Column, fieldValue reflect.Value) (interface{}, error) {
 	if fieldValue.CanAddr() {
-		if fieldConvert, ok := fieldValue.Addr().Interface().(Conversion); ok {
+		if fieldConvert, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
 			data, err := fieldConvert.ToDB()
 			if err != nil {
 				return 0, err
@@ -551,7 +552,7 @@ func (session *Session) value2Interface(col *schemas.Column, fieldValue reflect.
 		}
 	}
 
-	if fieldConvert, ok := fieldValue.Interface().(Conversion); ok {
+	if fieldConvert, ok := fieldValue.Interface().(convert.Conversion); ok {
 		data, err := fieldConvert.ToDB()
 		if err != nil {
 			return 0, err

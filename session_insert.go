@@ -613,7 +613,7 @@ func (session *Session) cacheInsert(table string) error {
 	if !session.statement.UseCache {
 		return nil
 	}
-	cacher := session.engine.GetCacher(table)
+	cacher := session.engine.cacherMgr.GetCacher(table)
 	if cacher == nil {
 		return nil
 	}

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"xorm.io/xorm/convert"
 	"xorm.io/xorm/core"
 	"xorm.io/xorm/schemas"
 )
@@ -453,7 +454,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 		}
 
 		if fieldValue.CanAddr() {
-			if structConvert, ok := fieldValue.Addr().Interface().(Conversion); ok {
+			if structConvert, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
 				if data, err := value2Bytes(&rawValue); err == nil {
 					if err := structConvert.FromDB(data); err != nil {
 						return nil, err
@@ -465,12 +466,12 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 			}
 		}
 
-		if _, ok := fieldValue.Interface().(Conversion); ok {
+		if _, ok := fieldValue.Interface().(convert.Conversion); ok {
 			if data, err := value2Bytes(&rawValue); err == nil {
 				if fieldValue.Kind() == reflect.Ptr && fieldValue.IsNil() {
 					fieldValue.Set(reflect.New(fieldValue.Type().Elem()))
 				}
-				fieldValue.Interface().(Conversion).FromDB(data)
+				fieldValue.Interface().(convert.Conversion).FromDB(data)
 			} else {
 				return nil, err
 			}

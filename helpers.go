@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -182,20 +181,6 @@ func structName(v reflect.Type) string {
 		v = v.Elem()
 	}
 	return v.Name()
-}
-
-func sliceEq(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	sort.Sort(sort.StringSlice(left))
-	sort.Sort(sort.StringSlice(right))
-	for i := 0; i < len(left); i++ {
-		if left[i] != right[i] {
-			return false
-		}
-	}
-	return true
 }
 
 func indexName(tableName, idxName string) string {

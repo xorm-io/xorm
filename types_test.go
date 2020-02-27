@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"xorm.io/xorm/convert"
 	"xorm.io/xorm/schemas"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestArrayField(t *testing.T) {
@@ -137,8 +139,8 @@ type ConvStruct struct {
 	Conv  ConvString
 	Conv2 *ConvString
 	Cfg1  ConvConfig
-	Cfg2  *ConvConfig `xorm:"TEXT"`
-	Cfg3  Conversion  `xorm:"BLOB"`
+	Cfg2  *ConvConfig        `xorm:"TEXT"`
+	Cfg3  convert.Conversion `xorm:"BLOB"`
 	Slice SliceType
 }
 
@@ -267,11 +269,11 @@ type Status struct {
 }
 
 var (
-	_          Conversion        = &Status{}
-	Registered Status            = Status{"Registered", "white"}
-	Approved   Status            = Status{"Approved", "green"}
-	Removed    Status            = Status{"Removed", "red"}
-	Statuses   map[string]Status = map[string]Status{
+	_          convert.Conversion = &Status{}
+	Registered Status             = Status{"Registered", "white"}
+	Approved   Status             = Status{"Approved", "green"}
+	Removed    Status             = Status{"Removed", "red"}
+	Statuses   map[string]Status  = map[string]Status{
 		Registered.Name: Registered,
 		Approved.Name:   Approved,
 		Removed.Name:    Removed,

@@ -280,7 +280,7 @@ func (session *Session) cacheGet(bean interface{}, sqlStr string, args ...interf
 	}
 
 	tableName := session.statement.TableName()
-	cacher := session.engine.GetCacher(tableName)
+	cacher := session.engine.cacherMgr.GetCacher(tableName)
 
 	session.engine.logger.Debug("[cache] Get SQL:", newsql, args)
 	table := session.statement.RefTable

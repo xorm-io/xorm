@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package tags
 
 import (
 	"fmt"
@@ -34,8 +34,8 @@ func splitTag(tag string) (tags []string) {
 	return
 }
 
-// tagContext represents a context for xorm tag parse.
-type tagContext struct {
+// Context represents a context for xorm tag parse.
+type Context struct {
 	tagName         string
 	params          []string
 	preTag, nextTag string
@@ -45,18 +45,18 @@ type tagContext struct {
 	isIndex         bool
 	isUnique        bool
 	indexNames      map[string]int
-	engine          *Engine
+	parser          *Parser
 	hasCacheTag     bool
 	hasNoCacheTag   bool
 	ignoreNext      bool
 }
 
-// tagHandler describes tag handler for XORM
-type tagHandler func(ctx *tagContext) error
+// Handler describes tag handler for XORM
+type Handler func(ctx *Context) error
 
 var (
 	// defaultTagHandlers enumerates all the default tag handler
-	defaultTagHandlers = map[string]tagHandler{
+	defaultTagHandlers = map[string]Handler{
 		"<-":       OnlyFromDBTagHandler,
 		"->":       OnlyToDBTagHandler,
 		"PK":       PKTagHandler,
@@ -86,43 +86,43 @@ func init() {
 }
 
 // IgnoreTagHandler describes ignored tag handler
-func IgnoreTagHandler(ctx *tagContext) error {
+func IgnoreTagHandler(ctx *Context) error {
 	return nil
 }
 
 // OnlyFromDBTagHandler describes mapping direction tag handler
-func OnlyFromDBTagHandler(ctx *tagContext) error {
+func OnlyFromDBTagHandler(ctx *Context) error {
 	ctx.col.MapType = schemas.ONLYFROMDB
 	return nil
 }
 
 // OnlyToDBTagHandler describes mapping direction tag handler
-func OnlyToDBTagHandler(ctx *tagContext) error {
+func OnlyToDBTagHandler(ctx *Context) error {
 	ctx.col.MapType = schemas.ONLYTODB
 	return nil
 }
 
 // PKTagHandler describes primary key tag handler
-func PKTagHandler(ctx *tagContext) error {
+func PKTagHandler(ctx *Context) error {
 	ctx.col.IsPrimaryKey = true
 	ctx.col.Nullable = false
 	return nil
 }
 
 // NULLTagHandler describes null tag handler
-func NULLTagHandler(ctx *tagContext) error {
+func NULLTagHandler(ctx *Context) error {
 	ctx.col.Nullable = (strings.ToUpper(ctx.preTag) != "NOT")
 	return nil
 }
 
 // NotNullTagHandler describes notnull tag handler
-func NotNullTagHandler(ctx *tagContext) error {
+func NotNullTagHandler(ctx *Context) error {
 	ctx.col.Nullable = false
 	return nil
 }
 
 // AutoIncrTagHandler describes autoincr tag handler
-func AutoIncrTagHandler(ctx *tagContext) error {
+func AutoIncrTagHandler(ctx *Context) error {
 	ctx.col.IsAutoIncrement = true
 	/*
 		if len(ctx.params) > 0 {
@@ -139,7 +139,7 @@ func AutoIncrTagHandler(ctx *tagContext) error {
 }
 
 // DefaultTagHandler describes default tag handler
-func DefaultTagHandler(ctx *tagContext) error {
+func DefaultTagHandler(ctx *Context) error {
 	if len(ctx.params) > 0 {
 		ctx.col.Default = ctx.params[0]
 	} else {
@@ -151,26 +151,26 @@ func DefaultTagHandler(ctx *tagContext) error {
 }
 
 // CreatedTagHandler describes created tag handler
-func CreatedTagHandler(ctx *tagContext) error {
+func CreatedTagHandler(ctx *Context) error {
 	ctx.col.IsCreated = true
 	return nil
 }
 
 // VersionTagHandler describes version tag handler
-func VersionTagHandler(ctx *tagContext) error {
+func VersionTagHandler(ctx *Context) error {
 	ctx.col.IsVersion = true
 	ctx.col.Default = "1"
 	return nil
 }
 
 // UTCTagHandler describes utc tag handler
-func UTCTagHandler(ctx *tagContext) error {
+func UTCTagHandler(ctx *Context) error {
 	ctx.col.TimeZone = time.UTC
 	return nil
 }
 
 // LocalTagHandler describes local tag handler
-func LocalTagHandler(ctx *tagContext) error {
+func LocalTagHandler(ctx *Context) error {
 	if len(ctx.params) == 0 {
 		ctx.col.TimeZone = time.Local
 	} else {
@@ -184,19 +184,19 @@ func LocalTagHandler(ctx *tagContext) error {
 }
 
 // UpdatedTagHandler describes updated tag handler
-func UpdatedTagHandler(ctx *tagContext) error {
+func UpdatedTagHandler(ctx *Context) error {
 	ctx.col.IsUpdated = true
 	return nil
 }
 
 // DeletedTagHandler describes deleted tag handler
-func DeletedTagHandler(ctx *tagContext) error {
+func DeletedTagHandler(ctx *Context) error {
 	ctx.col.IsDeleted = true
 	return nil
 }
 
 // IndexTagHandler describes index tag handler
-func IndexTagHandler(ctx *tagContext) error {
+func IndexTagHandler(ctx *Context) error {
 	if len(ctx.params) > 0 {
 		ctx.indexNames[ctx.params[0]] = schemas.IndexType
 	} else {
@@ -206,7 +206,7 @@ func IndexTagHandler(ctx *tagContext) error {
 }
 
 // UniqueTagHandler describes unique tag handler
-func UniqueTagHandler(ctx *tagContext) error {
+func UniqueTagHandler(ctx *Context) error {
 	if len(ctx.params) > 0 {
 		ctx.indexNames[ctx.params[0]] = schemas.UniqueType
 	} else {
@@ -216,7 +216,7 @@ func UniqueTagHandler(ctx *tagContext) error {
 }
 
 // CommentTagHandler add comment to column
-func CommentTagHandler(ctx *tagContext) error {
+func CommentTagHandler(ctx *Context) error {
 	if len(ctx.params) > 0 {
 		ctx.col.Comment = strings.Trim(ctx.params[0], "' ")
 	}
@@ -224,7 +224,7 @@ func CommentTagHandler(ctx *tagContext) error {
 }
 
 // SQLTypeTagHandler describes SQL Type tag handler
-func SQLTypeTagHandler(ctx *tagContext) error {
+func SQLTypeTagHandler(ctx *Context) error {
 	ctx.col.SQLType = schemas.SQLType{Name: ctx.tagName}
 	if len(ctx.params) > 0 {
 		if ctx.tagName == schemas.Enum {
@@ -264,7 +264,7 @@ func SQLTypeTagHandler(ctx *tagContext) error {
 }
 
 // ExtendsTagHandler describes extends tag handler
-func ExtendsTagHandler(ctx *tagContext) error {
+func ExtendsTagHandler(ctx *Context) error {
 	var fieldValue = ctx.fieldValue
 	var isPtr = false
 	switch fieldValue.Kind() {
@@ -280,7 +280,7 @@ func ExtendsTagHandler(ctx *tagContext) error {
 		isPtr = true
 		fallthrough
 	case reflect.Struct:
-		parentTable, err := ctx.engine.mapType(fieldValue)
+		parentTable, err := ctx.parser.MapType(fieldValue)
 		if err != nil {
 			return err
 		}
@@ -316,7 +316,7 @@ func ExtendsTagHandler(ctx *tagContext) error {
 }
 
 // CacheTagHandler describes cache tag handler
-func CacheTagHandler(ctx *tagContext) error {
+func CacheTagHandler(ctx *Context) error {
 	if !ctx.hasCacheTag {
 		ctx.hasCacheTag = true
 	}
@@ -324,7 +324,7 @@ func CacheTagHandler(ctx *tagContext) error {
 }
 
 // NoCacheTagHandler describes nocache tag handler
-func NoCacheTagHandler(ctx *tagContext) error {
+func NoCacheTagHandler(ctx *Context) error {
 	if !ctx.hasNoCacheTag {
 		ctx.hasNoCacheTag = true
 	}

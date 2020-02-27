@@ -329,7 +329,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 	}
 
 	tableName := session.statement.TableName()
-	cacher := session.engine.GetCacher(tableName)
+	cacher := session.engine.cacherMgr.GetCacher(tableName)
 	if cacher == nil {
 		return nil
 	}

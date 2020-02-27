@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
 
@@ -188,7 +189,7 @@ func (session *Session) isIndexExist2(tableName string, cols []string, unique bo
 	}
 
 	for _, index := range indexes {
-		if sliceEq(index.Cols, cols) {
+		if utils.SliceEq(index.Cols, cols) {
 			if unique {
 				return index.Type == schemas.UniqueType, nil
 			}
@@ -241,7 +242,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 
 	for _, bean := range beans {
 		v := rValue(bean)
-		table, err := engine.mapType(v)
+		table, err := engine.tagParser.MapType(v)
 		if err != nil {
 			return err
 		}

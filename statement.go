@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"xorm.io/builder"
+	"xorm.io/xorm/convert"
 	"xorm.io/xorm/dialects"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
@@ -329,7 +330,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 		var val interface{}
 
 		if fieldValue.CanAddr() {
-			if structConvert, ok := fieldValue.Addr().Interface().(Conversion); ok {
+			if structConvert, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
 				data, err := structConvert.ToDB()
 				if err != nil {
 					engine.logger.Error(err)
@@ -340,7 +341,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 			}
 		}
 
-		if structConvert, ok := fieldValue.Interface().(Conversion); ok {
+		if structConvert, ok := fieldValue.Interface().(convert.Conversion); ok {
 			data, err := structConvert.ToDB()
 			if err != nil {
 				engine.logger.Error(err)

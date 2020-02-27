@@ -28,7 +28,7 @@ func (session *Session) cacheDelete(table *schemas.Table, tableName, sqlStr stri
 		return ErrCacheFailed
 	}
 
-	cacher := session.engine.GetCacher(tableName)
+	cacher := session.engine.cacherMgr.GetCacher(tableName)
 	pkColumns := table.PKColumns()
 	ids, err := caches.GetCacheSql(cacher, tableName, newsql, args)
 	if err != nil {
