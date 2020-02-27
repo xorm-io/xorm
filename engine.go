@@ -24,6 +24,7 @@ import (
 	"xorm.io/xorm/caches"
 	"xorm.io/xorm/core"
 	"xorm.io/xorm/dialects"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/log"
 	"xorm.io/xorm/names"
 	"xorm.io/xorm/schemas"
@@ -80,7 +81,7 @@ func (engine *Engine) CondDeleted(col *schemas.Column) builder.Cond {
 	} else {
 		// FIXME: mssql: The conversion of a nvarchar data type to a datetime data type resulted in an out-of-range value.
 		if engine.dialect.DBType() != schemas.MSSQL {
-			cond = builder.Eq{col.Name: zeroTime1}
+			cond = builder.Eq{col.Name: utils.ZeroTime1}
 		}
 	}
 

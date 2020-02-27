@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
 
@@ -27,7 +28,7 @@ func (session *Session) str2Time(col *schemas.Column, data string) (outTime time
 		parseLoc = col.TimeZone
 	}
 
-	if sdata == zeroTime0 || sdata == zeroTime1 {
+	if sdata == utils.ZeroTime0 || sdata == utils.ZeroTime1 {
 	} else if !strings.ContainsAny(sdata, "- :") { // !nashtsai! has only found that mymysql driver is using this for time type column
 		// time stamp
 		sd, err := strconv.ParseInt(sdata, 10, 64)

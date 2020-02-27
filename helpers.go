@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // str2PK convert string value to primary key value according to tp
@@ -199,4 +200,8 @@ func sliceEq(left, right []string) bool {
 
 func indexName(tableName, idxName string) string {
 	return fmt.Sprintf("IDX_%v_%v", tableName, idxName)
+}
+
+func formatTime(t time.Time) string {
+	return t.Format("2006-01-02 15:04:05")
 }

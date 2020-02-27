@@ -20,7 +20,7 @@ func (session *Session) cacheDelete(table *schemas.Table, tableName, sqlStr stri
 	}
 
 	for _, filter := range session.engine.dialect.Filters() {
-		sqlStr = filter.Do(sqlStr, session.engine.dialect, table)
+		sqlStr = filter.Do(sqlStr)
 	}
 
 	newsql := session.statement.convertIDSQL(sqlStr)

@@ -6,6 +6,7 @@ package utils
 
 import (
 	"reflect"
+	"time"
 )
 
 type Zeroable interface {
@@ -95,4 +96,14 @@ func IsArrayZero(v reflect.Value) bool {
 	}
 
 	return true
+}
+
+const (
+	ZeroTime0 = "0000-00-00 00:00:00"
+	ZeroTime1 = "0001-01-01 00:00:00"
+)
+
+func IsTimeZero(t time.Time) bool {
+	return t.IsZero() || t.Format("2006-01-02 15:04:05") == ZeroTime0 ||
+		t.Format("2006-01-02 15:04:05") == ZeroTime1
 }

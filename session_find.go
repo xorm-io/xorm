@@ -335,7 +335,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 	}
 
 	for _, filter := range session.engine.dialect.Filters() {
-		sqlStr = filter.Do(sqlStr, session.engine.dialect, session.statement.RefTable)
+		sqlStr = filter.Do(sqlStr)
 	}
 
 	newsql := session.statement.convertIDSQL(sqlStr)

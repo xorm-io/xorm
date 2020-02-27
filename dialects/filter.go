@@ -13,20 +13,20 @@ import (
 
 // Filter is an interface to filter SQL
 type Filter interface {
-	Do(sql string, dialect Dialect, table *schemas.Table) string
+	Do(sql string) string
 }
 
 // QuoteFilter filter SQL replace ` to database's own quote character
 type QuoteFilter struct {
+	quoter schemas.Quoter
 }
 
-func (s *QuoteFilter) Do(sql string, dialect Dialect, table *schemas.Table) string {
-	quoter := dialect.Quoter()
-	if quoter.IsEmpty() {
+func (s *QuoteFilter) Do(sql string) string {
+	if s.quoter.IsEmpty() {
 		return sql
 	}
 
-	prefix, suffix := quoter[0][0], quoter[1][0]
+	prefix, suffix := s.quoter[0][0], s.quoter[1][0]
 	raw := []byte(sql)
 	for i, cnt := 0, 0; i < len(raw); i = i + 1 {
 		if raw[i] == '`' {
@@ -66,6 +66,6 @@ func convertQuestionMark(sql, prefix string, start int) string {
 	return buf.String()
 }
 
-func (s *SeqFilter) Do(sql string, dialect Dialect, table *schemas.Table) string {
+func (s *SeqFilter) Do(sql string) string {
 	return convertQuestionMark(sql, s.Prefix, s.Start)
 }

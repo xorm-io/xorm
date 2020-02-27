@@ -534,7 +534,7 @@ func (db *mssql) ForUpdateSQL(query string) string {
 }
 
 func (db *mssql) Filters() []Filter {
-	return []Filter{&QuoteFilter{}}
+	return []Filter{&QuoteFilter{db.Quoter()}}
 }
 
 type odbcDriver struct {

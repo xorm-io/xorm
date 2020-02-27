@@ -11,14 +11,15 @@ import (
 	"testing"
 	"time"
 
+	"xorm.io/xorm/names"
+
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
-	"xorm.io/xorm/names"
 )
 
 var (
-	dbtype         = flag.String("dbtype", "mysql", "database type")
-	dbConn         = flag.String("dbConn", "root:@/core_test?charset=utf8", "database connect string")
+	dbtype         = flag.String("dbtype", "sqlite3", "database type")
+	dbConn         = flag.String("dbConn", "./db_test.db", "database connect string")
 	createTableSql string
 )
 
