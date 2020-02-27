@@ -34,7 +34,7 @@ func (session *Session) Exist(bean ...interface{}) (bool, error) {
 				return false, ErrTableNotFound
 			}
 
-			tableName = session.statement.Engine.Quote(tableName)
+			tableName = session.statement.quote(tableName)
 			if len(session.statement.JoinStr) > 0 {
 				joinStr = session.statement.JoinStr
 			}

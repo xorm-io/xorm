@@ -282,7 +282,7 @@ func (session *Session) cacheGet(bean interface{}, sqlStr string, args ...interf
 	tableName := session.statement.TableName()
 	cacher := session.engine.getCacher(tableName)
 
-	session.engine.logger.Debug("[cacheGet] find sql:", newsql, args)
+	session.engine.logger.Debug("[cache] Get SQL:", newsql, args)
 	table := session.statement.RefTable
 	ids, err := caches.GetCacheSql(cacher, tableName, newsql, args)
 	if err != nil {
@@ -318,19 +318,19 @@ func (session *Session) cacheGet(bean interface{}, sqlStr string, args ...interf
 		}
 
 		ids = []schemas.PK{pk}
-		session.engine.logger.Debug("[cacheGet] cache ids:", newsql, ids)
+		session.engine.logger.Debug("[cache] cache ids:", newsql, ids)
 		err = caches.PutCacheSql(cacher, ids, tableName, newsql, args)
 		if err != nil {
 			return false, err
 		}
 	} else {
-		session.engine.logger.Debug("[cacheGet] cache hit sql:", newsql, ids)
+		session.engine.logger.Debug("[cache] cache hit:", newsql, ids)
 	}
 
 	if len(ids) > 0 {
 		structValue := reflect.Indirect(reflect.ValueOf(bean))
 		id := ids[0]
-		session.engine.logger.Debug("[cacheGet] get bean:", tableName, id)
+		session.engine.logger.Debug("[cache] get bean:", tableName, id)
 		sid, err := id.ToString()
 		if err != nil {
 			return false, err
@@ -343,10 +343,10 @@ func (session *Session) cacheGet(bean interface{}, sqlStr string, args ...interf
 				return has, err
 			}
 
-			session.engine.logger.Debug("[cacheGet] cache bean:", tableName, id, cacheBean)
+			session.engine.logger.Debug("[cache] cache bean:", tableName, id, cacheBean)
 			cacher.PutBean(tableName, sid, cacheBean)
 		} else {
-			session.engine.logger.Debug("[cacheGet] cache hit bean:", tableName, id, cacheBean)
+			session.engine.logger.Debug("[cache] cache hit:", tableName, id, cacheBean)
 			has = true
 		}
 		structValue.Set(reflect.Indirect(reflect.ValueOf(cacheBean)))

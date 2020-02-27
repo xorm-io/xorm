@@ -341,9 +341,9 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	var top string
 	if st.LimitN != nil {
 		limitValue := *st.LimitN
-		if st.Engine.dialect.DBType() == schemas.MYSQL {
+		if st.dialect.DBType() == schemas.MYSQL {
 			condSQL = condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
-		} else if st.Engine.dialect.DBType() == schemas.SQLITE {
+		} else if st.dialect.DBType() == schemas.SQLITE {
 			tempCondSQL := condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
 			cond = cond.And(builder.Expr(fmt.Sprintf("rowid IN (SELECT rowid FROM %v %v)",
 				session.engine.Quote(tableName), tempCondSQL), condArgs...))
@@ -354,7 +354,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 			if len(condSQL) > 0 {
 				condSQL = "WHERE " + condSQL
 			}
-		} else if st.Engine.dialect.DBType() == schemas.POSTGRES {
+		} else if st.dialect.DBType() == schemas.POSTGRES {
 			tempCondSQL := condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
 			cond = cond.And(builder.Expr(fmt.Sprintf("CTID IN (SELECT CTID FROM %v %v)",
 				session.engine.Quote(tableName), tempCondSQL), condArgs...))
@@ -366,8 +366,8 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 			if len(condSQL) > 0 {
 				condSQL = "WHERE " + condSQL
 			}
-		} else if st.Engine.dialect.DBType() == schemas.MSSQL {
-			if st.OrderStr != "" && st.Engine.dialect.DBType() == schemas.MSSQL &&
+		} else if st.dialect.DBType() == schemas.MSSQL {
+			if st.OrderStr != "" && st.dialect.DBType() == schemas.MSSQL &&
 				table != nil && len(table.PrimaryKeys) == 1 {
 				cond = builder.Expr(fmt.Sprintf("%s IN (SELECT TOP (%d) %s FROM %v%v)",
 					table.PrimaryKeys[0], limitValue, table.PrimaryKeys[0],

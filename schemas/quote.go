@@ -93,15 +93,23 @@ func (q Quoter) Join(a []string, sep string) string {
 		if i > 0 {
 			b.WriteString(sep)
 		}
-		if q[0] != "" {
+		if q[0] != "" && s != "*" {
 			b.WriteString(q[0])
 		}
 		b.WriteString(strings.TrimSpace(s))
-		if q[1] != "" {
+		if q[1] != "" && s != "*" {
 			b.WriteString(q[1])
 		}
 	}
 	return b.String()
+}
+
+func (q Quoter) Strings(s []string) []string {
+	var res = make([]string, 0, len(s))
+	for _, a := range s {
+		res = append(res, q.Quote(a))
+	}
+	return res
 }
 
 func (q Quoter) QuoteTo(buf *strings.Builder, value string) {

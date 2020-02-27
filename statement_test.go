@@ -166,15 +166,17 @@ func (TestType) TableName() string {
 func createTestStatement() *Statement {
 	if engine, ok := testEngine.(*Engine); ok {
 		statement := &Statement{}
-		statement.Init()
+		statement.Reset()
 		statement.Engine = engine
+		statement.dialect = engine.dialect
 		statement.setRefValue(reflect.ValueOf(TestType{}))
 
 		return statement
 	} else if eg, ok := testEngine.(*EngineGroup); ok {
 		statement := &Statement{}
-		statement.Init()
+		statement.Reset()
 		statement.Engine = eg.Engine
+		statement.dialect = eg.Engine.dialect
 		statement.setRefValue(reflect.ValueOf(TestType{}))
 
 		return statement
@@ -232,17 +234,12 @@ func TestUpdateIgnoreOnlyFromDBFields(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	record := assertGetRecord()
-	record.OnlyFromDBField = "test"
-	testEngine.Update(record)
 	assertGetRecord()
-}
 
-func TestCol2NewColsWithQuote(t *testing.T) {
-	cols := []string{"f1", "f2", "t3.f3"}
-
-	statement := createTestStatement()
-
-	quotedCols := statement.col2NewColsWithQuote(cols...)
-	assert.EqualValues(t, []string{statement.Engine.Quote("f1"), statement.Engine.Quote("f2"), statement.Engine.Quote("t3.f3")}, quotedCols)
+	_, err = testEngine.ID(1).Update(&TestOnlyFromDBField{
+		OnlyToDBField:   "b",
+		OnlyFromDBField: "test",
+	})
+	assert.NoError(t, err)
+	assertGetRecord()
 }

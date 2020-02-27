@@ -130,7 +130,7 @@ func NewSimpleLogger3(out io.Writer, prefix string, flag int, l LogLevel) *Simpl
 // Error implement ILogger
 func (s *SimpleLogger) Error(v ...interface{}) {
 	if s.level <= LOG_ERR {
-		s.ERR.Output(2, fmt.Sprint(v...))
+		s.ERR.Output(2, fmt.Sprintln(v...))
 	}
 	return
 }
@@ -146,7 +146,7 @@ func (s *SimpleLogger) Errorf(format string, v ...interface{}) {
 // Debug implement ILogger
 func (s *SimpleLogger) Debug(v ...interface{}) {
 	if s.level <= LOG_DEBUG {
-		s.DEBUG.Output(2, fmt.Sprint(v...))
+		s.DEBUG.Output(2, fmt.Sprintln(v...))
 	}
 	return
 }
@@ -162,7 +162,7 @@ func (s *SimpleLogger) Debugf(format string, v ...interface{}) {
 // Info implement ILogger
 func (s *SimpleLogger) Info(v ...interface{}) {
 	if s.level <= LOG_INFO {
-		s.INFO.Output(2, fmt.Sprint(v...))
+		s.INFO.Output(2, fmt.Sprintln(v...))
 	}
 	return
 }
@@ -178,7 +178,7 @@ func (s *SimpleLogger) Infof(format string, v ...interface{}) {
 // Warn implement ILogger
 func (s *SimpleLogger) Warn(v ...interface{}) {
 	if s.level <= LOG_WARNING {
-		s.WARN.Output(2, fmt.Sprint(v...))
+		s.WARN.Output(2, fmt.Sprintln(v...))
 	}
 	return
 }

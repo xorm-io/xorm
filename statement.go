@@ -20,6 +20,7 @@ import (
 // Statement save all the sql info for executing SQL
 type Statement struct {
 	RefTable        *schemas.Table
+	dialect         dialects.Dialect
 	Engine          *Engine
 	Start           int
 	LimitN          *int
@@ -32,7 +33,6 @@ type Statement struct {
 	ColumnStr       string
 	selectStr       string
 	useAllCols      bool
-	OmitStr         string
 	AltTableName    string
 	tableName       string
 	RawSQL          string
@@ -63,8 +63,20 @@ type Statement struct {
 	lastError       error
 }
 
+func newStatement(dialect dialects.Dialect) *Statement {
+	statement := &Statement{
+		dialect: dialect,
+	}
+	statement.Reset()
+	return statement
+}
+
+func (statement *Statement) omitStr() string {
+	return statement.dialect.Quoter().Join(statement.omitColumnMap, " ,")
+}
+
 // Init reset all the statement's fields
-func (statement *Statement) Init() {
+func (statement *Statement) Reset() {
 	statement.RefTable = nil
 	statement.Start = 0
 	statement.LimitN = nil
@@ -75,7 +87,6 @@ func (statement *Statement) Init() {
 	statement.GroupByStr = ""
 	statement.HavingStr = ""
 	statement.ColumnStr = ""
-	statement.OmitStr = ""
 	statement.columnMap = columnMap{}
 	statement.omitColumnMap = columnMap{}
 	statement.AltTableName = ""
@@ -144,6 +155,10 @@ func (statement *Statement) Where(query interface{}, args ...interface{}) *State
 	return statement.And(query, args...)
 }
 
+func (statement *Statement) quote(s string) string {
+	return statement.dialect.Quoter().Quote(s)
+}
+
 // And add Where & and statement
 func (statement *Statement) And(query interface{}, args ...interface{}) *Statement {
 	switch query.(type) {
@@ -154,7 +169,7 @@ func (statement *Statement) And(query interface{}, args ...interface{}) *Stateme
 		queryMap := query.(map[string]interface{})
 		newMap := make(map[string]interface{})
 		for k, v := range queryMap {
-			newMap[statement.Engine.Quote(k)] = v
+			newMap[statement.quote(k)] = v
 		}
 		statement.cond = statement.cond.And(builder.Eq(newMap))
 	case builder.Cond:
@@ -197,14 +212,14 @@ func (statement *Statement) Or(query interface{}, args ...interface{}) *Statemen
 
 // In generate "Where column IN (?) " statement
 func (statement *Statement) In(column string, args ...interface{}) *Statement {
-	in := builder.In(statement.Engine.Quote(column), args...)
+	in := builder.In(statement.quote(column), args...)
 	statement.cond = statement.cond.And(in)
 	return statement
 }
 
 // NotIn generate "Where column NOT IN (?) " statement
 func (statement *Statement) NotIn(column string, args ...interface{}) *Statement {
-	notIn := builder.NotIn(statement.Engine.Quote(column), args...)
+	notIn := builder.NotIn(statement.quote(column), args...)
 	statement.cond = statement.cond.And(notIn)
 	return statement
 }
@@ -341,7 +356,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 			if fieldValue.IsNil() {
 				if includeNil {
 					args = append(args, nil)
-					colNames = append(colNames, fmt.Sprintf("%v=?", engine.Quote(col.Name)))
+					colNames = append(colNames, fmt.Sprintf("%v=?", statement.quote(col.Name)))
 				}
 				continue
 			} else if !fieldValue.IsValid() {
@@ -485,10 +500,10 @@ func (statement *Statement) buildUpdates(bean interface{},
 
 	APPEND:
 		args = append(args, val)
-		if col.IsPrimaryKey && engine.dialect.DBType() == "ql" {
+		if col.IsPrimaryKey {
 			continue
 		}
-		colNames = append(colNames, fmt.Sprintf("%v = ?", engine.Quote(col.Name)))
+		colNames = append(colNames, fmt.Sprintf("%v = ?", statement.quote(col.Name)))
 	}
 
 	return colNames, args
@@ -504,9 +519,9 @@ func (statement *Statement) colName(col *schemas.Column, tableName string) strin
 		if len(statement.TableAlias) > 0 {
 			nm = statement.TableAlias
 		}
-		return statement.Engine.Quote(nm) + "." + statement.Engine.Quote(col.Name)
+		return statement.quote(nm) + "." + statement.quote(col.Name)
 	}
-	return statement.Engine.Quote(col.Name)
+	return statement.quote(col.Name)
 }
 
 // TableName return current tableName
@@ -572,24 +587,6 @@ func (statement *Statement) SetExpr(column string, expression interface{}) *Stat
 	return statement
 }
 
-func (statement *Statement) col2NewColsWithQuote(columns ...string) []string {
-	newColumns := make([]string, 0)
-	quotes := append(strings.Split(statement.Engine.Quote(""), ""), "`")
-	for _, col := range columns {
-		newColumns = append(newColumns, statement.Engine.Quote(eraseAny(col, quotes...)))
-	}
-	return newColumns
-}
-
-func (statement *Statement) colmap2NewColsWithQuote() []string {
-	newColumns := make([]string, len(statement.columnMap), len(statement.columnMap))
-	copy(newColumns, statement.columnMap)
-	for i := 0; i < len(statement.columnMap); i++ {
-		newColumns[i] = statement.Engine.Quote(newColumns[i])
-	}
-	return newColumns
-}
-
 // Distinct generates "DISTINCT col1, col2 " statement
 func (statement *Statement) Distinct(columns ...string) *Statement {
 	statement.IsDistinct = true
@@ -616,10 +613,7 @@ func (statement *Statement) Cols(columns ...string) *Statement {
 		statement.columnMap.add(nc)
 	}
 
-	newColumns := statement.colmap2NewColsWithQuote()
-
-	statement.ColumnStr = strings.Join(newColumns, ", ")
-	statement.ColumnStr = strings.Replace(statement.ColumnStr, statement.Engine.dialect.Quoter().Quote("*"), "*", -1)
+	statement.ColumnStr = statement.dialect.Quoter().Join(statement.columnMap, ", ")
 	return statement
 }
 
@@ -654,7 +648,6 @@ func (statement *Statement) Omit(columns ...string) {
 	for _, nc := range newColumns {
 		statement.omitColumnMap = append(statement.omitColumnMap, nc)
 	}
-	statement.OmitStr = statement.Engine.Quote(strings.Join(newColumns, statement.Engine.Quote(", ")))
 }
 
 // Nullable Update use only: update columns to null when value is nullable and zero-value
@@ -695,8 +688,13 @@ func (statement *Statement) Desc(colNames ...string) *Statement {
 	if len(statement.OrderStr) > 0 {
 		fmt.Fprint(&buf, statement.OrderStr, ", ")
 	}
-	newColNames := statement.col2NewColsWithQuote(colNames...)
-	fmt.Fprintf(&buf, "%v DESC", strings.Join(newColNames, " DESC, "))
+	for i, col := range colNames {
+		if i > 0 {
+			fmt.Fprint(&buf, ", ")
+		}
+		statement.dialect.Quoter().QuoteTo(&buf, col)
+		fmt.Fprint(&buf, " DESC")
+	}
 	statement.OrderStr = buf.String()
 	return statement
 }
@@ -707,8 +705,13 @@ func (statement *Statement) Asc(colNames ...string) *Statement {
 	if len(statement.OrderStr) > 0 {
 		fmt.Fprint(&buf, statement.OrderStr, ", ")
 	}
-	newColNames := statement.col2NewColsWithQuote(colNames...)
-	fmt.Fprintf(&buf, "%v ASC", strings.Join(newColNames, " ASC, "))
+	for i, col := range colNames {
+		if i > 0 {
+			fmt.Fprint(&buf, ", ")
+		}
+		statement.dialect.Quoter().QuoteTo(&buf, col)
+		fmt.Fprint(&buf, " ASC")
+	}
 	statement.OrderStr = buf.String()
 	return statement
 }
