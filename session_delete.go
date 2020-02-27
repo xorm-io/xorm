@@ -28,7 +28,7 @@ func (session *Session) cacheDelete(table *schemas.Table, tableName, sqlStr stri
 		return ErrCacheFailed
 	}
 
-	cacher := session.engine.getCacher(tableName)
+	cacher := session.engine.GetCacher(tableName)
 	pkColumns := table.PKColumns()
 	ids, err := caches.GetCacheSql(cacher, tableName, newsql, args)
 	if err != nil {
@@ -206,7 +206,7 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 		})
 	}
 
-	if cacher := session.engine.getCacher(tableNameNoQuote); cacher != nil && session.statement.UseCache {
+	if cacher := session.engine.GetCacher(tableNameNoQuote); cacher != nil && session.statement.UseCache {
 		session.cacheDelete(table, tableNameNoQuote, deleteSQL, argsForCache...)
 	}
 

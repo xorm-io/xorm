@@ -40,8 +40,7 @@ type Engine struct {
 	TagIdentifier string
 	Tables        map[reflect.Type]*schemas.Table
 
-	mutex  *sync.RWMutex
-	Cacher caches.Cacher
+	mutex *sync.RWMutex
 
 	showSQL      bool
 	showExecTime bool
@@ -50,42 +49,20 @@ type Engine struct {
 	TZLocation *time.Location // The timezone of the application
 	DatabaseTZ *time.Location // The timezone of the database
 
-	disableGlobalCache bool
-
 	tagHandlers map[string]tagHandler
 
 	engineGroup *EngineGroup
-
-	cachers    map[string]caches.Cacher
-	cacherLock sync.RWMutex
+	cacherMgr   *caches.Manager
 
 	defaultContext context.Context
 }
 
-func (engine *Engine) setCacher(tableName string, cacher caches.Cacher) {
-	engine.cacherLock.Lock()
-	engine.cachers[tableName] = cacher
-	engine.cacherLock.Unlock()
-}
-
 func (engine *Engine) SetCacher(tableName string, cacher caches.Cacher) {
-	engine.setCacher(tableName, cacher)
-}
-
-func (engine *Engine) getCacher(tableName string) caches.Cacher {
-	var cacher caches.Cacher
-	var ok bool
-	engine.cacherLock.RLock()
-	cacher, ok = engine.cachers[tableName]
-	engine.cacherLock.RUnlock()
-	if !ok && !engine.disableGlobalCache {
-		cacher = engine.Cacher
-	}
-	return cacher
+	engine.cacherMgr.SetCacher(tableName, cacher)
 }
 
 func (engine *Engine) GetCacher(tableName string) caches.Cacher {
-	return engine.getCacher(tableName)
+	return engine.cacherMgr.GetCacher(tableName)
 }
 
 // BufferSize sets buffer size for iterate
@@ -152,9 +129,7 @@ func (engine *Engine) SetLogLevel(level log.LogLevel) {
 
 // SetDisableGlobalCache disable global cache or not
 func (engine *Engine) SetDisableGlobalCache(disable bool) {
-	if engine.disableGlobalCache != disable {
-		engine.disableGlobalCache = disable
-	}
+	engine.cacherMgr.SetDisableGlobalCache(disable)
 }
 
 // DriverName return the current sql driver's name
@@ -244,12 +219,12 @@ func (engine *Engine) SetMaxIdleConns(conns int) {
 
 // SetDefaultCacher set the default cacher. Xorm's default not enable cacher.
 func (engine *Engine) SetDefaultCacher(cacher caches.Cacher) {
-	engine.Cacher = cacher
+	engine.cacherMgr.SetDefaultCacher(cacher)
 }
 
 // GetDefaultCacher returns the default cacher
 func (engine *Engine) GetDefaultCacher() caches.Cacher {
-	return engine.Cacher
+	return engine.cacherMgr.GetDefaultCacher()
 }
 
 // NoCache If you has set default cacher, and you want temporilly stop use cache,
@@ -269,7 +244,7 @@ func (engine *Engine) NoCascade() *Session {
 
 // MapCacher Set a table use a special cacher
 func (engine *Engine) MapCacher(bean interface{}, cacher caches.Cacher) error {
-	engine.setCacher(engine.TableName(bean, true), cacher)
+	engine.SetCacher(engine.TableName(bean, true), cacher)
 	return nil
 }
 
@@ -799,7 +774,7 @@ func (engine *Engine) autoMapType(v reflect.Value) (*schemas.Table, error) {
 		}
 
 		engine.Tables[t] = table
-		if engine.Cacher != nil {
+		if engine.GetDefaultCacher() != nil {
 			if v.CanAddr() {
 				engine.GobRegister(v.Addr().Interface())
 			} else {
@@ -1030,17 +1005,17 @@ func (engine *Engine) mapType(v reflect.Value) (*schemas.Table, error) {
 	}
 
 	if hasCacheTag {
-		if engine.Cacher != nil { // !nash! use engine's cacher if provided
+		if engine.GetDefaultCacher() != nil { // !nash! use engine's cacher if provided
 			engine.logger.Info("enable cache on table:", table.Name)
-			engine.setCacher(table.Name, engine.Cacher)
+			engine.SetCacher(table.Name, engine.GetDefaultCacher())
 		} else {
 			engine.logger.Info("enable LRU cache on table:", table.Name)
-			engine.setCacher(table.Name, caches.NewLRUCacher2(caches.NewMemoryStore(), time.Hour, 10000))
+			engine.SetCacher(table.Name, caches.NewLRUCacher2(caches.NewMemoryStore(), time.Hour, 10000))
 		}
 	}
 	if hasNoCacheTag {
 		engine.logger.Info("disable cache on table:", table.Name)
-		engine.setCacher(table.Name, nil)
+		engine.SetCacher(table.Name, nil)
 	}
 
 	return table, nil
@@ -1152,7 +1127,7 @@ func (engine *Engine) CreateUniques(bean interface{}) error {
 // ClearCacheBean if enabled cache, clear the cache bean
 func (engine *Engine) ClearCacheBean(bean interface{}, id string) error {
 	tableName := engine.TableName(bean)
-	cacher := engine.getCacher(tableName)
+	cacher := engine.GetCacher(tableName)
 	if cacher != nil {
 		cacher.ClearIds(tableName)
 		cacher.DelBean(tableName, id)
@@ -1164,7 +1139,7 @@ func (engine *Engine) ClearCacheBean(bean interface{}, id string) error {
 func (engine *Engine) ClearCache(beans ...interface{}) error {
 	for _, bean := range beans {
 		tableName := engine.TableName(bean)
-		cacher := engine.getCacher(tableName)
+		cacher := engine.GetCacher(tableName)
 		if cacher != nil {
 			cacher.ClearIds(tableName)
 			cacher.ClearBeans(tableName)

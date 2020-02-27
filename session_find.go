@@ -183,7 +183,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 	}
 
 	if session.canCache() {
-		if cacher := session.engine.getCacher(session.statement.TableName()); cacher != nil &&
+		if cacher := session.engine.GetCacher(session.statement.TableName()); cacher != nil &&
 			!session.statement.IsDistinct &&
 			!session.statement.unscoped {
 			err = session.cacheFind(sliceElementType, sqlStr, rowsSlicePtr, args...)
@@ -329,7 +329,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 	}
 
 	tableName := session.statement.TableName()
-	cacher := session.engine.getCacher(tableName)
+	cacher := session.engine.GetCacher(tableName)
 	if cacher == nil {
 		return nil
 	}

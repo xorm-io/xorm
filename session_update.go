@@ -42,7 +42,7 @@ func (session *Session) cacheUpdate(table *schemas.Table, tableName, sqlStr stri
 		}
 	}
 
-	cacher := session.engine.getCacher(tableName)
+	cacher := session.engine.GetCacher(tableName)
 	session.engine.logger.Debug("[cacheUpdate] get cache sql", newsql, args[nStart:])
 	ids, err := caches.GetCacheSql(cacher, tableName, newsql, args[nStart:])
 	if err != nil {
@@ -412,7 +412,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 		}
 	}
 
-	if cacher := session.engine.getCacher(tableName); cacher != nil && session.statement.UseCache {
+	if cacher := session.engine.GetCacher(tableName); cacher != nil && session.statement.UseCache {
 		// session.cacheUpdate(table, tableName, sqlStr, args...)
 		session.engine.logger.Debug("[cacheUpdate] clear table ", tableName)
 		cacher.ClearIds(tableName)
