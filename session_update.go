@@ -103,14 +103,8 @@ func (session *Session) cacheUpdate(table *schemas.Table, tableName, sqlStr stri
 				sps := strings.SplitN(kv, "=", 2)
 				sps2 := strings.Split(sps[0], ".")
 				colName := sps2[len(sps2)-1]
-				// treat quote prefix, suffix and '`' as quotes
-				quotes := append(strings.Split(session.engine.Quote(""), ""), "`")
-				if strings.ContainsAny(colName, strings.Join(quotes, "")) {
-					colName = strings.TrimSpace(eraseAny(colName, quotes...))
-				} else {
-					session.engine.logger.Debug("[cacheUpdate] cannot find column", tableName, colName)
-					return ErrCacheFailed
-				}
+				colName = session.engine.dialect.Quoter().Trim(colName)
+				colName = schemas.CommonQuoter.Trim(colName)
 
 				if col := table.GetColumn(colName); col != nil {
 					fieldValue, err := col.ValueOf(bean)
@@ -182,7 +176,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 			return 0, ErrTableNotFound
 		}
 
-		if session.statement.ColumnStr == "" {
+		if session.statement.columnStr() == "" {
 			colNames, args = session.statement.buildUpdates(bean, false, false,
 				false, false, true)
 		} else {

@@ -200,17 +200,3 @@ func sliceEq(left, right []string) bool {
 func indexName(tableName, idxName string) string {
 	return fmt.Sprintf("IDX_%v_%v", tableName, idxName)
 }
-
-func eraseAny(value string, strToErase ...string) string {
-	if len(strToErase) == 0 {
-		return value
-	}
-	var replaceSeq []string
-	for _, s := range strToErase {
-		replaceSeq = append(replaceSeq, s, "")
-	}
-
-	replacer := strings.NewReplacer(replaceSeq...)
-
-	return replacer.Replace(value)
-}

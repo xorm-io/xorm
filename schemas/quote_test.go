@@ -63,3 +63,9 @@ func TestStrings(t *testing.T) {
 	quotedCols := quoter.Strings(cols)
 	assert.EqualValues(t, []string{"[f1]", "[f2]", "[t3].[f3]"}, quotedCols)
 }
+
+func TestTrim(t *testing.T) {
+	raw := "[table_name]"
+	assert.EqualValues(t, raw, CommonQuoter.Trim(raw))
+	assert.EqualValues(t, "table_name", Quoter{"[", "]"}.Trim(raw))
+}

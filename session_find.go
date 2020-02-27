@@ -135,7 +135,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 			return ErrTableNotFound
 		}
 
-		var columnStr = session.statement.ColumnStr
+		var columnStr = session.statement.columnStr()
 		if len(session.statement.selectStr) > 0 {
 			columnStr = session.statement.selectStr
 		} else {

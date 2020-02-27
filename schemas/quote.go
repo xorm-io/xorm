@@ -69,7 +69,7 @@ func (q Quoter) Trim(s string) string {
 	if s[0:1] == q[0] {
 		s = s[1:]
 	}
-	if len(s) > 0 && s[len(s)-1:] == q[0] {
+	if len(s) > 0 && s[len(s)-1:] == q[1] {
 		return s[:len(s)-1]
 	}
 	return s

@@ -30,7 +30,6 @@ type Statement struct {
 	joinArgs        []interface{}
 	GroupByStr      string
 	HavingStr       string
-	ColumnStr       string
 	selectStr       string
 	useAllCols      bool
 	AltTableName    string
@@ -86,7 +85,6 @@ func (statement *Statement) Reset() {
 	statement.joinArgs = make([]interface{}, 0)
 	statement.GroupByStr = ""
 	statement.HavingStr = ""
-	statement.ColumnStr = ""
 	statement.columnMap = columnMap{}
 	statement.omitColumnMap = columnMap{}
 	statement.AltTableName = ""
@@ -612,9 +610,11 @@ func (statement *Statement) Cols(columns ...string) *Statement {
 	for _, nc := range cols {
 		statement.columnMap.add(nc)
 	}
-
-	statement.ColumnStr = statement.dialect.Quoter().Join(statement.columnMap, ", ")
 	return statement
+}
+
+func (statement *Statement) columnStr() string {
+	return statement.Engine.dialect.Quoter().Join(statement.columnMap, ", ")
 }
 
 // AllCols update use only: update all columns
@@ -955,7 +955,7 @@ func (statement *Statement) genGetSQL(bean interface{}) (string, []interface{}, 
 		statement.setRefBean(bean)
 	}
 
-	var columnStr = statement.ColumnStr
+	var columnStr = statement.columnStr()
 	if len(statement.selectStr) > 0 {
 		columnStr = statement.selectStr
 	} else {
@@ -1020,7 +1020,7 @@ func (statement *Statement) genCountSQL(beans ...interface{}) (string, []interfa
 	var selectSQL = statement.selectStr
 	if len(selectSQL) <= 0 {
 		if statement.IsDistinct {
-			selectSQL = fmt.Sprintf("count(DISTINCT %s)", statement.ColumnStr)
+			selectSQL = fmt.Sprintf("count(DISTINCT %s)", statement.columnStr())
 		} else {
 			selectSQL = "count(*)"
 		}
