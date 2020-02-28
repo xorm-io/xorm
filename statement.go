@@ -225,7 +225,7 @@ func (statement *Statement) NotIn(column string, args ...interface{}) *Statement
 
 func (statement *Statement) setRefValue(v reflect.Value) error {
 	var err error
-	statement.RefTable, err = statement.Engine.autoMapType(reflect.Indirect(v))
+	statement.RefTable, err = statement.Engine.tagParser.MapType(reflect.Indirect(v))
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (statement *Statement) setRefValue(v reflect.Value) error {
 
 func (statement *Statement) setRefBean(bean interface{}) error {
 	var err error
-	statement.RefTable, err = statement.Engine.autoMapType(rValue(bean))
+	statement.RefTable, err = statement.Engine.tagParser.MapType(rValue(bean))
 	if err != nil {
 		return err
 	}
@@ -414,8 +414,10 @@ func (statement *Statement) buildUpdates(bean interface{},
 				val, _ = nulType.Value()
 			} else {
 				if !col.SQLType.IsJson() {
-					engine.autoMapType(fieldValue)
-					if table, ok := engine.Tables[fieldValue.Type()]; ok {
+					table, err := engine.tagParser.MapType(fieldValue)
+					if err != nil {
+						val = fieldValue.Interface()
+					} else {
 						if len(table.PrimaryKeys) == 1 {
 							pkField := reflect.Indirect(fieldValue).FieldByName(table.PKColumns()[0].FieldName)
 							// fix non-int pk issues
@@ -428,8 +430,6 @@ func (statement *Statement) buildUpdates(bean interface{},
 							// TODO: how to handler?
 							panic("not supported")
 						}
-					} else {
-						val = fieldValue.Interface()
 					}
 				} else {
 					// Blank struct could not be as update data
@@ -723,7 +723,7 @@ func (statement *Statement) Table(tableNameOrBean interface{}) *Statement {
 	t := v.Type()
 	if t.Kind() == reflect.Struct {
 		var err error
-		statement.RefTable, err = statement.Engine.autoMapType(v)
+		statement.RefTable, err = statement.Engine.tagParser.MapType(v)
 		if err != nil {
 			statement.Engine.logger.Error(err)
 			return statement

@@ -92,12 +92,8 @@ func TestExtends(t *testing.T) {
 	tu9 := &tempUser4{}
 	_, err = testEngine.Get(tu9)
 	assert.NoError(t, err)
-
-	if tu9.TempUser2.TempUser.Username != tu8.TempUser2.TempUser.Username || tu9.TempUser2.Departname != tu8.TempUser2.Departname {
-		err = errors.New(fmt.Sprintln("not equal for", tu8, tu9))
-		t.Error(err)
-		panic(err)
-	}
+	assert.EqualValues(t, tu8.TempUser2.TempUser.Username, tu9.TempUser2.TempUser.Username)
+	assert.EqualValues(t, tu8.TempUser2.Departname, tu9.TempUser2.Departname)
 
 	tu10 := &tempUser4{tempUser2{tempUser{0, "extends update"}, ""}}
 	_, err = testEngine.ID(tu9.TempUser2.TempUser.Id).Update(tu10)
@@ -117,17 +113,10 @@ func TestExtends(t *testing.T) {
 	_, err = testEngine.Get(tu5)
 	assert.NoError(t, err)
 
-	if tu5.Temp == nil {
-		err = errors.New("error get data extends")
-		t.Error(err)
-		panic(err)
-	}
-	if tu5.Temp.Id != 1 || tu5.Temp.Username != "extends" ||
-		tu5.Departname != "dev depart" {
-		err = errors.New("error get data extends")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NotNil(t, tu5.Temp)
+	assert.EqualValues(t, 1, tu5.Temp.Id)
+	assert.EqualValues(t, "extends", tu5.Temp.Username)
+	assert.EqualValues(t, "dev depart", tu5.Departname)
 
 	tu6 := &tempUser3{&tempUser{0, "extends update"}, ""}
 	_, err = testEngine.ID(tu5.Temp.Id).Update(tu6)
@@ -162,47 +151,25 @@ func TestExtends(t *testing.T) {
 		qt(ui), qt(ud), qt(ui), qt(udid), qt(ud), qt(uiid))
 	b, err := testEngine.SQL(sql).NoCascade().Get(&info)
 	assert.NoError(t, err)
-	if !b {
-		err = errors.New("should has lest one record")
-		t.Error(err)
-		panic(err)
-	}
-	fmt.Println(info)
-	if info.Userinfo.Uid == 0 || info.Userdetail.Id == 0 {
-		err = errors.New("all of the id should has value")
-		t.Error(err)
-		panic(err)
-	}
+	assert.True(t, b, "should has lest one record")
+	assert.True(t, info.Userinfo.Uid > 0, "all of the id should has value")
+	assert.True(t, info.Userdetail.Id > 0, "all of the id should has value")
 
-	fmt.Println("----join--info2")
 	var info2 UserAndDetail
 	b, err = testEngine.Table(&Userinfo{}).
 		Join("LEFT", qt(ud), qt(ui)+"."+qt("detail_id")+" = "+qt(ud)+"."+qt(uiid)).
 		NoCascade().Get(&info2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !b {
-		err = errors.New("should has lest one record")
-		t.Error(err)
-		panic(err)
-	}
-	if info2.Userinfo.Uid == 0 || info2.Userdetail.Id == 0 {
-		err = errors.New("all of the id should has value")
-		t.Error(err)
-		panic(err)
-	}
-	fmt.Println(info2)
+	assert.NoError(t, err)
+	assert.True(t, b)
+	assert.True(t, info2.Userinfo.Uid > 0, "all of the id should has value")
+	assert.True(t, info2.Userdetail.Id > 0, "all of the id should has value")
 
-	fmt.Println("----join--infos2")
 	var infos2 = make([]UserAndDetail, 0)
 	err = testEngine.Table(&Userinfo{}).
 		Join("LEFT", qt(ud), qt(ui)+"."+qt("detail_id")+" = "+qt(ud)+"."+qt(uiid)).
 		NoCascade().
 		Find(&infos2)
 	assert.NoError(t, err)
-	fmt.Println(infos2)
 }
 
 type MessageBase struct {

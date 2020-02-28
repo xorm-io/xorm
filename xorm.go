@@ -10,9 +10,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"reflect"
 	"runtime"
-	"sync"
 	"time"
 
 	"xorm.io/xorm/caches"
@@ -61,14 +59,17 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		return nil, err
 	}
 
+	cacherMgr := caches.NewManager()
+	mapper := names.NewCacheMapper(new(names.SnakeMapper))
+	tagParser := tags.NewParser("xorm", dialect, mapper, mapper, cacherMgr)
+
 	engine := &Engine{
 		db:             db,
 		dialect:        dialect,
-		Tables:         make(map[reflect.Type]*schemas.Table),
-		mutex:          &sync.RWMutex{},
 		TZLocation:     time.Local,
 		defaultContext: context.Background(),
-		cacherMgr:      caches.NewManager(),
+		cacherMgr:      cacherMgr,
+		tagParser:      tagParser,
 	}
 
 	if uri.DBType == schemas.SQLITE {
@@ -80,8 +81,6 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	logger := log.NewSimpleLogger(os.Stdout)
 	logger.SetLevel(log.LOG_INFO)
 	engine.SetLogger(logger)
-	mapper := names.NewCacheMapper(new(names.SnakeMapper))
-	engine.tagParser = tags.NewParser("xorm", dialect, mapper, mapper, engine.cacherMgr)
 
 	runtime.SetFinalizer(engine, close)
 

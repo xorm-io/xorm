@@ -165,8 +165,10 @@ func (engine *Engine) buildConds(table *schemas.Table, bean interface{},
 						val = bytes
 					}
 				} else {
-					engine.autoMapType(fieldValue)
-					if table, ok := engine.Tables[fieldValue.Type()]; ok {
+					table, err := engine.tagParser.MapType(fieldValue)
+					if err != nil {
+						val = fieldValue.Interface()
+					} else {
 						if len(table.PrimaryKeys) == 1 {
 							pkField := reflect.Indirect(fieldValue).FieldByName(table.PKColumns()[0].FieldName)
 							// fix non-int pk issues
@@ -180,8 +182,6 @@ func (engine *Engine) buildConds(table *schemas.Table, bean interface{},
 							//TODO: how to handler?
 							return nil, fmt.Errorf("not supported %v as %v", fieldValue.Interface(), table.PrimaryKeys)
 						}
-					} else {
-						val = fieldValue.Interface()
 					}
 				}
 			}

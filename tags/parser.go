@@ -5,10 +5,12 @@
 package tags
 
 import (
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"xorm.io/xorm/caches"
@@ -25,6 +27,7 @@ type Parser struct {
 	TableMapper  names.Mapper
 	handlers     map[string]Handler
 	cacherMgr    *caches.Manager
+	tableCache   sync.Map // map[reflect.Type]*schemas.Table
 }
 
 func NewParser(identifier string, dialect dialects.Dialect, tableMapper, columnMapper names.Mapper, cacherMgr *caches.Manager) *Parser {
@@ -51,6 +54,36 @@ func addIndex(indexName string, table *schemas.Table, col *schemas.Column, index
 }
 
 func (parser *Parser) MapType(v reflect.Value) (*schemas.Table, error) {
+	t := v.Type()
+	tableI, ok := parser.tableCache.Load(t)
+	if ok {
+		return tableI.(*schemas.Table), nil
+	}
+
+	table, err := parser.mapType(v)
+	if err != nil {
+		return nil, err
+	}
+
+	parser.tableCache.Store(t, table)
+
+	if parser.cacherMgr.GetDefaultCacher() != nil {
+		if v.CanAddr() {
+			gob.Register(v.Addr().Interface())
+		} else {
+			gob.Register(v.Interface())
+		}
+	}
+
+	return table, nil
+}
+
+// ClearTable removes the database mapper of a type from the cache
+func (parser *Parser) ClearTable(t reflect.Type) {
+	parser.tableCache.Delete(t)
+}
+
+func (parser *Parser) mapType(v reflect.Value) (*schemas.Table, error) {
 	t := v.Type()
 	table := schemas.NewEmptyTable()
 	table.Type = t

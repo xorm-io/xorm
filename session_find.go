@@ -275,7 +275,7 @@ func (session *Session) noCacheFind(table *schemas.Table, containerValue reflect
 	if elemType.Kind() == reflect.Struct {
 		var newValue = newElemFunc(fields)
 		dataStruct := rValue(newValue.Interface())
-		tb, err := session.engine.autoMapType(dataStruct)
+		tb, err := session.engine.tagParser.MapType(dataStruct)
 		if err != nil {
 			return err
 		}

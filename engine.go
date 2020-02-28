@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
-	"encoding/gob"
 	"errors"
 	"fmt"
 	"io"
@@ -17,7 +16,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"xorm.io/builder"
@@ -36,10 +34,6 @@ import (
 type Engine struct {
 	db      *core.DB
 	dialect dialects.Dialect
-
-	Tables map[reflect.Type]*schemas.Table
-
-	mutex *sync.RWMutex
 
 	showSQL      bool
 	showExecTime bool
@@ -753,43 +747,6 @@ func (engine *Engine) Having(conditions string) *Session {
 	return session.Having(conditions)
 }
 
-// UnMapType removes the database mapper of a type
-func (engine *Engine) UnMapType(t reflect.Type) {
-	engine.mutex.Lock()
-	defer engine.mutex.Unlock()
-	delete(engine.Tables, t)
-}
-
-func (engine *Engine) autoMapType(v reflect.Value) (*schemas.Table, error) {
-	t := v.Type()
-	engine.mutex.Lock()
-	defer engine.mutex.Unlock()
-	table, ok := engine.Tables[t]
-	if !ok {
-		var err error
-		table, err = engine.tagParser.MapType(v)
-		if err != nil {
-			return nil, err
-		}
-
-		engine.Tables[t] = table
-		if engine.GetDefaultCacher() != nil {
-			if v.CanAddr() {
-				engine.GobRegister(v.Addr().Interface())
-			} else {
-				engine.GobRegister(v.Interface())
-			}
-		}
-	}
-	return table, nil
-}
-
-// GobRegister register one struct to gob for cache use
-func (engine *Engine) GobRegister(v interface{}) *Engine {
-	gob.Register(v)
-	return engine
-}
-
 // Table table struct
 type Table struct {
 	*schemas.Table
@@ -804,7 +761,7 @@ func (t *Table) IsValid() bool {
 // TableInfo get table info according to bean's content
 func (engine *Engine) TableInfo(bean interface{}) *Table {
 	v := rValue(bean)
-	tb, err := engine.autoMapType(v)
+	tb, err := engine.tagParser.MapType(v)
 	if err != nil {
 		engine.logger.Error(err)
 	}
@@ -842,7 +799,7 @@ func (engine *Engine) IDOfV(rv reflect.Value) schemas.PK {
 
 func (engine *Engine) idOfV(rv reflect.Value) (schemas.PK, error) {
 	v := reflect.Indirect(rv)
-	table, err := engine.autoMapType(v)
+	table, err := engine.tagParser.MapType(v)
 	if err != nil {
 		return nil, err
 	}
@@ -938,6 +895,11 @@ func (engine *Engine) ClearCache(beans ...interface{}) error {
 	return nil
 }
 
+// UnMapType remove table from tables cache
+func (engine *Engine) UnMapType(t reflect.Type) {
+	engine.tagParser.ClearTable(t)
+}
+
 // Sync the new struct changes to database, this method will automatically add
 // table, column, index, unique. but will not delete or change anything.
 // If you change some field, you should change the database manually.
@@ -948,7 +910,7 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 	for _, bean := range beans {
 		v := rValue(bean)
 		tableNameNoSchema := engine.TableName(bean)
-		table, err := engine.autoMapType(v)
+		table, err := engine.tagParser.MapType(v)
 		if err != nil {
 			return err
 		}
