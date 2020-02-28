@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"time"
 
-	"xorm.io/builder"
 	"xorm.io/xorm/core"
+	"xorm.io/xorm/internal/statements"
 )
 
 func (session *Session) queryPreprocess(sqlStr *string, paramStr ...interface{}) {
@@ -196,20 +196,6 @@ func (session *Session) exec(sqlStr string, args ...interface{}) (sql.Result, er
 	return session.DB().ExecContext(session.ctx, sqlStr, args...)
 }
 
-func convertSQLOrArgs(sqlOrArgs ...interface{}) (string, []interface{}, error) {
-	switch sqlOrArgs[0].(type) {
-	case string:
-		return sqlOrArgs[0].(string), sqlOrArgs[1:], nil
-	case *builder.Builder:
-		return sqlOrArgs[0].(*builder.Builder).ToSQL()
-	case builder.Builder:
-		bd := sqlOrArgs[0].(builder.Builder)
-		return bd.ToSQL()
-	}
-
-	return "", nil, ErrUnSupportedType
-}
-
 // Exec raw sql
 func (session *Session) Exec(sqlOrArgs ...interface{}) (sql.Result, error) {
 	if session.isAutoClose {
@@ -220,7 +206,7 @@ func (session *Session) Exec(sqlOrArgs ...interface{}) (sql.Result, error) {
 		return nil, ErrUnSupportedType
 	}
 
-	sqlStr, args, err := convertSQLOrArgs(sqlOrArgs...)
+	sqlStr, args, err := statements.ConvertSQLOrArgs(sqlOrArgs...)
 	if err != nil {
 		return nil, err
 	}

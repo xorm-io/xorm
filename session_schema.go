@@ -33,11 +33,11 @@ func (session *Session) CreateTable(bean interface{}) error {
 }
 
 func (session *Session) createTable(bean interface{}) error {
-	if err := session.statement.setRefBean(bean); err != nil {
+	if err := session.statement.SetRefBean(bean); err != nil {
 		return err
 	}
 
-	sqlStr := session.statement.genCreateTableSQL()
+	sqlStr := session.statement.GenCreateTableSQL()
 	_, err := session.exec(sqlStr)
 	return err
 }
@@ -52,11 +52,11 @@ func (session *Session) CreateIndexes(bean interface{}) error {
 }
 
 func (session *Session) createIndexes(bean interface{}) error {
-	if err := session.statement.setRefBean(bean); err != nil {
+	if err := session.statement.SetRefBean(bean); err != nil {
 		return err
 	}
 
-	sqls := session.statement.genIndexSQL()
+	sqls := session.statement.GenIndexSQL()
 	for _, sqlStr := range sqls {
 		_, err := session.exec(sqlStr)
 		if err != nil {
@@ -75,11 +75,11 @@ func (session *Session) CreateUniques(bean interface{}) error {
 }
 
 func (session *Session) createUniques(bean interface{}) error {
-	if err := session.statement.setRefBean(bean); err != nil {
+	if err := session.statement.SetRefBean(bean); err != nil {
 		return err
 	}
 
-	sqls := session.statement.genUniqueSQL()
+	sqls := session.statement.GenUniqueSQL()
 	for _, sqlStr := range sqls {
 		_, err := session.exec(sqlStr)
 		if err != nil {
@@ -99,11 +99,11 @@ func (session *Session) DropIndexes(bean interface{}) error {
 }
 
 func (session *Session) dropIndexes(bean interface{}) error {
-	if err := session.statement.setRefBean(bean); err != nil {
+	if err := session.statement.SetRefBean(bean); err != nil {
 		return err
 	}
 
-	sqls := session.statement.genDelIndexSQL()
+	sqls := session.statement.GenDelIndexSQL()
 	for _, sqlStr := range sqls {
 		_, err := session.exec(sqlStr)
 		if err != nil {
@@ -201,7 +201,7 @@ func (session *Session) isIndexExist2(tableName string, cols []string, unique bo
 
 func (session *Session) addColumn(colName string) error {
 	col := session.statement.RefTable.GetColumn(colName)
-	sql := session.statement.dialect.AddColumnSQL(session.statement.TableName(), col)
+	sql := session.engine.dialect.AddColumnSQL(session.statement.TableName(), col)
 	_, err := session.exec(sql)
 	return err
 }
@@ -241,7 +241,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 	}()
 
 	for _, bean := range beans {
-		v := rValue(bean)
+		v := utils.ReflectValue(bean)
 		table, err := engine.tagParser.MapType(v)
 		if err != nil {
 			return err
@@ -299,7 +299,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 			// column is not exist on table
 			if oriCol == nil {
 				session.statement.RefTable = table
-				session.statement.tableName = tbNameWithSchema
+				session.statement.SetTableName(tbNameWithSchema)
 				if err = session.addColumn(col.Name); err != nil {
 					return err
 				}
@@ -409,11 +409,11 @@ func (session *Session) Sync2(beans ...interface{}) error {
 		for name, index := range addedNames {
 			if index.Type == schemas.UniqueType {
 				session.statement.RefTable = table
-				session.statement.tableName = tbNameWithSchema
+				session.statement.SetTableName(tbNameWithSchema)
 				err = session.addUnique(tbNameWithSchema, name)
 			} else if index.Type == schemas.IndexType {
 				session.statement.RefTable = table
-				session.statement.tableName = tbNameWithSchema
+				session.statement.SetTableName(tbNameWithSchema)
 				err = session.addIndex(tbNameWithSchema, name)
 			}
 			if err != nil {

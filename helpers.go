@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -138,36 +137,12 @@ func int64ToInt(id int64, tp reflect.Type) interface{} {
 	return int64ToIntValue(id, tp).Interface()
 }
 
-func indexNoCase(s, sep string) int {
-	return strings.Index(strings.ToLower(s), strings.ToLower(sep))
-}
-
-func splitNoCase(s, sep string) []string {
-	idx := indexNoCase(s, sep)
-	if idx < 0 {
-		return []string{s}
-	}
-	return strings.Split(s, s[idx:idx+len(sep)])
-}
-
-func splitNNoCase(s, sep string, n int) []string {
-	idx := indexNoCase(s, sep)
-	if idx < 0 {
-		return []string{s}
-	}
-	return strings.SplitN(s, s[idx:idx+len(sep)], n)
-}
-
 func makeArray(elem string, count int) []string {
 	res := make([]string, count)
 	for i := 0; i < count; i++ {
 		res[i] = elem
 	}
 	return res
-}
-
-func rValue(bean interface{}) reflect.Value {
-	return reflect.Indirect(reflect.ValueOf(bean))
 }
 
 func rType(bean interface{}) reflect.Type {
@@ -181,10 +156,6 @@ func structName(v reflect.Type) string {
 		v = v.Elem()
 	}
 	return v.Name()
-}
-
-func indexName(tableName, idxName string) string {
-	return fmt.Sprintf("IDX_%v_%v", tableName, idxName)
 }
 
 func formatTime(t time.Time) string {

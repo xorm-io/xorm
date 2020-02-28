@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package contexts
 
 // ContextCache is the interface that operates the cache data.
 type ContextCache interface {

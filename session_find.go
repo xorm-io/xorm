@@ -8,10 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 
 	"xorm.io/builder"
 	"xorm.io/xorm/caches"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
 
@@ -53,8 +53,8 @@ func (session *Session) FindAndCount(rowsSlicePtr interface{}, condiBean ...inte
 	}
 	session.autoResetStatement = true
 
-	if session.statement.selectStr != "" {
-		session.statement.selectStr = ""
+	if session.statement.SelectStr != "" {
+		session.statement.SelectStr = ""
 	}
 	if session.statement.OrderStr != "" {
 		session.statement.OrderStr = ""
@@ -66,8 +66,8 @@ func (session *Session) FindAndCount(rowsSlicePtr interface{}, condiBean ...inte
 func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{}) error {
 	defer session.resetStatement()
 
-	if session.statement.lastError != nil {
-		return session.statement.lastError
+	if session.statement.LastError != nil {
+		return session.statement.LastError
 	}
 
 	sliceValue := reflect.Indirect(reflect.ValueOf(rowsSlicePtr))
@@ -82,7 +82,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 		if sliceElementType.Kind() == reflect.Ptr {
 			if sliceElementType.Elem().Kind() == reflect.Struct {
 				pv := reflect.New(sliceElementType.Elem())
-				if err := session.statement.setRefValue(pv); err != nil {
+				if err := session.statement.SetRefValue(pv); err != nil {
 					return err
 				}
 			} else {
@@ -90,7 +90,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 			}
 		} else if sliceElementType.Kind() == reflect.Struct {
 			pv := reflect.New(sliceElementType)
-			if err := session.statement.setRefValue(pv); err != nil {
+			if err := session.statement.SetRefValue(pv); err != nil {
 				return err
 			}
 		} else {
@@ -103,16 +103,16 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 	var addedTableName = (len(session.statement.JoinStr) > 0)
 	var autoCond builder.Cond
 	if tp == tpStruct {
-		if !session.statement.noAutoCondition && len(condiBean) > 0 {
+		if !session.statement.NoAutoCondition && len(condiBean) > 0 {
 			var err error
-			autoCond, err = session.statement.buildConds(table, condiBean[0], true, true, false, true, addedTableName)
+			autoCond, err = session.statement.BuildConds(table, condiBean[0], true, true, false, true, addedTableName)
 			if err != nil {
 				return err
 			}
 		} else {
 			// !oinume! Add "<col> IS NULL" to WHERE whatever condiBean is given.
 			// See https://gitea.com/xorm/xorm/issues/179
-			if col := table.DeletedColumn(); col != nil && !session.statement.unscoped { // tag "deleted" is enabled
+			if col := table.DeletedColumn(); col != nil && !session.statement.GetUnscoped() { // tag "deleted" is enabled
 				var colName = session.engine.Quote(col.Name)
 				if addedTableName {
 					var nm = session.statement.TableName()
@@ -122,70 +122,20 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 					colName = session.engine.Quote(nm) + "." + colName
 				}
 
-				autoCond = session.engine.CondDeleted(col)
+				autoCond = session.statement.CondDeleted(col)
 			}
 		}
 	}
 
-	var sqlStr string
-	var args []interface{}
-	var err error
-	if session.statement.RawSQL == "" {
-		if len(session.statement.TableName()) <= 0 {
-			return ErrTableNotFound
-		}
-
-		var columnStr = session.statement.columnStr()
-		if len(session.statement.selectStr) > 0 {
-			columnStr = session.statement.selectStr
-		} else {
-			if session.statement.JoinStr == "" {
-				if columnStr == "" {
-					if session.statement.GroupByStr != "" {
-						columnStr = session.statement.quoteColumnStr(session.statement.GroupByStr)
-					} else {
-						columnStr = session.statement.genColumnStr()
-					}
-				}
-			} else {
-				if columnStr == "" {
-					if session.statement.GroupByStr != "" {
-						columnStr = session.statement.quoteColumnStr(session.statement.GroupByStr)
-					} else {
-						columnStr = "*"
-					}
-				}
-			}
-			if columnStr == "" {
-				columnStr = "*"
-			}
-		}
-
-		session.statement.cond = session.statement.cond.And(autoCond)
-		condSQL, condArgs, err := builder.ToSQL(session.statement.cond)
-		if err != nil {
-			return err
-		}
-
-		args = append(session.statement.joinArgs, condArgs...)
-		sqlStr, err = session.statement.genSelectSQL(columnStr, condSQL, true, true)
-		if err != nil {
-			return err
-		}
-		// for mssql and use limit
-		qs := strings.Count(sqlStr, "?")
-		if len(args)*2 == qs {
-			args = append(args, args...)
-		}
-	} else {
-		sqlStr = session.statement.RawSQL
-		args = session.statement.RawParams
+	sqlStr, args, err := session.statement.GenFindSQL(autoCond)
+	if err != nil {
+		return err
 	}
 
 	if session.canCache() {
 		if cacher := session.engine.GetCacher(session.statement.TableName()); cacher != nil &&
 			!session.statement.IsDistinct &&
-			!session.statement.unscoped {
+			!session.statement.GetUnscoped() {
 			err = session.cacheFind(sliceElementType, sqlStr, rowsSlicePtr, args...)
 			if err != ErrCacheFailed {
 				return err
@@ -274,7 +224,7 @@ func (session *Session) noCacheFind(table *schemas.Table, containerValue reflect
 
 	if elemType.Kind() == reflect.Struct {
 		var newValue = newElemFunc(fields)
-		dataStruct := rValue(newValue.Interface())
+		dataStruct := utils.ReflectValue(newValue.Interface())
 		tb, err := session.engine.tagParser.MapType(dataStruct)
 		if err != nil {
 			return err
@@ -323,8 +273,8 @@ func convertPKToValue(table *schemas.Table, dst interface{}, pk schemas.PK) erro
 
 func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr interface{}, args ...interface{}) (err error) {
 	if !session.canCache() ||
-		indexNoCase(sqlStr, "having") != -1 ||
-		indexNoCase(sqlStr, "group by") != -1 {
+		utils.IndexNoCase(sqlStr, "having") != -1 ||
+		utils.IndexNoCase(sqlStr, "group by") != -1 {
 		return ErrCacheFailed
 	}
 
@@ -338,7 +288,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 		sqlStr = filter.Do(sqlStr)
 	}
 
-	newsql := session.statement.convertIDSQL(sqlStr)
+	newsql := session.statement.ConvertIDSQL(sqlStr)
 	if newsql == "" {
 		return ErrCacheFailed
 	}

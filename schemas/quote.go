@@ -109,6 +109,40 @@ func (q Quoter) Join(a []string, sep string) string {
 	return b.String()
 }
 
+func (q Quoter) JoinWrite(b *strings.Builder, a []string, sep string) error {
+	if len(a) == 0 {
+		return nil
+	}
+
+	n := len(sep) * (len(a) - 1)
+	for i := 0; i < len(a); i++ {
+		n += len(a[i])
+	}
+
+	b.Grow(n)
+	for i, s := range a {
+		if i > 0 {
+			if _, err := b.WriteString(sep); err != nil {
+				return err
+			}
+		}
+		if q[0] != "" && s != "*" && s[0] != '`' {
+			if _, err := b.WriteString(q[0]); err != nil {
+				return err
+			}
+		}
+		if _, err := b.WriteString(strings.TrimSpace(s)); err != nil {
+			return err
+		}
+		if q[1] != "" && s != "*" && s[0] != '`' {
+			if _, err := b.WriteString(q[1]); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (q Quoter) Strings(s []string) []string {
 	var res = make([]string, 0, len(s))
 	for _, a := range s {

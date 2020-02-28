@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/names"
 )
 
@@ -299,13 +300,13 @@ func TestHaving(t *testing.T) {
 
 func TestOrderSameMapper(t *testing.T) {
 	assert.NoError(t, prepareEngine())
-	testEngine.UnMapType(rValue(new(Userinfo)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
 
 	mapper := testEngine.GetTableMapper()
 	testEngine.SetMapper(names.SameMapper{})
 
 	defer func() {
-		testEngine.UnMapType(rValue(new(Userinfo)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
 		testEngine.SetMapper(mapper)
 	}()
 
@@ -324,12 +325,12 @@ func TestOrderSameMapper(t *testing.T) {
 
 func TestHavingSameMapper(t *testing.T) {
 	assert.NoError(t, prepareEngine())
-	testEngine.UnMapType(rValue(new(Userinfo)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
 
 	mapper := testEngine.GetTableMapper()
 	testEngine.SetMapper(names.SameMapper{})
 	defer func() {
-		testEngine.UnMapType(rValue(new(Userinfo)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
 		testEngine.SetMapper(mapper)
 	}()
 	assertSync(t, new(Userinfo))

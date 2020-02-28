@@ -41,6 +41,7 @@ type Dialect interface {
 	DBType() DBType
 	SQLType(*schemas.Column) string
 	FormatBytes(b []byte) string
+	DefaultSchema() string
 
 	DriverName() string
 	DataSourceName() string
@@ -101,6 +102,10 @@ func (b *Base) DB() *core.DB {
 
 func (b *Base) SetLogger(logger log.Logger) {
 	b.logger = logger
+}
+
+func (b *Base) DefaultSchema() string {
+	return ""
 }
 
 func (b *Base) Init(db *core.DB, dialect Dialect, uri *URI, drivername, dataSourceName string) error {

@@ -51,5 +51,5 @@ func (session *Session) NotIn(column string, args ...interface{}) *Session {
 
 // Conds returns session query conditions except auto bean conditions
 func (session *Session) Conds() builder.Cond {
-	return session.statement.cond
+	return session.statement.Conds()
 }

@@ -788,6 +788,10 @@ func (db *postgres) Init(d *core.DB, uri *URI, drivername, dataSourceName string
 	return nil
 }
 
+func (db *postgres) DefaultSchema() string {
+	return PostgresPublicSchema
+}
+
 func (db *postgres) SQLType(c *schemas.Column) string {
 	var res string
 	switch t := c.SQLType.Name; t {

@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/builder"
 	"xorm.io/xorm/caches"
 	"xorm.io/xorm/core"
 	"xorm.io/xorm/dialects"
@@ -63,25 +62,6 @@ func (engine *Engine) BufferSize(size int) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.BufferSize(size)
-}
-
-// CondDeleted returns the conditions whether a record is soft deleted.
-func (engine *Engine) CondDeleted(col *schemas.Column) builder.Cond {
-	var cond = builder.NewCond()
-	if col.SQLType.IsNumeric() {
-		cond = builder.Eq{col.Name: 0}
-	} else {
-		// FIXME: mssql: The conversion of a nvarchar data type to a datetime data type resulted in an out-of-range value.
-		if engine.dialect.DBType() != schemas.MSSQL {
-			cond = builder.Eq{col.Name: utils.ZeroTime1}
-		}
-	}
-
-	if col.Nullable {
-		cond = cond.Or(builder.IsNull{col.Name})
-	}
-
-	return cond
 }
 
 // ShowSQL show SQL statement or not on logger if log level is great than INFO
@@ -237,7 +217,7 @@ func (engine *Engine) NoCascade() *Session {
 
 // MapCacher Set a table use a special cacher
 func (engine *Engine) MapCacher(bean interface{}, cacher caches.Cacher) error {
-	engine.SetCacher(engine.TableName(bean, true), cacher)
+	engine.SetCacher(dialects.FullTableName(engine.dialect, engine.GetTableMapper(), bean, true), cacher)
 	return nil
 }
 
@@ -759,13 +739,13 @@ func (t *Table) IsValid() bool {
 }
 
 // TableInfo get table info according to bean's content
-func (engine *Engine) TableInfo(bean interface{}) *Table {
-	v := rValue(bean)
+func (engine *Engine) TableInfo(bean interface{}) (*Table, error) {
+	v := utils.ReflectValue(bean)
 	tb, err := engine.tagParser.MapType(v)
 	if err != nil {
-		engine.logger.Error(err)
+		return nil, err
 	}
-	return &Table{tb, engine.TableName(bean)}
+	return &Table{tb, dialects.FullTableName(engine.dialect, engine.GetTableMapper(), bean)}, nil
 }
 
 // IsTableEmpty if a table has any reocrd
@@ -785,6 +765,11 @@ func (engine *Engine) IsTableExist(beanOrTableName interface{}) (bool, error) {
 // IDOf get id from one struct
 func (engine *Engine) IDOf(bean interface{}) schemas.PK {
 	return engine.IDOfV(reflect.ValueOf(bean))
+}
+
+// TableName returns table name with schema prefix if has
+func (engine *Engine) TableName(bean interface{}, includeSchema ...bool) string {
+	return dialects.FullTableName(engine.dialect, engine.GetTableMapper(), bean, includeSchema...)
 }
 
 // IDOfV get id from one value of struct
@@ -873,7 +858,7 @@ func (engine *Engine) CreateUniques(bean interface{}) error {
 
 // ClearCacheBean if enabled cache, clear the cache bean
 func (engine *Engine) ClearCacheBean(bean interface{}, id string) error {
-	tableName := engine.TableName(bean)
+	tableName := dialects.FullTableName(engine.dialect, engine.GetTableMapper(), bean)
 	cacher := engine.GetCacher(tableName)
 	if cacher != nil {
 		cacher.ClearIds(tableName)
@@ -885,7 +870,7 @@ func (engine *Engine) ClearCacheBean(bean interface{}, id string) error {
 // ClearCache if enabled cache, clear some tables' cache
 func (engine *Engine) ClearCache(beans ...interface{}) error {
 	for _, bean := range beans {
-		tableName := engine.TableName(bean)
+		tableName := dialects.FullTableName(engine.dialect, engine.GetTableMapper(), bean)
 		cacher := engine.GetCacher(tableName)
 		if cacher != nil {
 			cacher.ClearIds(tableName)
@@ -908,8 +893,8 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 	defer session.Close()
 
 	for _, bean := range beans {
-		v := rValue(bean)
-		tableNameNoSchema := engine.TableName(bean)
+		v := utils.ReflectValue(bean)
+		tableNameNoSchema := dialects.FullTableName(engine.dialect, engine.GetTableMapper(), bean)
 		table, err := engine.tagParser.MapType(v)
 		if err != nil {
 			return err
@@ -946,7 +931,7 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 					return err
 				}
 				if !isExist {
-					if err := session.statement.setRefBean(bean); err != nil {
+					if err := session.statement.SetRefBean(bean); err != nil {
 						return err
 					}
 					err = session.addColumn(col.Name)
@@ -957,7 +942,7 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 			}
 
 			for name, index := range table.Indexes {
-				if err := session.statement.setRefBean(bean); err != nil {
+				if err := session.statement.SetRefBean(bean); err != nil {
 					return err
 				}
 				if index.Type == schemas.UniqueType {
@@ -966,7 +951,7 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 						return err
 					}
 					if !isExist {
-						if err := session.statement.setRefBean(bean); err != nil {
+						if err := session.statement.SetRefBean(bean); err != nil {
 							return err
 						}
 
@@ -981,7 +966,7 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 						return err
 					}
 					if !isExist {
-						if err := session.statement.setRefBean(bean); err != nil {
+						if err := session.statement.SetRefBean(bean); err != nil {
 							return err
 						}
 
@@ -1250,45 +1235,11 @@ func (engine *Engine) nowTime(col *schemas.Column) (interface{}, time.Time) {
 	if !col.DisableTimeZone && col.TimeZone != nil {
 		tz = col.TimeZone
 	}
-	return engine.formatTime(col.SQLType.Name, t.In(tz)), t.In(engine.TZLocation)
+	return dialects.FormatTime(engine.dialect, col.SQLType.Name, t.In(tz)), t.In(engine.TZLocation)
 }
 
 func (engine *Engine) formatColTime(col *schemas.Column, t time.Time) (v interface{}) {
-	if t.IsZero() {
-		if col.Nullable {
-			return nil
-		}
-		return ""
-	}
-
-	if col.TimeZone != nil {
-		return engine.formatTime(col.SQLType.Name, t.In(col.TimeZone))
-	}
-	return engine.formatTime(col.SQLType.Name, t.In(engine.DatabaseTZ))
-}
-
-// formatTime format time as column type
-func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v interface{}) {
-	switch sqlTypeName {
-	case schemas.Time:
-		s := t.Format("2006-01-02 15:04:05") // time.RFC3339
-		v = s[11:19]
-	case schemas.Date:
-		v = t.Format("2006-01-02")
-	case schemas.DateTime, schemas.TimeStamp, schemas.Varchar: // !DarthPestilane! format time when sqlTypeName is schemas.Varchar.
-		v = t.Format("2006-01-02 15:04:05")
-	case schemas.TimeStampz:
-		if engine.dialect.DBType() == schemas.MSSQL {
-			v = t.Format("2006-01-02T15:04:05.9999999Z07:00")
-		} else {
-			v = t.Format(time.RFC3339Nano)
-		}
-	case schemas.BigInt, schemas.Int:
-		v = t.Unix()
-	default:
-		v = t
-	}
-	return
+	return dialects.FormatColumnTime(engine.dialect, engine.DatabaseTZ, col, t)
 }
 
 // GetColumnMapper returns the column name mapper
@@ -1331,4 +1282,8 @@ func (engine *Engine) Unscoped() *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Unscoped()
+}
+
+func (engine *Engine) tbNameWithSchema(v string) string {
+	return dialects.TableNameWithSchema(engine.dialect, v)
 }

@@ -10,6 +10,7 @@ import (
 	"reflect"
 
 	"xorm.io/xorm/core"
+	"xorm.io/xorm/internal/utils"
 )
 
 // Rows rows wrapper a rows to
@@ -29,7 +30,7 @@ func newRows(session *Session, bean interface{}) (*Rows, error) {
 	var args []interface{}
 	var err error
 
-	if err = rows.session.statement.setRefBean(bean); err != nil {
+	if err = rows.session.statement.SetRefBean(bean); err != nil {
 		return nil, err
 	}
 
@@ -38,7 +39,7 @@ func newRows(session *Session, bean interface{}) (*Rows, error) {
 	}
 
 	if rows.session.statement.RawSQL == "" {
-		sqlStr, args, err = rows.session.statement.genGetSQL(bean)
+		sqlStr, args, err = rows.session.statement.GenGetSQL(bean)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +85,7 @@ func (rows *Rows) Scan(bean interface{}) error {
 		return fmt.Errorf("scan arg is incompatible type to [%v]", rows.beanType)
 	}
 
-	if err := rows.session.statement.setRefBean(bean); err != nil {
+	if err := rows.session.statement.SetRefBean(bean); err != nil {
 		return err
 	}
 
@@ -98,7 +99,7 @@ func (rows *Rows) Scan(bean interface{}) error {
 		return err
 	}
 
-	dataStruct := rValue(bean)
+	dataStruct := utils.ReflectValue(bean)
 	_, err = rows.session.slice2Bean(scanResults, fields, bean, &dataStruct, rows.session.statement.RefTable)
 	if err != nil {
 		return err

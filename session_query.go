@@ -8,75 +8,11 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 	"time"
 
-	"xorm.io/builder"
 	"xorm.io/xorm/core"
 	"xorm.io/xorm/schemas"
 )
-
-func (session *Session) genQuerySQL(sqlOrArgs ...interface{}) (string, []interface{}, error) {
-	if len(sqlOrArgs) > 0 {
-		return convertSQLOrArgs(sqlOrArgs...)
-	}
-
-	if session.statement.RawSQL != "" {
-		return session.statement.RawSQL, session.statement.RawParams, nil
-	}
-
-	if len(session.statement.TableName()) <= 0 {
-		return "", nil, ErrTableNotFound
-	}
-
-	var columnStr = session.statement.columnStr()
-	if len(session.statement.selectStr) > 0 {
-		columnStr = session.statement.selectStr
-	} else {
-		if session.statement.JoinStr == "" {
-			if columnStr == "" {
-				if session.statement.GroupByStr != "" {
-					columnStr = session.statement.quoteColumnStr(session.statement.GroupByStr)
-				} else {
-					columnStr = session.statement.genColumnStr()
-				}
-			}
-		} else {
-			if columnStr == "" {
-				if session.statement.GroupByStr != "" {
-					columnStr = session.statement.quoteColumnStr(session.statement.GroupByStr)
-				} else {
-					columnStr = "*"
-				}
-			}
-		}
-		if columnStr == "" {
-			columnStr = "*"
-		}
-	}
-
-	if err := session.statement.processIDParam(); err != nil {
-		return "", nil, err
-	}
-
-	condSQL, condArgs, err := builder.ToSQL(session.statement.cond)
-	if err != nil {
-		return "", nil, err
-	}
-
-	args := append(session.statement.joinArgs, condArgs...)
-	sqlStr, err := session.statement.genSelectSQL(columnStr, condSQL, true, true)
-	if err != nil {
-		return "", nil, err
-	}
-	// for mssql and use limit
-	qs := strings.Count(sqlStr, "?")
-	if len(args)*2 == qs {
-		args = append(args, args...)
-	}
-
-	return sqlStr, args, nil
-}
 
 // Query runs a raw sql and return records as []map[string][]byte
 func (session *Session) Query(sqlOrArgs ...interface{}) ([]map[string][]byte, error) {
@@ -84,7 +20,7 @@ func (session *Session) Query(sqlOrArgs ...interface{}) ([]map[string][]byte, er
 		defer session.Close()
 	}
 
-	sqlStr, args, err := session.genQuerySQL(sqlOrArgs...)
+	sqlStr, args, err := session.statement.GenQuerySQL(sqlOrArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +169,7 @@ func (session *Session) QueryString(sqlOrArgs ...interface{}) ([]map[string]stri
 		defer session.Close()
 	}
 
-	sqlStr, args, err := session.genQuerySQL(sqlOrArgs...)
+	sqlStr, args, err := session.statement.GenQuerySQL(sqlOrArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +189,7 @@ func (session *Session) QuerySliceString(sqlOrArgs ...interface{}) ([][]string, 
 		defer session.Close()
 	}
 
-	sqlStr, args, err := session.genQuerySQL(sqlOrArgs...)
+	sqlStr, args, err := session.statement.GenQuerySQL(sqlOrArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +242,7 @@ func (session *Session) QueryInterface(sqlOrArgs ...interface{}) ([]map[string]i
 		defer session.Close()
 	}
 
-	sqlStr, args, err := session.genQuerySQL(sqlOrArgs...)
+	sqlStr, args, err := session.statement.GenQuerySQL(sqlOrArgs...)
 	if err != nil {
 		return nil, err
 	}

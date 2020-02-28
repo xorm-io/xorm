@@ -23,7 +23,7 @@ func (session *Session) cacheDelete(table *schemas.Table, tableName, sqlStr stri
 		sqlStr = filter.Do(sqlStr)
 	}
 
-	newsql := session.statement.convertIDSQL(sqlStr)
+	newsql := session.statement.ConvertIDSQL(sqlStr)
 	if newsql == "" {
 		return ErrCacheFailed
 	}
@@ -80,11 +80,11 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 		defer session.Close()
 	}
 
-	if session.statement.lastError != nil {
-		return 0, session.statement.lastError
+	if session.statement.LastError != nil {
+		return 0, session.statement.LastError
 	}
 
-	if err := session.statement.setRefBean(bean); err != nil {
+	if err := session.statement.SetRefBean(bean); err != nil {
 		return 0, err
 	}
 
@@ -98,7 +98,7 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 		processor.BeforeDelete()
 	}
 
-	condSQL, condArgs, err := session.statement.genConds(bean)
+	condSQL, condArgs, err := session.statement.GenConds(bean)
 	if err != nil {
 		return 0, err
 	}
@@ -152,7 +152,7 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 
 	var realSQL string
 	argsForCache := make([]interface{}, 0, len(condArgs)*2)
-	if session.statement.unscoped || table.DeletedColumn() == nil { // tag "deleted" is disabled
+	if session.statement.GetUnscoped() || table.DeletedColumn() == nil { // tag "deleted" is disabled
 		realSQL = deleteSQL
 		copy(argsForCache, condArgs)
 		argsForCache = append(condArgs, argsForCache...)

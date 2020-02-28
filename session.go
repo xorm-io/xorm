@@ -14,8 +14,11 @@ import (
 	"strings"
 	"time"
 
+	"xorm.io/xorm/contexts"
 	"xorm.io/xorm/convert"
 	"xorm.io/xorm/core"
+	"xorm.io/xorm/internal/json"
+	"xorm.io/xorm/internal/statements"
 	"xorm.io/xorm/schemas"
 )
 
@@ -32,7 +35,7 @@ type Session struct {
 	db                     *core.DB
 	engine                 *Engine
 	tx                     *core.Tx
-	statement              Statement
+	statement              *statements.Statement
 	isAutoCommit           bool
 	isCommitedOrRollbacked bool
 	isAutoClose            bool
@@ -73,9 +76,12 @@ func (session *Session) Clone() *Session {
 
 // Init reset the session as the init status.
 func (session *Session) Init() {
-	session.statement.Reset()
-	session.statement.dialect = session.engine.dialect
-	session.statement.Engine = session.engine
+	session.statement = statements.NewStatement(
+		session.engine.dialect,
+		session.engine.tagParser,
+		session.engine.DatabaseTZ,
+	)
+
 	session.showSQL = session.engine.showSQL
 	session.isAutoCommit = true
 	session.isCommitedOrRollbacked = false
@@ -118,8 +124,8 @@ func (session *Session) Close() {
 }
 
 // ContextCache enable context cache or not
-func (session *Session) ContextCache(context ContextCache) *Session {
-	session.statement.context = context
+func (session *Session) ContextCache(context contexts.ContextCache) *Session {
+	session.statement.SetContextCache(context)
 	return session
 }
 
@@ -158,7 +164,9 @@ func (session *Session) After(closures func(interface{})) *Session {
 
 // Table can input a string or pointer to struct for special a table to operate.
 func (session *Session) Table(tableNameOrBean interface{}) *Session {
-	session.statement.Table(tableNameOrBean)
+	if err := session.statement.SetTable(tableNameOrBean); err != nil {
+		session.engine.logger.Error(err)
+	}
 	return session
 }
 
@@ -182,7 +190,7 @@ func (session *Session) ForUpdate() *Session {
 
 // NoAutoCondition disable generate SQL condition from beans
 func (session *Session) NoAutoCondition(no ...bool) *Session {
-	session.statement.NoAutoCondition(no...)
+	session.statement.SetNoAutoCondition(no...)
 	return session
 }
 
@@ -288,7 +296,7 @@ func (session *Session) canCache() bool {
 		!session.statement.UseCache ||
 		session.statement.IsForUpdate ||
 		session.tx != nil ||
-		len(session.statement.selectStr) > 0 {
+		len(session.statement.SelectStr) > 0 {
 		return false
 	}
 	return true
@@ -505,13 +513,13 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 					continue
 				}
 				if fieldValue.CanAddr() {
-					err := DefaultJSONHandler.Unmarshal(bs, fieldValue.Addr().Interface())
+					err := json.DefaultJSONHandler.Unmarshal(bs, fieldValue.Addr().Interface())
 					if err != nil {
 						return nil, err
 					}
 				} else {
 					x := reflect.New(fieldType)
-					err := DefaultJSONHandler.Unmarshal(bs, x.Interface())
+					err := json.DefaultJSONHandler.Unmarshal(bs, x.Interface())
 					if err != nil {
 						return nil, err
 					}
@@ -535,13 +543,13 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 			hasAssigned = true
 			if len(bs) > 0 {
 				if fieldValue.CanAddr() {
-					err := DefaultJSONHandler.Unmarshal(bs, fieldValue.Addr().Interface())
+					err := json.DefaultJSONHandler.Unmarshal(bs, fieldValue.Addr().Interface())
 					if err != nil {
 						return nil, err
 					}
 				} else {
 					x := reflect.New(fieldType)
-					err := DefaultJSONHandler.Unmarshal(bs, x.Interface())
+					err := json.DefaultJSONHandler.Unmarshal(bs, x.Interface())
 					if err != nil {
 						return nil, err
 					}
@@ -557,7 +565,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 						hasAssigned = true
 						if col.SQLType.IsText() {
 							x := reflect.New(fieldType)
-							err := DefaultJSONHandler.Unmarshal(vv.Bytes(), x.Interface())
+							err := json.DefaultJSONHandler.Unmarshal(vv.Bytes(), x.Interface())
 							if err != nil {
 								return nil, err
 							}
@@ -672,7 +680,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 					hasAssigned = true
 					x := reflect.New(fieldType)
 					if len([]byte(vv.String())) > 0 {
-						err := DefaultJSONHandler.Unmarshal([]byte(vv.String()), x.Interface())
+						err := json.DefaultJSONHandler.Unmarshal([]byte(vv.String()), x.Interface())
 						if err != nil {
 							return nil, err
 						}
@@ -682,7 +690,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 					hasAssigned = true
 					x := reflect.New(fieldType)
 					if len(vv.Bytes()) > 0 {
-						err := DefaultJSONHandler.Unmarshal(vv.Bytes(), x.Interface())
+						err := json.DefaultJSONHandler.Unmarshal(vv.Bytes(), x.Interface())
 						if err != nil {
 							return nil, err
 						}
@@ -818,7 +826,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 			case schemas.Complex64Type:
 				var x complex64
 				if len([]byte(vv.String())) > 0 {
-					err := DefaultJSONHandler.Unmarshal([]byte(vv.String()), &x)
+					err := json.DefaultJSONHandler.Unmarshal([]byte(vv.String()), &x)
 					if err != nil {
 						return nil, err
 					}
@@ -828,7 +836,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 			case schemas.Complex128Type:
 				var x complex128
 				if len([]byte(vv.String())) > 0 {
-					err := DefaultJSONHandler.Unmarshal([]byte(vv.String()), &x)
+					err := json.DefaultJSONHandler.Unmarshal([]byte(vv.String()), &x)
 					if err != nil {
 						return nil, err
 					}
@@ -877,7 +885,7 @@ func (session *Session) LastSQL() (string, []interface{}) {
 
 // Unscoped always disable struct tag "deleted"
 func (session *Session) Unscoped() *Session {
-	session.statement.Unscoped()
+	session.statement.SetUnscoped()
 	return session
 }
 

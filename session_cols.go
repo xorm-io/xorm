@@ -63,19 +63,6 @@ func getFlagForColumn(m map[string]bool, col *schemas.Column) (val bool, has boo
 	return false, false
 }
 
-func col2NewCols(columns ...string) []string {
-	newColumns := make([]string, 0, len(columns))
-	for _, col := range columns {
-		col = strings.Replace(col, "`", "", -1)
-		col = strings.Replace(col, `"`, "", -1)
-		ccols := strings.Split(col, ",")
-		for _, c := range ccols {
-			newColumns = append(newColumns, strings.TrimSpace(c))
-		}
-	}
-	return newColumns
-}
-
 // Incr provides a query string like "count = count + 1"
 func (session *Session) Incr(column string, arg ...interface{}) *Session {
 	session.statement.Incr(column, arg...)

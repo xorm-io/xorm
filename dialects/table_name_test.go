@@ -2,10 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package dialects
 
 import (
 	"testing"
+
+	"xorm.io/xorm/names"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,9 +22,9 @@ func (mcc *MCC) TableName() string {
 	return "mcc"
 }
 
-func TestTableName1(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+func TestFullTableName(t *testing.T) {
+	dialect := QueryDialect("mysql")
 
-	assert.EqualValues(t, "mcc", testEngine.TableName(new(MCC)))
-	assert.EqualValues(t, "mcc", testEngine.TableName("mcc"))
+	assert.EqualValues(t, "mcc", FullTableName(dialect, names.SnakeMapper{}, &MCC{}))
+	assert.EqualValues(t, "mcc", FullTableName(dialect, names.SnakeMapper{}, "mcc"))
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/names"
 	"xorm.io/xorm/schemas"
 )
@@ -608,10 +609,10 @@ func TestGonicMapperID(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	oldMapper := testEngine.GetColumnMapper()
-	testEngine.UnMapType(rValue(new(IDGonicMapper)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(IDGonicMapper)).Type())
 	testEngine.SetMapper(names.LintGonicMapper)
 	defer func() {
-		testEngine.UnMapType(rValue(new(IDGonicMapper)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(IDGonicMapper)).Type())
 		testEngine.SetMapper(oldMapper)
 	}()
 
@@ -645,10 +646,10 @@ func TestSameMapperID(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	oldMapper := testEngine.GetColumnMapper()
-	testEngine.UnMapType(rValue(new(IDSameMapper)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(IDSameMapper)).Type())
 	testEngine.SetMapper(names.SameMapper{})
 	defer func() {
-		testEngine.UnMapType(rValue(new(IDSameMapper)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(IDSameMapper)).Type())
 		testEngine.SetMapper(oldMapper)
 	}()
 
@@ -818,7 +819,9 @@ func TestAutoIncrTag(t *testing.T) {
 		Id int64
 	}
 
-	tb := testEngine.TableInfo(new(TestAutoIncr1))
+	tb, err := testEngine.TableInfo(new(TestAutoIncr1))
+	assert.NoError(t, err)
+
 	cols := tb.Columns()
 	assert.EqualValues(t, 1, len(cols))
 	assert.True(t, cols[0].IsAutoIncrement)
@@ -829,7 +832,9 @@ func TestAutoIncrTag(t *testing.T) {
 		Id int64 `xorm:"id"`
 	}
 
-	tb = testEngine.TableInfo(new(TestAutoIncr2))
+	tb, err = testEngine.TableInfo(new(TestAutoIncr2))
+	assert.NoError(t, err)
+
 	cols = tb.Columns()
 	assert.EqualValues(t, 1, len(cols))
 	assert.False(t, cols[0].IsAutoIncrement)
@@ -840,7 +845,9 @@ func TestAutoIncrTag(t *testing.T) {
 		Id int64 `xorm:"'ID'"`
 	}
 
-	tb = testEngine.TableInfo(new(TestAutoIncr3))
+	tb, err = testEngine.TableInfo(new(TestAutoIncr3))
+	assert.NoError(t, err)
+
 	cols = tb.Columns()
 	assert.EqualValues(t, 1, len(cols))
 	assert.False(t, cols[0].IsAutoIncrement)
@@ -851,7 +858,9 @@ func TestAutoIncrTag(t *testing.T) {
 		Id int64 `xorm:"pk"`
 	}
 
-	tb = testEngine.TableInfo(new(TestAutoIncr4))
+	tb, err = testEngine.TableInfo(new(TestAutoIncr4))
+	assert.NoError(t, err)
+
 	cols = tb.Columns()
 	assert.EqualValues(t, 1, len(cols))
 	assert.False(t, cols[0].IsAutoIncrement)
@@ -1035,7 +1044,9 @@ func TestTagDefault5(t *testing.T) {
 	}
 
 	assertSync(t, new(DefaultStruct5))
-	table := testEngine.TableInfo(new(DefaultStruct5))
+	table, err := testEngine.TableInfo(new(DefaultStruct5))
+	assert.NoError(t, err)
+
 	createdCol := table.GetColumn("created")
 	assert.NotNil(t, createdCol)
 	assert.EqualValues(t, "'2006-01-02 15:04:05'", createdCol.Default)

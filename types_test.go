@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"xorm.io/xorm/convert"
+	"xorm.io/xorm/internal/json"
 	"xorm.io/xorm/schemas"
 
 	"github.com/stretchr/testify/assert"
@@ -118,21 +119,21 @@ type ConvConfig struct {
 }
 
 func (s *ConvConfig) FromDB(data []byte) error {
-	return DefaultJSONHandler.Unmarshal(data, s)
+	return json.DefaultJSONHandler.Unmarshal(data, s)
 }
 
 func (s *ConvConfig) ToDB() ([]byte, error) {
-	return DefaultJSONHandler.Marshal(s)
+	return json.DefaultJSONHandler.Marshal(s)
 }
 
 type SliceType []*ConvConfig
 
 func (s *SliceType) FromDB(data []byte) error {
-	return DefaultJSONHandler.Unmarshal(data, s)
+	return json.DefaultJSONHandler.Unmarshal(data, s)
 }
 
 func (s *SliceType) ToDB() ([]byte, error) {
-	return DefaultJSONHandler.Marshal(s)
+	return json.DefaultJSONHandler.Marshal(s)
 }
 
 type ConvStruct struct {

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package statements
 
 import (
 	"fmt"
@@ -77,7 +77,7 @@ func convertArg(arg interface{}, convertFunc func(string) string) string {
 
 const insertSelectPlaceHolder = true
 
-func (statement *Statement) writeArg(w *builder.BytesWriter, arg interface{}) error {
+func (statement *Statement) WriteArg(w *builder.BytesWriter, arg interface{}) error {
 	switch argv := arg.(type) {
 	case bool:
 		if statement.dialect.DBType() == schemas.MSSQL {
@@ -130,37 +130,13 @@ func (statement *Statement) writeArg(w *builder.BytesWriter, arg interface{}) er
 	return nil
 }
 
-func (statement *Statement) writeArgs(w *builder.BytesWriter, args []interface{}) error {
+func (statement *Statement) WriteArgs(w *builder.BytesWriter, args []interface{}) error {
 	for i, arg := range args {
-		if err := statement.writeArg(w, arg); err != nil {
+		if err := statement.WriteArg(w, arg); err != nil {
 			return err
 		}
 
 		if i+1 != len(args) {
-			if _, err := w.WriteString(","); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func writeStrings(w *builder.BytesWriter, cols []string, leftQuote, rightQuote string) error {
-	for i, colName := range cols {
-		if len(leftQuote) > 0 && colName[0] != '`' {
-			if _, err := w.WriteString(leftQuote); err != nil {
-				return err
-			}
-		}
-		if _, err := w.WriteString(colName); err != nil {
-			return err
-		}
-		if len(rightQuote) > 0 && colName[len(colName)-1] != '`' {
-			if _, err := w.WriteString(rightQuote); err != nil {
-				return err
-			}
-		}
-		if i+1 != len(cols) {
 			if _, err := w.WriteString(","); err != nil {
 				return err
 			}

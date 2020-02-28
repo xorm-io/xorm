@@ -113,7 +113,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 		return 0, errors.New("could not insert a empty slice")
 	}
 
-	if err := session.statement.setRefBean(sliceValue.Index(0).Interface()); err != nil {
+	if err := session.statement.SetRefBean(sliceValue.Index(0).Interface()); err != nil {
 		return 0, err
 	}
 
@@ -163,10 +163,10 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 				if col.IsDeleted {
 					continue
 				}
-				if session.statement.omitColumnMap.contain(col.Name) {
+				if session.statement.OmitColumnMap.Contain(col.Name) {
 					continue
 				}
-				if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
+				if len(session.statement.ColumnMap) > 0 && !session.statement.ColumnMap.Contain(col.Name) {
 					continue
 				}
 				if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
@@ -178,7 +178,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 						col := table.GetColumn(colName)
 						setColumnTime(bean, col, t)
 					})
-				} else if col.IsVersion && session.statement.checkVersion {
+				} else if col.IsVersion && session.statement.CheckVersion {
 					args = append(args, 1)
 					var colName = col.Name
 					session.afterClosures = append(session.afterClosures, func(bean interface{}) {
@@ -214,10 +214,10 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 				if col.IsDeleted {
 					continue
 				}
-				if session.statement.omitColumnMap.contain(col.Name) {
+				if session.statement.OmitColumnMap.Contain(col.Name) {
 					continue
 				}
-				if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
+				if len(session.statement.ColumnMap) > 0 && !session.statement.ColumnMap.Contain(col.Name) {
 					continue
 				}
 				if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
@@ -229,7 +229,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 						col := table.GetColumn(colName)
 						setColumnTime(bean, col, t)
 					})
-				} else if col.IsVersion && session.statement.checkVersion {
+				} else if col.IsVersion && session.statement.CheckVersion {
 					args = append(args, 1)
 					var colName = col.Name
 					session.afterClosures = append(session.afterClosures, func(bean interface{}) {
@@ -329,7 +329,7 @@ func (session *Session) InsertMulti(rowsSlicePtr interface{}) (int64, error) {
 }
 
 func (session *Session) innerInsert(bean interface{}) (int64, error) {
-	if err := session.statement.setRefBean(bean); err != nil {
+	if err := session.statement.SetRefBean(bean); err != nil {
 		return 0, err
 	}
 	if len(session.statement.TableName()) <= 0 {
@@ -353,7 +353,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		return 0, err
 	}
 
-	exprs := session.statement.exprColumns
+	exprs := session.statement.ExprColumns
 	colPlaces := strings.Repeat("?, ", len(colNames))
 	if exprs.Len() <= 0 && len(colPlaces) > 0 {
 		colPlaces = colPlaces[0 : len(colPlaces)-2]
@@ -385,25 +385,25 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 			return 0, err
 		}
 
-		if err := writeStrings(buf, append(colNames, exprs.colNames...), "`", "`"); err != nil {
+		if err := session.engine.dialect.Quoter().JoinWrite(buf.Builder, append(colNames, exprs.ColNames...), ","); err != nil {
 			return 0, err
 		}
 
-		if session.statement.cond.IsValid() {
+		if session.statement.Conds().IsValid() {
 			if _, err := buf.WriteString(fmt.Sprintf(")%s SELECT ", output)); err != nil {
 				return 0, err
 			}
 
-			if err := session.statement.writeArgs(buf, args); err != nil {
+			if err := session.statement.WriteArgs(buf, args); err != nil {
 				return 0, err
 			}
 
-			if len(exprs.args) > 0 {
+			if len(exprs.Args) > 0 {
 				if _, err := buf.WriteString(","); err != nil {
 					return 0, err
 				}
 			}
-			if err := exprs.writeArgs(buf); err != nil {
+			if err := exprs.WriteArgs(buf); err != nil {
 				return 0, err
 			}
 
@@ -411,7 +411,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 				return 0, err
 			}
 
-			if err := session.statement.cond.WriteTo(buf); err != nil {
+			if err := session.statement.Conds().WriteTo(buf); err != nil {
 				return 0, err
 			}
 		} else {
@@ -423,7 +423,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 				return 0, err
 			}
 
-			if err := exprs.writeArgs(buf); err != nil {
+			if err := exprs.WriteArgs(buf); err != nil {
 				return 0, err
 			}
 
@@ -482,7 +482,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 		session.cacheInsert(tableName)
 
-		if table.Version != "" && session.statement.checkVersion {
+		if table.Version != "" && session.statement.CheckVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
 			if err != nil {
 				session.engine.logger.Error(err)
@@ -523,7 +523,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 		session.cacheInsert(tableName)
 
-		if table.Version != "" && session.statement.checkVersion {
+		if table.Version != "" && session.statement.CheckVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
 			if err != nil {
 				session.engine.logger.Error(err)
@@ -564,7 +564,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 		session.cacheInsert(tableName)
 
-		if table.Version != "" && session.statement.checkVersion {
+		if table.Version != "" && session.statement.CheckVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
 			if err != nil {
 				session.engine.logger.Error(err)
@@ -637,19 +637,19 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 			continue
 		}
 
-		if session.statement.omitColumnMap.contain(col.Name) {
+		if session.statement.OmitColumnMap.Contain(col.Name) {
 			continue
 		}
 
-		if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
+		if len(session.statement.ColumnMap) > 0 && !session.statement.ColumnMap.Contain(col.Name) {
 			continue
 		}
 
-		if session.statement.incrColumns.isColExist(col.Name) {
+		if session.statement.IncrColumns.IsColExist(col.Name) {
 			continue
-		} else if session.statement.decrColumns.isColExist(col.Name) {
+		} else if session.statement.DecrColumns.IsColExist(col.Name) {
 			continue
-		} else if session.statement.exprColumns.isColExist(col.Name) {
+		} else if session.statement.ExprColumns.IsColExist(col.Name) {
 			continue
 		}
 
@@ -681,7 +681,7 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 		}
 
 		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
-		if _, ok := getFlagForColumn(session.statement.nullableMap, col); ok {
+		if _, ok := getFlagForColumn(session.statement.NullableMap, col); ok {
 			if col.Nullable && utils.IsValueZero(fieldValue) {
 				var nilValue *int
 				fieldValue = reflect.ValueOf(nilValue)
@@ -698,7 +698,7 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 				col := table.GetColumn(colName)
 				setColumnTime(bean, col, t)
 			})
-		} else if col.IsVersion && session.statement.checkVersion {
+		} else if col.IsVersion && session.statement.CheckVersion {
 			args = append(args, 1)
 		} else {
 			arg, err := session.value2Interface(col, fieldValue)
@@ -724,9 +724,9 @@ func (session *Session) insertMapInterface(m map[string]interface{}) (int64, err
 	}
 
 	var columns = make([]string, 0, len(m))
-	exprs := session.statement.exprColumns
+	exprs := session.statement.ExprColumns
 	for k := range m {
-		if !exprs.isColExist(k) {
+		if !exprs.IsColExist(k) {
 			columns = append(columns, k)
 		}
 	}
@@ -751,9 +751,9 @@ func (session *Session) insertMapString(m map[string]string) (int64, error) {
 	}
 
 	var columns = make([]string, 0, len(m))
-	exprs := session.statement.exprColumns
+	exprs := session.statement.ExprColumns
 	for k := range m {
-		if !exprs.isColExist(k) {
+		if !exprs.IsColExist(k) {
 			columns = append(columns, k)
 		}
 	}
@@ -774,15 +774,15 @@ func (session *Session) insertMap(columns []string, args []interface{}) (int64, 
 		return 0, ErrTableNotFound
 	}
 
-	exprs := session.statement.exprColumns
+	exprs := session.statement.ExprColumns
 	w := builder.NewWriter()
 	// if insert where
-	if session.statement.cond.IsValid() {
+	if session.statement.Conds().IsValid() {
 		if _, err := w.WriteString(fmt.Sprintf("INSERT INTO %s (", session.engine.Quote(tableName))); err != nil {
 			return 0, err
 		}
 
-		if err := writeStrings(w, append(columns, exprs.colNames...), "`", "`"); err != nil {
+		if err := session.engine.dialect.Quoter().JoinWrite(w.Builder, append(columns, exprs.ColNames...), ","); err != nil {
 			return 0, err
 		}
 
@@ -790,15 +790,15 @@ func (session *Session) insertMap(columns []string, args []interface{}) (int64, 
 			return 0, err
 		}
 
-		if err := session.statement.writeArgs(w, args); err != nil {
+		if err := session.statement.WriteArgs(w, args); err != nil {
 			return 0, err
 		}
 
-		if len(exprs.args) > 0 {
+		if len(exprs.Args) > 0 {
 			if _, err := w.WriteString(","); err != nil {
 				return 0, err
 			}
-			if err := exprs.writeArgs(w); err != nil {
+			if err := exprs.WriteArgs(w); err != nil {
 				return 0, err
 			}
 		}
@@ -807,7 +807,7 @@ func (session *Session) insertMap(columns []string, args []interface{}) (int64, 
 			return 0, err
 		}
 
-		if err := session.statement.cond.WriteTo(w); err != nil {
+		if err := session.statement.Conds().WriteTo(w); err != nil {
 			return 0, err
 		}
 	} else {
@@ -818,7 +818,7 @@ func (session *Session) insertMap(columns []string, args []interface{}) (int64, 
 			return 0, err
 		}
 
-		if err := writeStrings(w, append(columns, exprs.colNames...), "`", "`"); err != nil {
+		if err := session.engine.dialect.Quoter().JoinWrite(w.Builder, append(columns, exprs.ColNames...), ","); err != nil {
 			return 0, err
 		}
 		if _, err := w.WriteString(fmt.Sprintf(") VALUES (%s", qm)); err != nil {
@@ -826,11 +826,11 @@ func (session *Session) insertMap(columns []string, args []interface{}) (int64, 
 		}
 
 		w.Append(args...)
-		if len(exprs.args) > 0 {
+		if len(exprs.Args) > 0 {
 			if _, err := w.WriteString(","); err != nil {
 				return 0, err
 			}
-			if err := exprs.writeArgs(w); err != nil {
+			if err := exprs.WriteArgs(w); err != nil {
 				return 0, err
 			}
 		}

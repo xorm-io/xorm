@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package statements
 
 import (
 	"fmt"
@@ -26,21 +26,21 @@ type exprParam struct {
 }
 
 type exprParams struct {
-	colNames []string
-	args     []interface{}
+	ColNames []string
+	Args     []interface{}
 }
 
 func (exprs *exprParams) Len() int {
-	return len(exprs.colNames)
+	return len(exprs.ColNames)
 }
 
 func (exprs *exprParams) addParam(colName string, arg interface{}) {
-	exprs.colNames = append(exprs.colNames, colName)
-	exprs.args = append(exprs.args, arg)
+	exprs.ColNames = append(exprs.ColNames, colName)
+	exprs.Args = append(exprs.Args, arg)
 }
 
-func (exprs *exprParams) isColExist(colName string) bool {
-	for _, name := range exprs.colNames {
+func (exprs *exprParams) IsColExist(colName string) bool {
+	for _, name := range exprs.ColNames {
 		if strings.EqualFold(schemas.CommonQuoter.Trim(name), schemas.CommonQuoter.Trim(colName)) {
 			return true
 		}
@@ -49,16 +49,16 @@ func (exprs *exprParams) isColExist(colName string) bool {
 }
 
 func (exprs *exprParams) getByName(colName string) (exprParam, bool) {
-	for i, name := range exprs.colNames {
+	for i, name := range exprs.ColNames {
 		if strings.EqualFold(name, colName) {
-			return exprParam{name, exprs.args[i]}, true
+			return exprParam{name, exprs.Args[i]}, true
 		}
 	}
 	return exprParam{}, false
 }
 
-func (exprs *exprParams) writeArgs(w *builder.BytesWriter) error {
-	for i, expr := range exprs.args {
+func (exprs *exprParams) WriteArgs(w *builder.BytesWriter) error {
+	for i, expr := range exprs.Args {
 		switch arg := expr.(type) {
 		case *builder.Builder:
 			if _, err := w.WriteString("("); err != nil {
@@ -83,7 +83,7 @@ func (exprs *exprParams) writeArgs(w *builder.BytesWriter) error {
 			}
 			w.Append(arg)
 		}
-		if i != len(exprs.args)-1 {
+		if i != len(exprs.Args)-1 {
 			if _, err := w.WriteString(","); err != nil {
 				return err
 			}
@@ -93,7 +93,7 @@ func (exprs *exprParams) writeArgs(w *builder.BytesWriter) error {
 }
 
 func (exprs *exprParams) writeNameArgs(w *builder.BytesWriter) error {
-	for i, colName := range exprs.colNames {
+	for i, colName := range exprs.ColNames {
 		if _, err := w.WriteString(colName); err != nil {
 			return err
 		}
@@ -101,7 +101,7 @@ func (exprs *exprParams) writeNameArgs(w *builder.BytesWriter) error {
 			return err
 		}
 
-		switch arg := exprs.args[i].(type) {
+		switch arg := exprs.Args[i].(type) {
 		case *builder.Builder:
 			if _, err := w.WriteString("("); err != nil {
 				return err
@@ -113,10 +113,10 @@ func (exprs *exprParams) writeNameArgs(w *builder.BytesWriter) error {
 				return err
 			}
 		default:
-			w.Append(exprs.args[i])
+			w.Append(exprs.Args[i])
 		}
 
-		if i+1 != len(exprs.colNames) {
+		if i+1 != len(exprs.ColNames) {
 			if _, err := w.WriteString(","); err != nil {
 				return err
 			}

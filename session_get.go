@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"xorm.io/xorm/caches"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
 
@@ -27,8 +28,8 @@ func (session *Session) Get(bean interface{}) (bool, error) {
 func (session *Session) get(bean interface{}) (bool, error) {
 	defer session.resetStatement()
 
-	if session.statement.lastError != nil {
-		return false, session.statement.lastError
+	if session.statement.LastError != nil {
+		return false, session.statement.LastError
 	}
 
 	beanValue := reflect.ValueOf(bean)
@@ -39,7 +40,7 @@ func (session *Session) get(bean interface{}) (bool, error) {
 	}
 
 	if beanValue.Elem().Kind() == reflect.Struct {
-		if err := session.statement.setRefBean(bean); err != nil {
+		if err := session.statement.SetRefBean(bean); err != nil {
 			return false, err
 		}
 	}
@@ -53,7 +54,7 @@ func (session *Session) get(bean interface{}) (bool, error) {
 			return false, ErrTableNotFound
 		}
 		session.statement.Limit(1)
-		sqlStr, args, err = session.statement.genGetSQL(bean)
+		sqlStr, args, err = session.statement.GenGetSQL(bean)
 		if err != nil {
 			return false, err
 		}
@@ -66,7 +67,7 @@ func (session *Session) get(bean interface{}) (bool, error) {
 
 	if session.canCache() && beanValue.Elem().Kind() == reflect.Struct {
 		if cacher := session.engine.GetCacher(session.statement.TableName()); cacher != nil &&
-			!session.statement.unscoped {
+			!session.statement.GetUnscoped() {
 			has, err := session.cacheGet(bean, sqlStr, args...)
 			if err != ErrCacheFailed {
 				return has, err
@@ -74,7 +75,7 @@ func (session *Session) get(bean interface{}) (bool, error) {
 		}
 	}
 
-	context := session.statement.context
+	context := session.statement.Context
 	if context != nil {
 		res := context.Get(fmt.Sprintf("%v-%v", sqlStr, args))
 		if res != nil {
@@ -244,7 +245,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *schemas.Table, 
 		// close it before covert data
 		rows.Close()
 
-		dataStruct := rValue(bean)
+		dataStruct := utils.ReflectValue(bean)
 		_, err = session.slice2Bean(scanResults, fields, bean, &dataStruct, table)
 		if err != nil {
 			return true, err
@@ -274,7 +275,7 @@ func (session *Session) cacheGet(bean interface{}, sqlStr string, args ...interf
 	for _, filter := range session.engine.dialect.Filters() {
 		sqlStr = filter.Do(sqlStr)
 	}
-	newsql := session.statement.convertIDSQL(sqlStr)
+	newsql := session.statement.ConvertIDSQL(sqlStr)
 	if newsql == "" {
 		return false, ErrCacheFailed
 	}

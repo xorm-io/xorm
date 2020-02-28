@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/names"
 )
 
@@ -85,10 +86,10 @@ func TestCombineTransactionSameMapper(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	oldMapper := testEngine.GetColumnMapper()
-	testEngine.UnMapType(rValue(new(Userinfo)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
 	testEngine.SetMapper(names.SameMapper{})
 	defer func() {
-		testEngine.UnMapType(rValue(new(Userinfo)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
 		testEngine.SetMapper(oldMapper)
 	}()
 

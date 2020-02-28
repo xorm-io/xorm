@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/names"
 )
 
@@ -685,20 +686,20 @@ func TestUpdateSameMapper(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	oldMapper := testEngine.GetTableMapper()
-	testEngine.UnMapType(rValue(new(Userinfo)).Type())
-	testEngine.UnMapType(rValue(new(Condi)).Type())
-	testEngine.UnMapType(rValue(new(Article)).Type())
-	testEngine.UnMapType(rValue(new(UpdateAllCols)).Type())
-	testEngine.UnMapType(rValue(new(UpdateMustCols)).Type())
-	testEngine.UnMapType(rValue(new(UpdateIncr)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(Condi)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(Article)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(UpdateAllCols)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(UpdateMustCols)).Type())
+	testEngine.UnMapType(utils.ReflectValue(new(UpdateIncr)).Type())
 	testEngine.SetMapper(names.SameMapper{})
 	defer func() {
-		testEngine.UnMapType(rValue(new(Userinfo)).Type())
-		testEngine.UnMapType(rValue(new(Condi)).Type())
-		testEngine.UnMapType(rValue(new(Article)).Type())
-		testEngine.UnMapType(rValue(new(UpdateAllCols)).Type())
-		testEngine.UnMapType(rValue(new(UpdateMustCols)).Type())
-		testEngine.UnMapType(rValue(new(UpdateIncr)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(Condi)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(Article)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(UpdateAllCols)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(UpdateMustCols)).Type())
+		testEngine.UnMapType(utils.ReflectValue(new(UpdateIncr)).Type())
 		testEngine.SetMapper(oldMapper)
 	}()
 

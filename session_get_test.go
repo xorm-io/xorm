@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"xorm.io/xorm/contexts"
 	"xorm.io/xorm/schemas"
 )
 
@@ -417,7 +418,7 @@ func TestContextGet(t *testing.T) {
 	sess := testEngine.NewSession()
 	defer sess.Close()
 
-	context := NewMemoryContextCache()
+	context := contexts.NewMemoryContextCache()
 
 	var c2 ContextGetStruct
 	has, err := sess.ID(1).NoCache().ContextCache(context).Get(&c2)
@@ -452,7 +453,7 @@ func TestContextGet2(t *testing.T) {
 	_, err := testEngine.Insert(&ContextGetStruct2{Name: "1"})
 	assert.NoError(t, err)
 
-	context := NewMemoryContextCache()
+	context := contexts.NewMemoryContextCache()
 
 	var c2 ContextGetStruct2
 	has, err := testEngine.ID(1).NoCache().ContextCache(context).Get(&c2)
