@@ -280,7 +280,7 @@ func ExtendsTagHandler(ctx *Context) error {
 		isPtr = true
 		fallthrough
 	case reflect.Struct:
-		parentTable, err := ctx.parser.mapType(fieldValue)
+		parentTable, err := ctx.parser.Parse(fieldValue)
 		if err != nil {
 			return err
 		}

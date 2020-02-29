@@ -30,7 +30,7 @@ func (session *Session) cacheUpdate(table *schemas.Table, tableName, sqlStr stri
 	for _, filter := range session.engine.dialect.Filters() {
 		newsql = filter.Do(newsql)
 	}
-	session.engine.logger.Debug("[cacheUpdate] new sql", oldhead, newsql)
+	session.engine.logger.Debugf("[cache] new sql: %v, %v", oldhead, newsql)
 
 	var nStart int
 	if len(args) > 0 {
@@ -43,7 +43,7 @@ func (session *Session) cacheUpdate(table *schemas.Table, tableName, sqlStr stri
 	}
 
 	cacher := session.engine.GetCacher(tableName)
-	session.engine.logger.Debug("[cacheUpdate] get cache sql", newsql, args[nStart:])
+	session.engine.logger.Debugf("[cache] get cache sql: %v, %v", newsql, args[nStart:])
 	ids, err := caches.GetCacheSql(cacher, tableName, newsql, args[nStart:])
 	if err != nil {
 		rows, err := session.NoCache().queryRows(newsql, args[nStart:]...)
@@ -76,7 +76,7 @@ func (session *Session) cacheUpdate(table *schemas.Table, tableName, sqlStr stri
 
 			ids = append(ids, pk)
 		}
-		session.engine.logger.Debug("[cacheUpdate] find updated id", ids)
+		session.engine.logger.Debugf("[cache] find updated id: %v", ids)
 	} /*else {
 	    session.engine.LogDebug("[xorm:cacheUpdate] del cached sql:", tableName, newsql, args)
 	    cacher.DelIds(tableName, genSqlKey(newsql, args))
@@ -109,9 +109,9 @@ func (session *Session) cacheUpdate(table *schemas.Table, tableName, sqlStr stri
 				if col := table.GetColumn(colName); col != nil {
 					fieldValue, err := col.ValueOf(bean)
 					if err != nil {
-						session.engine.logger.Error(err)
+						session.engine.logger.Errorf("%v", err)
 					} else {
-						session.engine.logger.Debug("[cacheUpdate] set bean field", bean, colName, fieldValue.Interface())
+						session.engine.logger.Debugf("[cache] set bean field: %v, %v, %v", bean, colName, fieldValue.Interface())
 						if col.IsVersion && session.statement.CheckVersion {
 							session.incrVersionFieldValue(fieldValue)
 						} else {
@@ -119,16 +119,16 @@ func (session *Session) cacheUpdate(table *schemas.Table, tableName, sqlStr stri
 						}
 					}
 				} else {
-					session.engine.logger.Errorf("[cacheUpdate] ERROR: column %v is not table %v's",
+					session.engine.logger.Errorf("[cache] ERROR: column %v is not table %v's",
 						colName, table.Name)
 				}
 			}
 
-			session.engine.logger.Debug("[cacheUpdate] update cache", tableName, id, bean)
+			session.engine.logger.Debugf("[cache] update cache: %v, %v, %v", tableName, id, bean)
 			cacher.PutBean(tableName, sid, bean)
 		}
 	}
-	session.engine.logger.Debug("[cacheUpdate] clear cached table sql:", tableName)
+	session.engine.logger.Debugf("[cache] clear cached table sql: %v", tableName)
 	cacher.ClearIds(tableName)
 	return nil
 }
@@ -414,7 +414,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 
 	if cacher := session.engine.GetCacher(tableName); cacher != nil && session.statement.UseCache {
 		// session.cacheUpdate(table, tableName, sqlStr, args...)
-		session.engine.logger.Debug("[cacheUpdate] clear table ", tableName)
+		session.engine.logger.Debugf("[cache] clear table: %v", tableName)
 		cacher.ClearIds(tableName)
 		cacher.ClearBeans(tableName)
 	}
@@ -425,7 +425,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 			closure(bean)
 		}
 		if processor, ok := interface{}(bean).(AfterUpdateProcessor); ok {
-			session.engine.logger.Debug("[event]", tableName, " has after update processor")
+			session.engine.logger.Debugf("[event] %v has after update processor", tableName)
 			processor.AfterUpdate()
 		}
 	} else {

@@ -82,7 +82,7 @@ func (session *Session) Init() {
 		session.engine.DatabaseTZ,
 	)
 
-	session.showSQL = session.engine.showSQL
+	//session.showSQL = session.engine.showSQL
 	session.isAutoCommit = true
 	session.isCommitedOrRollbacked = false
 	session.isAutoClose = false
@@ -165,7 +165,7 @@ func (session *Session) After(closures func(interface{})) *Session {
 // Table can input a string or pointer to struct for special a table to operate.
 func (session *Session) Table(tableNameOrBean interface{}) *Session {
 	if err := session.statement.SetTable(tableNameOrBean); err != nil {
-		session.engine.logger.Error(err)
+		session.statement.LastError = err
 	}
 	return session
 }
@@ -447,7 +447,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 		fieldValue, err := session.getField(dataStruct, key, table, idx)
 		if err != nil {
 			if !strings.Contains(err.Error(), "is not valid") {
-				session.engine.logger.Warn(err)
+				session.engine.logger.Warnf("%v", err)
 			}
 			continue
 		}
@@ -650,7 +650,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 						hasAssigned = true
 						t, err := session.byte2Time(col, d)
 						if err != nil {
-							session.engine.logger.Error("byte2Time error:", err.Error())
+							session.engine.logger.Errorf("byte2Time error: %v", err)
 							hasAssigned = false
 						} else {
 							fieldValue.Set(reflect.ValueOf(t).Convert(fieldType))
@@ -659,7 +659,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 						hasAssigned = true
 						t, err := session.str2Time(col, d)
 						if err != nil {
-							session.engine.logger.Error("byte2Time error:", err.Error())
+							session.engine.logger.Errorf("byte2Time error: %v", err)
 							hasAssigned = false
 						} else {
 							fieldValue.Set(reflect.ValueOf(t).Convert(fieldType))
@@ -672,7 +672,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 				// !<winxxp>! 增加支持sql.Scanner接口的结构，如sql.NullString
 				hasAssigned = true
 				if err := nulVal.Scan(vv.Interface()); err != nil {
-					session.engine.logger.Error("sql.Sanner error:", err.Error())
+					session.engine.logger.Errorf("sql.Sanner error: %v", err)
 					hasAssigned = false
 				}
 			} else if col.SQLType.IsJson() {
@@ -698,7 +698,7 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 					}
 				}
 			} else if session.statement.UseCascade {
-				table, err := session.engine.tagParser.MapType(*fieldValue)
+				table, err := session.engine.tagParser.ParseWithCache(*fieldValue)
 				if err != nil {
 					return nil, err
 				}
@@ -865,17 +865,6 @@ func (session *Session) slice2Bean(scanResults []interface{}, fields []string, b
 func (session *Session) saveLastSQL(sql string, args ...interface{}) {
 	session.lastSQL = sql
 	session.lastSQLArgs = args
-	session.logSQL(sql, args...)
-}
-
-func (session *Session) logSQL(sqlStr string, sqlArgs ...interface{}) {
-	if session.showSQL && !session.engine.showExecTime {
-		if len(sqlArgs) > 0 {
-			session.engine.logger.Infof("[SQL] %v %#v", sqlStr, sqlArgs)
-		} else {
-			session.engine.logger.Infof("[SQL] %v", sqlStr)
-		}
-	}
 }
 
 // LastSQL returns last query information

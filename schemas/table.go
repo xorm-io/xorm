@@ -7,7 +7,6 @@ package schemas
 import (
 	"reflect"
 	"strings"
-	//"xorm.io/xorm/cache"
 )
 
 // Table represents a database table
@@ -24,10 +23,9 @@ type Table struct {
 	Updated       string
 	Deleted       string
 	Version       string
-	//Cacher        caches.Cacher
-	StoreEngine string
-	Charset     string
-	Comment     string
+	StoreEngine   string
+	Charset       string
+	Comment       string
 }
 
 func NewEmptyTable() *Table {

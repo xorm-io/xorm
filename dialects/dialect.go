@@ -11,14 +11,11 @@ import (
 	"time"
 
 	"xorm.io/xorm/core"
-	"xorm.io/xorm/log"
 	"xorm.io/xorm/schemas"
 )
 
-type DBType string
-
 type URI struct {
-	DBType  DBType
+	DBType  schemas.DBType
 	Proto   string
 	Host    string
 	Port    string
@@ -32,13 +29,12 @@ type URI struct {
 	Schema  string
 }
 
-// a dialect is a driver's wrapper
+// Dialect represents a kind of database
 type Dialect interface {
-	SetLogger(logger log.Logger)
 	Init(*core.DB, *URI, string, string) error
 	URI() *URI
 	DB() *core.DB
-	DBType() DBType
+	DBType() schemas.DBType
 	SQLType(*schemas.Column) string
 	FormatBytes(b []byte) string
 	DefaultSchema() string
@@ -49,7 +45,6 @@ type Dialect interface {
 	IsReserved(string) bool
 	Quoter() schemas.Quoter
 
-	RollBackStr() string
 	AutoIncrStr() string
 
 	SupportInsertMany() bool
@@ -92,16 +87,11 @@ type Base struct {
 	dialect        Dialect
 	driverName     string
 	dataSourceName string
-	logger         log.Logger
 	uri            *URI
 }
 
 func (b *Base) DB() *core.DB {
 	return b.db
-}
-
-func (b *Base) SetLogger(logger log.Logger) {
-	b.logger = logger
 }
 
 func (b *Base) DefaultSchema() string {
@@ -118,7 +108,7 @@ func (b *Base) URI() *URI {
 	return b.uri
 }
 
-func (b *Base) DBType() DBType {
+func (b *Base) DBType() schemas.DBType {
 	return b.uri.DBType
 }
 
@@ -187,10 +177,6 @@ func (b *Base) DataSourceName() string {
 	return b.dataSourceName
 }
 
-func (db *Base) RollBackStr() string {
-	return "ROLL BACK"
-}
-
 func (db *Base) SupportDropIfExists() bool {
 	return true
 }
@@ -201,7 +187,6 @@ func (db *Base) DropTableSQL(tableName string) string {
 }
 
 func (db *Base) HasRecords(ctx context.Context, query string, args ...interface{}) (bool, error) {
-	db.LogSQL(query, args)
 	rows, err := db.DB().QueryContext(ctx, query, args...)
 	if err != nil {
 		return false, err
@@ -229,13 +214,8 @@ func (db *Base) IsColumnExist(ctx context.Context, tableName, colName string) (b
 }
 
 func (db *Base) AddColumnSQL(tableName string, col *schemas.Column) string {
-	quoter := db.dialect.Quoter()
-	sql := fmt.Sprintf("ALTER TABLE %v ADD %v", quoter.Quote(tableName),
+	return fmt.Sprintf("ALTER TABLE %v ADD %v", db.dialect.Quoter().Quote(tableName),
 		db.String(col))
-	if db.dialect.DBType() == schemas.MYSQL && len(col.Comment) > 0 {
-		sql += " COMMENT '" + col.Comment + "'"
-	}
-	return sql
 }
 
 func (db *Base) CreateIndexSQL(tableName string, index *schemas.Index) string {
@@ -323,16 +303,6 @@ func (b *Base) ForUpdateSQL(query string) string {
 	return query + " FOR UPDATE"
 }
 
-func (b *Base) LogSQL(sql string, args []interface{}) {
-	if b.logger != nil && b.logger.IsShowSQL() {
-		if len(args) > 0 {
-			b.logger.Infof("[SQL] %v %v", sql, args)
-		} else {
-			b.logger.Infof("[SQL] %v", sql)
-		}
-	}
-}
-
 func (b *Base) SetParams(params map[string]string) {
 }
 
@@ -341,7 +311,7 @@ var (
 )
 
 // RegisterDialect register database dialect
-func RegisterDialect(dbName DBType, dialectFunc func() Dialect) {
+func RegisterDialect(dbName schemas.DBType, dialectFunc func() Dialect) {
 	if dialectFunc == nil {
 		panic("core: Register dialect is nil")
 	}
@@ -349,7 +319,7 @@ func RegisterDialect(dbName DBType, dialectFunc func() Dialect) {
 }
 
 // QueryDialect query if registered database dialect
-func QueryDialect(dbName DBType) Dialect {
+func QueryDialect(dbName schemas.DBType) Dialect {
 	if d, ok := dialects[strings.ToLower(string(dbName))]; ok {
 		return d()
 	}
@@ -358,7 +328,7 @@ func QueryDialect(dbName DBType) Dialect {
 
 func regDrvsNDialects() bool {
 	providedDrvsNDialects := map[string]struct {
-		dbType     DBType
+		dbType     schemas.DBType
 		getDriver  func() Driver
 		getDialect func() Dialect
 	}{

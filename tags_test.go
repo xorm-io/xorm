@@ -871,7 +871,7 @@ func TestAutoIncrTag(t *testing.T) {
 func TestTagComment(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 	// FIXME: only support mysql
-	if testEngine.Dialect().DriverName() != schemas.MYSQL {
+	if testEngine.Dialect().DBType() != schemas.MYSQL {
 		return
 	}
 

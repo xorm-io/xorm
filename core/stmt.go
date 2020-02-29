@@ -9,6 +9,9 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
+	"time"
+
+	"xorm.io/xorm/log"
 )
 
 // Stmt reprents a stmt objects
@@ -16,6 +19,7 @@ type Stmt struct {
 	*sql.Stmt
 	db    *DB
 	names map[string]int
+	query string
 }
 
 func (db *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
@@ -27,11 +31,27 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 		return "?"
 	})
 
+	start := time.Now()
+	if db.Logger != nil {
+		db.Logger.BeforeSQL(log.LogContext{
+			Ctx: ctx,
+			SQL: "PREPARE",
+		})
+	}
 	stmt, err := db.DB.PrepareContext(ctx, query)
+	if db.Logger != nil {
+		db.Logger.AfterSQL(log.LogContext{
+			Ctx:         ctx,
+			SQL:         "PREPARE",
+			ExecuteTime: time.Now().Sub(start),
+			Err:         err,
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
-	return &Stmt{stmt, db, names}, nil
+
+	return &Stmt{stmt, db, names, query}, nil
 }
 
 func (db *DB) Prepare(query string) (*Stmt, error) {
@@ -48,7 +68,7 @@ func (s *Stmt) ExecMapContext(ctx context.Context, mp interface{}) (sql.Result, 
 	for k, i := range s.names {
 		args[i] = vv.Elem().MapIndex(reflect.ValueOf(k)).Interface()
 	}
-	return s.Stmt.ExecContext(ctx, args...)
+	return s.ExecContext(ctx, args...)
 }
 
 func (s *Stmt) ExecMap(mp interface{}) (sql.Result, error) {
@@ -65,15 +85,54 @@ func (s *Stmt) ExecStructContext(ctx context.Context, st interface{}) (sql.Resul
 	for k, i := range s.names {
 		args[i] = vv.Elem().FieldByName(k).Interface()
 	}
-	return s.Stmt.ExecContext(ctx, args...)
+	return s.ExecContext(ctx, args...)
 }
 
 func (s *Stmt) ExecStruct(st interface{}) (sql.Result, error) {
 	return s.ExecStructContext(context.Background(), st)
 }
 
+func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error) {
+	start := time.Now()
+	if s.db.Logger != nil {
+		s.db.Logger.BeforeSQL(log.LogContext{
+			Ctx:  ctx,
+			SQL:  s.query,
+			Args: args,
+		})
+	}
+	res, err := s.Stmt.ExecContext(ctx, args)
+	if s.db.Logger != nil {
+		s.db.Logger.AfterSQL(log.LogContext{
+			Ctx:         ctx,
+			SQL:         s.query,
+			Args:        args,
+			ExecuteTime: time.Now().Sub(start),
+			Err:         err,
+		})
+	}
+	return res, err
+}
+
 func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*Rows, error) {
+	start := time.Now()
+	if s.db.Logger != nil {
+		s.db.Logger.BeforeSQL(log.LogContext{
+			Ctx:  ctx,
+			SQL:  s.query,
+			Args: args,
+		})
+	}
 	rows, err := s.Stmt.QueryContext(ctx, args...)
+	if s.db.Logger != nil {
+		s.db.Logger.AfterSQL(log.LogContext{
+			Ctx:         ctx,
+			SQL:         s.query,
+			Args:        args,
+			ExecuteTime: time.Now().Sub(start),
+			Err:         err,
+		})
+	}
 	if err != nil {
 		return nil, err
 	}

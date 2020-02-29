@@ -80,7 +80,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 
 	logger := log.NewSimpleLogger(os.Stdout)
 	logger.SetLevel(log.LOG_INFO)
-	engine.SetLogger(logger)
+	engine.SetLogger(log.NewLoggerAdapter(logger))
 
 	runtime.SetFinalizer(engine, close)
 

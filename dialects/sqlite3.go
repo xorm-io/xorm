@@ -249,16 +249,10 @@ func (db *sqlite3) ForUpdateSQL(query string) string {
 	return query
 }
 
-/*func (db *sqlite3) ColumnCheckSql(tableName, colName string) (string, []interface{}) {
-	args := []interface{}{tableName}
-	sql := "SELECT name FROM sqlite_master WHERE type='table' and name = ? and ((sql like '%`" + colName + "`%') or (sql like '%[" + colName + "]%'))"
-	return sql, args
-}*/
-
 func (db *sqlite3) IsColumnExist(ctx context.Context, tableName, colName string) (bool, error) {
 	args := []interface{}{tableName}
 	query := "SELECT name FROM sqlite_master WHERE type='table' and name = ? and ((sql like '%`" + colName + "`%') or (sql like '%[" + colName + "]%'))"
-	db.LogSQL(query, args)
+
 	rows, err := db.DB().QueryContext(ctx, query, args...)
 	if err != nil {
 		return false, err
@@ -336,7 +330,7 @@ func parseString(colStr string) (*schemas.Column, error) {
 func (db *sqlite3) GetColumns(ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error) {
 	args := []interface{}{tableName}
 	s := "SELECT sql FROM sqlite_master WHERE type='table' and name = ?"
-	db.LogSQL(s, args)
+
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, nil, err
@@ -393,7 +387,6 @@ func (db *sqlite3) GetColumns(ctx context.Context, tableName string) ([]string, 
 func (db *sqlite3) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	args := []interface{}{}
 	s := "SELECT name FROM sqlite_master WHERE type='table'"
-	db.LogSQL(s, args)
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
@@ -419,7 +412,6 @@ func (db *sqlite3) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 func (db *sqlite3) GetIndexes(ctx context.Context, tableName string) (map[string]*schemas.Index, error) {
 	args := []interface{}{tableName}
 	s := "SELECT sql FROM sqlite_master WHERE type='index' and tbl_name = ?"
-	db.LogSQL(s, args)
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {

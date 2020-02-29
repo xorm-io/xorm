@@ -187,7 +187,7 @@ func (statement *Statement) BuildUpdates(bean interface{},
 				val, _ = nulType.Value()
 			} else {
 				if !col.SQLType.IsJson() {
-					table, err := statement.tagParser.MapType(fieldValue)
+					table, err := statement.tagParser.ParseWithCache(fieldValue)
 					if err != nil {
 						val = fieldValue.Interface()
 					} else {

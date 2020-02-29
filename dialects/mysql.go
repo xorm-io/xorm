@@ -303,23 +303,26 @@ func (db *mysql) IndexCheckSQL(tableName, idxName string) (string, []interface{}
 	return sql, args
 }
 
-/*func (db *mysql) ColumnCheckSql(tableName, colName string) (string, []interface{}) {
-	args := []interface{}{db.DbName, tableName, colName}
-	sql := "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?"
-	return sql, args
-}*/
-
 func (db *mysql) TableCheckSQL(tableName string) (string, []interface{}) {
 	args := []interface{}{db.uri.DBName, tableName}
 	sql := "SELECT `TABLE_NAME` from `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? and `TABLE_NAME`=?"
 	return sql, args
 }
 
+func (db *mysql) AddColumnSQL(tableName string, col *schemas.Column) string {
+	quoter := db.dialect.Quoter()
+	sql := fmt.Sprintf("ALTER TABLE %v ADD %v", quoter.Quote(tableName),
+		db.String(col))
+	if len(col.Comment) > 0 {
+		sql += " COMMENT '" + col.Comment + "'"
+	}
+	return sql
+}
+
 func (db *mysql) GetColumns(ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error) {
 	args := []interface{}{db.uri.DBName, tableName}
 	s := "SELECT `COLUMN_NAME`, `IS_NULLABLE`, `COLUMN_DEFAULT`, `COLUMN_TYPE`," +
 		" `COLUMN_KEY`, `EXTRA`,`COLUMN_COMMENT` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
-	db.LogSQL(s, args)
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
@@ -430,7 +433,6 @@ func (db *mysql) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	args := []interface{}{db.uri.DBName}
 	s := "SELECT `TABLE_NAME`, `ENGINE`, `TABLE_ROWS`, `AUTO_INCREMENT`, `TABLE_COMMENT` from " +
 		"`INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? AND (`ENGINE`='MyISAM' OR `ENGINE` = 'InnoDB' OR `ENGINE` = 'TokuDB')"
-	db.LogSQL(s, args)
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
@@ -459,7 +461,6 @@ func (db *mysql) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 func (db *mysql) GetIndexes(ctx context.Context, tableName string) (map[string]*schemas.Index, error) {
 	args := []interface{}{db.uri.DBName, tableName}
 	s := "SELECT `INDEX_NAME`, `NON_UNIQUE`, `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`STATISTICS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
-	db.LogSQL(s, args)
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {

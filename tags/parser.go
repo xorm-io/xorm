@@ -20,11 +20,15 @@ import (
 	"xorm.io/xorm/schemas"
 )
 
+var (
+	ErrUnsupportedType = errors.New("Unsupported type")
+)
+
 type Parser struct {
 	identifier   string
 	dialect      dialects.Dialect
-	ColumnMapper names.Mapper
-	TableMapper  names.Mapper
+	columnMapper names.Mapper
+	tableMapper  names.Mapper
 	handlers     map[string]Handler
 	cacherMgr    *caches.Manager
 	tableCache   sync.Map // map[reflect.Type]*schemas.Table
@@ -34,33 +38,39 @@ func NewParser(identifier string, dialect dialects.Dialect, tableMapper, columnM
 	return &Parser{
 		identifier:   identifier,
 		dialect:      dialect,
-		TableMapper:  tableMapper,
-		ColumnMapper: columnMapper,
+		tableMapper:  tableMapper,
+		columnMapper: columnMapper,
 		handlers:     defaultTagHandlers,
 		cacherMgr:    cacherMgr,
 	}
 }
 
-func addIndex(indexName string, table *schemas.Table, col *schemas.Column, indexType int) {
-	if index, ok := table.Indexes[indexName]; ok {
-		index.AddColumn(col.Name)
-		col.Indexes[index.Name] = indexType
-	} else {
-		index := schemas.NewIndex(indexName, indexType)
-		index.AddColumn(col.Name)
-		table.AddIndex(index)
-		col.Indexes[index.Name] = indexType
-	}
+func (parser *Parser) GetTableMapper() names.Mapper {
+	return parser.tableMapper
 }
 
-func (parser *Parser) MapType(v reflect.Value) (*schemas.Table, error) {
+func (parser *Parser) SetTableMapper(mapper names.Mapper) {
+	parser.ClearCaches()
+	parser.tableMapper = mapper
+}
+
+func (parser *Parser) GetColumnMapper() names.Mapper {
+	return parser.columnMapper
+}
+
+func (parser *Parser) SetColumnMapper(mapper names.Mapper) {
+	parser.ClearCaches()
+	parser.columnMapper = mapper
+}
+
+func (parser *Parser) ParseWithCache(v reflect.Value) (*schemas.Table, error) {
 	t := v.Type()
 	tableI, ok := parser.tableCache.Load(t)
 	if ok {
 		return tableI.(*schemas.Table), nil
 	}
 
-	table, err := parser.mapType(v)
+	table, err := parser.Parse(v)
 	if err != nil {
 		return nil, err
 	}
@@ -78,16 +88,41 @@ func (parser *Parser) MapType(v reflect.Value) (*schemas.Table, error) {
 	return table, nil
 }
 
-// ClearTable removes the database mapper of a type from the cache
-func (parser *Parser) ClearTable(t reflect.Type) {
+// ClearCacheTable removes the database mapper of a type from the cache
+func (parser *Parser) ClearCacheTable(t reflect.Type) {
 	parser.tableCache.Delete(t)
 }
 
-func (parser *Parser) mapType(v reflect.Value) (*schemas.Table, error) {
+// ClearCaches removes all the cached table information parsed by structs
+func (parser *Parser) ClearCaches() {
+	parser.tableCache = sync.Map{}
+}
+
+func addIndex(indexName string, table *schemas.Table, col *schemas.Column, indexType int) {
+	if index, ok := table.Indexes[indexName]; ok {
+		index.AddColumn(col.Name)
+		col.Indexes[index.Name] = indexType
+	} else {
+		index := schemas.NewIndex(indexName, indexType)
+		index.AddColumn(col.Name)
+		table.AddIndex(index)
+		col.Indexes[index.Name] = indexType
+	}
+}
+
+// Parse parses a struct as a table information
+func (parser *Parser) Parse(v reflect.Value) (*schemas.Table, error) {
 	t := v.Type()
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	if t.Kind() != reflect.Struct {
+		return nil, ErrUnsupportedType
+	}
+
 	table := schemas.NewEmptyTable()
 	table.Type = t
-	table.Name = names.GetTableName(parser.TableMapper, v)
+	table.Name = names.GetTableName(parser.tableMapper, v)
 
 	var idFieldColName string
 	var hasCacheTag, hasNoCacheTag bool
@@ -204,7 +239,7 @@ func (parser *Parser) mapType(v reflect.Value) (*schemas.Table, error) {
 					col.Length2 = col.SQLType.DefaultLength2
 				}
 				if col.Name == "" {
-					col.Name = parser.ColumnMapper.Obj2Table(t.Field(i).Name)
+					col.Name = parser.columnMapper.Obj2Table(t.Field(i).Name)
 				}
 
 				if ctx.isUnique {
@@ -229,7 +264,7 @@ func (parser *Parser) mapType(v reflect.Value) (*schemas.Table, error) {
 			} else {
 				sqlType = schemas.Type2SQLType(fieldType)
 			}
-			col = schemas.NewColumn(parser.ColumnMapper.Obj2Table(t.Field(i).Name),
+			col = schemas.NewColumn(parser.columnMapper.Obj2Table(t.Field(i).Name),
 				t.Field(i).Name, sqlType, sqlType.DefaultLength,
 				sqlType.DefaultLength2, true)
 

@@ -83,7 +83,7 @@ type EngineInterface interface {
 	DBMetas() ([]*schemas.Table, error)
 	Dialect() dialects.Dialect
 	DropTables(...interface{}) error
-	DumpAllToFile(fp string, tp ...dialects.DBType) error
+	DumpAllToFile(fp string, tp ...schemas.DBType) error
 	GetCacher(string) caches.Cacher
 	GetColumnMapper() names.Mapper
 	GetDefaultCacher() caches.Cacher
@@ -98,7 +98,7 @@ type EngineInterface interface {
 	SetConnMaxLifetime(time.Duration)
 	SetColumnMapper(names.Mapper)
 	SetDefaultCacher(caches.Cacher)
-	SetLogger(logger log.Logger)
+	SetLogger(logger interface{})
 	SetLogLevel(log.LogLevel)
 	SetMapper(names.Mapper)
 	SetMaxOpenConns(int)
@@ -107,12 +107,11 @@ type EngineInterface interface {
 	SetTableMapper(names.Mapper)
 	SetTZDatabase(tz *time.Location)
 	SetTZLocation(tz *time.Location)
-	ShowExecTime(...bool)
 	ShowSQL(show ...bool)
 	Sync(...interface{}) error
 	Sync2(...interface{}) error
 	StoreEngine(storeEngine string) *Session
-	TableInfo(bean interface{}) (*Table, error)
+	TableInfo(bean interface{}) (*schemas.Table, error)
 	TableName(interface{}, ...bool) string
 	UnMapType(reflect.Type)
 }

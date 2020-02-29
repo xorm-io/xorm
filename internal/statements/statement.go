@@ -253,11 +253,11 @@ func (statement *Statement) NotIn(column string, args ...interface{}) *Statement
 
 func (statement *Statement) SetRefValue(v reflect.Value) error {
 	var err error
-	statement.RefTable, err = statement.tagParser.MapType(reflect.Indirect(v))
+	statement.RefTable, err = statement.tagParser.ParseWithCache(reflect.Indirect(v))
 	if err != nil {
 		return err
 	}
-	statement.tableName = dialects.FullTableName(statement.dialect, statement.tagParser.TableMapper, v, true)
+	statement.tableName = dialects.FullTableName(statement.dialect, statement.tagParser.GetTableMapper(), v, true)
 	return nil
 }
 
@@ -267,11 +267,11 @@ func rValue(bean interface{}) reflect.Value {
 
 func (statement *Statement) SetRefBean(bean interface{}) error {
 	var err error
-	statement.RefTable, err = statement.tagParser.MapType(rValue(bean))
+	statement.RefTable, err = statement.tagParser.ParseWithCache(rValue(bean))
 	if err != nil {
 		return err
 	}
-	statement.tableName = dialects.FullTableName(statement.dialect, statement.tagParser.TableMapper, bean, true)
+	statement.tableName = dialects.FullTableName(statement.dialect, statement.tagParser.GetTableMapper(), bean, true)
 	return nil
 }
 
@@ -507,13 +507,13 @@ func (statement *Statement) SetTable(tableNameOrBean interface{}) error {
 	t := v.Type()
 	if t.Kind() == reflect.Struct {
 		var err error
-		statement.RefTable, err = statement.tagParser.MapType(v)
+		statement.RefTable, err = statement.tagParser.ParseWithCache(v)
 		if err != nil {
 			return err
 		}
 	}
 
-	statement.AltTableName = dialects.FullTableName(statement.dialect, statement.tagParser.TableMapper, tableNameOrBean, true)
+	statement.AltTableName = dialects.FullTableName(statement.dialect, statement.tagParser.GetTableMapper(), tableNameOrBean, true)
 	return nil
 }
 
@@ -554,7 +554,7 @@ func (statement *Statement) Join(joinOP string, tablename interface{}, condition
 		fmt.Fprintf(&buf, "(%s) %s ON %v", subSQL, aliasName, condition)
 		statement.joinArgs = append(statement.joinArgs, subQueryArgs...)
 	default:
-		tbName := dialects.FullTableName(statement.dialect, statement.tagParser.TableMapper, tablename, true)
+		tbName := dialects.FullTableName(statement.dialect, statement.tagParser.GetTableMapper(), tablename, true)
 		if !utils.IsSubQuery(tbName) {
 			var buf strings.Builder
 			statement.dialect.Quoter().QuoteTo(&buf, tbName)
@@ -689,7 +689,7 @@ func (statement *Statement) GenDelIndexSQL() []string {
 		} else if index.Type == schemas.IndexType {
 			rIdxName = utils.IndexName(idxPrefixName, idxName)
 		}
-		sql := fmt.Sprintf("DROP INDEX %v", statement.quote(dialects.FullTableName(statement.dialect, statement.tagParser.TableMapper, rIdxName, true)))
+		sql := fmt.Sprintf("DROP INDEX %v", statement.quote(dialects.FullTableName(statement.dialect, statement.tagParser.GetTableMapper(), rIdxName, true)))
 		if statement.dialect.IndexOnTable() {
 			sql += fmt.Sprintf(" ON %v", statement.quote(tbName))
 		}
@@ -844,7 +844,7 @@ func (statement *Statement) buildConds2(table *schemas.Table, bean interface{},
 						val = bytes
 					}
 				} else {
-					table, err := statement.tagParser.MapType(fieldValue)
+					table, err := statement.tagParser.ParseWithCache(fieldValue)
 					if err != nil {
 						val = fieldValue.Interface()
 					} else {

@@ -485,7 +485,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		if table.Version != "" && session.statement.CheckVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
 			if err != nil {
-				session.engine.logger.Error(err)
+				session.engine.logger.Errorf("%v", err)
 			} else if verValue.IsValid() && verValue.CanSet() {
 				session.incrVersionFieldValue(verValue)
 			}
@@ -503,7 +503,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
 		if err != nil {
-			session.engine.logger.Error(err)
+			session.engine.logger.Errorf("%v", err)
 		}
 
 		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
@@ -526,7 +526,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		if table.Version != "" && session.statement.CheckVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
 			if err != nil {
-				session.engine.logger.Error(err)
+				session.engine.logger.Errorf("%v", err)
 			} else if verValue.IsValid() && verValue.CanSet() {
 				session.incrVersionFieldValue(verValue)
 			}
@@ -544,7 +544,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
 		if err != nil {
-			session.engine.logger.Error(err)
+			session.engine.logger.Errorf("%v", err)
 		}
 
 		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
@@ -567,7 +567,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		if table.Version != "" && session.statement.CheckVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
 			if err != nil {
-				session.engine.logger.Error(err)
+				session.engine.logger.Errorf("%v", err)
 			} else if verValue.IsValid() && verValue.CanSet() {
 				session.incrVersionFieldValue(verValue)
 			}
@@ -585,7 +585,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
 		if err != nil {
-			session.engine.logger.Error(err)
+			session.engine.logger.Errorf("%v", err)
 		}
 
 		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
@@ -617,7 +617,7 @@ func (session *Session) cacheInsert(table string) error {
 	if cacher == nil {
 		return nil
 	}
-	session.engine.logger.Debug("[cache] clear sql:", table)
+	session.engine.logger.Debugf("[cache] clear sql: %v", table)
 	cacher.ClearIds(table)
 	return nil
 }

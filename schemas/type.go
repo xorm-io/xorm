@@ -11,12 +11,14 @@ import (
 	"time"
 )
 
+type DBType string
+
 const (
-	POSTGRES = "postgres"
-	SQLITE   = "sqlite3"
-	MYSQL    = "mysql"
-	MSSQL    = "mssql"
-	ORACLE   = "oracle"
+	POSTGRES DBType = "postgres"
+	SQLITE   DBType = "sqlite3"
+	MYSQL    DBType = "mysql"
+	MSSQL    DBType = "mssql"
+	ORACLE   DBType = "oracle"
 )
 
 // SQLType represents SQL types

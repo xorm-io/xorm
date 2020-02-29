@@ -635,7 +635,6 @@ func (db *oracle) IsColumnExist(ctx context.Context, tableName, colName string) 
 	args := []interface{}{tableName, colName}
 	query := "SELECT column_name FROM USER_TAB_COLUMNS WHERE table_name = :1" +
 		" AND column_name = :2"
-	db.LogSQL(query, args)
 
 	rows, err := db.DB().QueryContext(ctx, query, args...)
 	if err != nil {
@@ -653,7 +652,6 @@ func (db *oracle) GetColumns(ctx context.Context, tableName string) ([]string, m
 	args := []interface{}{tableName}
 	s := "SELECT column_name,data_default,data_type,data_length,data_precision,data_scale," +
 		"nullable FROM USER_TAB_COLUMNS WHERE table_name = :1"
-	db.LogSQL(s, args)
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
@@ -750,7 +748,6 @@ func (db *oracle) GetColumns(ctx context.Context, tableName string) ([]string, m
 func (db *oracle) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	args := []interface{}{}
 	s := "SELECT table_name FROM user_tables"
-	db.LogSQL(s, args)
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
@@ -775,7 +772,6 @@ func (db *oracle) GetIndexes(ctx context.Context, tableName string) (map[string]
 	args := []interface{}{tableName}
 	s := "SELECT t.column_name,i.uniqueness,i.index_name FROM user_ind_columns t,user_indexes i " +
 		"WHERE t.index_name = i.index_name and t.table_name = i.table_name and t.table_name =:1"
-	db.LogSQL(s, args)
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {

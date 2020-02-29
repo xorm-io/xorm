@@ -943,7 +943,6 @@ func (db *postgres) IsColumnExist(ctx context.Context, tableName, colName string
 		query = "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1" +
 			" AND column_name = $2"
 	}
-	db.LogSQL(query, args)
 
 	rows, err := db.DB().QueryContext(ctx, query, args...)
 	if err != nil {
@@ -974,8 +973,6 @@ WHERE c.relkind = 'r'::char AND c.relname = $1%s AND f.attnum > 0 ORDER BY f.att
 		f = " AND s.table_schema = $2"
 	}
 	s = fmt.Sprintf(s, f)
-
-	db.LogSQL(s, args)
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
@@ -1077,8 +1074,6 @@ func (db *postgres) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 		s = s + " WHERE schemaname = $1"
 	}
 
-	db.LogSQL(s, args)
-
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {
 		return nil, err
@@ -1117,7 +1112,6 @@ func (db *postgres) GetIndexes(ctx context.Context, tableName string) (map[strin
 		args = append(args, db.uri.Schema)
 		s = s + " AND schemaname=$2"
 	}
-	db.LogSQL(s, args)
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
 	if err != nil {

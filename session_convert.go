@@ -111,7 +111,6 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 		if len(data) > 0 {
 			err := json.DefaultJSONHandler.Unmarshal(data, x.Interface())
 			if err != nil {
-				session.engine.logger.Error(err)
 				return err
 			}
 			fieldValue.Set(x.Elem())
@@ -125,7 +124,6 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 			if len(data) > 0 {
 				err := json.DefaultJSONHandler.Unmarshal(data, x.Interface())
 				if err != nil {
-					session.engine.logger.Error(err)
 					return err
 				}
 				fieldValue.Set(x.Elem())
@@ -138,7 +136,6 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 				if len(data) > 0 {
 					err := json.DefaultJSONHandler.Unmarshal(data, x.Interface())
 					if err != nil {
-						session.engine.logger.Error(err)
 						return err
 					}
 					fieldValue.Set(x.Elem())
@@ -210,7 +207,7 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 				v = x
 				fieldValue.Set(reflect.ValueOf(v).Convert(fieldType))
 			} else if session.statement.UseCascade {
-				table, err := session.engine.tagParser.MapType(*fieldValue)
+				table, err := session.engine.tagParser.ParseWithCache(*fieldValue)
 				if err != nil {
 					return err
 				}
@@ -267,7 +264,6 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 			if len(data) > 0 {
 				err := json.DefaultJSONHandler.Unmarshal(data, &x)
 				if err != nil {
-					session.engine.logger.Error(err)
 					return err
 				}
 				fieldValue.Set(reflect.ValueOf(&x).Convert(fieldType))
@@ -278,7 +274,6 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 			if len(data) > 0 {
 				err := json.DefaultJSONHandler.Unmarshal(data, &x)
 				if err != nil {
-					session.engine.logger.Error(err)
 					return err
 				}
 				fieldValue.Set(reflect.ValueOf(&x).Convert(fieldType))
@@ -493,7 +488,7 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 			default:
 				if session.statement.UseCascade {
 					structInter := reflect.New(fieldType.Elem())
-					table, err := session.engine.tagParser.MapType(structInter.Elem())
+					table, err := session.engine.tagParser.ParseWithCache(structInter.Elem())
 					if err != nil {
 						return err
 					}
@@ -570,7 +565,7 @@ func (session *Session) value2Interface(col *schemas.Column, fieldValue reflect.
 		if fieldValue.IsNil() {
 			return nil, nil
 		} else if !fieldValue.IsValid() {
-			session.engine.logger.Warn("the field[", col.FieldName, "] is invalid")
+			session.engine.logger.Warnf("the field [%s] is invalid", col.FieldName)
 			return nil, nil
 		} else {
 			// !nashtsai! deference pointer type to instance type
@@ -604,7 +599,7 @@ func (session *Session) value2Interface(col *schemas.Column, fieldValue reflect.
 				return v.Value()
 			}
 
-			fieldTable, err := session.engine.tagParser.MapType(fieldValue)
+			fieldTable, err := session.engine.tagParser.ParseWithCache(fieldValue)
 			if err != nil {
 				return nil, err
 			}
@@ -618,14 +613,12 @@ func (session *Session) value2Interface(col *schemas.Column, fieldValue reflect.
 		if col.SQLType.IsText() {
 			bytes, err := json.DefaultJSONHandler.Marshal(fieldValue.Interface())
 			if err != nil {
-				session.engine.logger.Error(err)
 				return 0, err
 			}
 			return string(bytes), nil
 		} else if col.SQLType.IsBlob() {
 			bytes, err := json.DefaultJSONHandler.Marshal(fieldValue.Interface())
 			if err != nil {
-				session.engine.logger.Error(err)
 				return 0, err
 			}
 			return bytes, nil
@@ -634,7 +627,6 @@ func (session *Session) value2Interface(col *schemas.Column, fieldValue reflect.
 	case reflect.Complex64, reflect.Complex128:
 		bytes, err := json.DefaultJSONHandler.Marshal(fieldValue.Interface())
 		if err != nil {
-			session.engine.logger.Error(err)
 			return 0, err
 		}
 		return string(bytes), nil
@@ -646,7 +638,6 @@ func (session *Session) value2Interface(col *schemas.Column, fieldValue reflect.
 		if col.SQLType.IsText() {
 			bytes, err := json.DefaultJSONHandler.Marshal(fieldValue.Interface())
 			if err != nil {
-				session.engine.logger.Error(err)
 				return 0, err
 			}
 			return string(bytes), nil
@@ -659,7 +650,6 @@ func (session *Session) value2Interface(col *schemas.Column, fieldValue reflect.
 			} else {
 				bytes, err = json.DefaultJSONHandler.Marshal(fieldValue.Interface())
 				if err != nil {
-					session.engine.logger.Error(err)
 					return 0, err
 				}
 			}

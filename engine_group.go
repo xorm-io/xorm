@@ -135,7 +135,7 @@ func (eg *EngineGroup) SetDefaultCacher(cacher caches.Cacher) {
 }
 
 // SetLogger set the new logger
-func (eg *EngineGroup) SetLogger(logger log.Logger) {
+func (eg *EngineGroup) SetLogger(logger interface{}) {
 	eg.Engine.SetLogger(logger)
 	for i := 0; i < len(eg.slaves); i++ {
 		eg.slaves[i].SetLogger(logger)
@@ -185,14 +185,6 @@ func (eg *EngineGroup) SetTableMapper(mapper names.Mapper) {
 	eg.Engine.SetTableMapper(mapper)
 	for i := 0; i < len(eg.slaves); i++ {
 		eg.slaves[i].SetTableMapper(mapper)
-	}
-}
-
-// ShowExecTime show SQL statement and execute time or not on logger if log level is great than INFO
-func (eg *EngineGroup) ShowExecTime(show ...bool) {
-	eg.Engine.ShowExecTime(show...)
-	for i := 0; i < len(eg.slaves); i++ {
-		eg.slaves[i].ShowExecTime(show...)
 	}
 }
 

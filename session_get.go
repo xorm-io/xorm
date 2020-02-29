@@ -79,7 +79,7 @@ func (session *Session) get(bean interface{}) (bool, error) {
 	if context != nil {
 		res := context.Get(fmt.Sprintf("%v-%v", sqlStr, args))
 		if res != nil {
-			session.engine.logger.Debug("hit context cache", sqlStr)
+			session.engine.logger.Debugf("hit context cache: %s", sqlStr)
 
 			structValue := reflect.Indirect(reflect.ValueOf(bean))
 			structValue.Set(reflect.Indirect(reflect.ValueOf(res)))
@@ -283,7 +283,7 @@ func (session *Session) cacheGet(bean interface{}, sqlStr string, args ...interf
 	tableName := session.statement.TableName()
 	cacher := session.engine.cacherMgr.GetCacher(tableName)
 
-	session.engine.logger.Debug("[cache] Get SQL:", newsql, args)
+	session.engine.logger.Debugf("[cache] Get SQL: %s, %v", newsql, args)
 	table := session.statement.RefTable
 	ids, err := caches.GetCacheSql(cacher, tableName, newsql, args)
 	if err != nil {
@@ -319,19 +319,19 @@ func (session *Session) cacheGet(bean interface{}, sqlStr string, args ...interf
 		}
 
 		ids = []schemas.PK{pk}
-		session.engine.logger.Debug("[cache] cache ids:", newsql, ids)
+		session.engine.logger.Debugf("[cache] cache ids: %s, %v", newsql, ids)
 		err = caches.PutCacheSql(cacher, ids, tableName, newsql, args)
 		if err != nil {
 			return false, err
 		}
 	} else {
-		session.engine.logger.Debug("[cache] cache hit:", newsql, ids)
+		session.engine.logger.Debugf("[cache] cache hit: %s, %v", newsql, ids)
 	}
 
 	if len(ids) > 0 {
 		structValue := reflect.Indirect(reflect.ValueOf(bean))
 		id := ids[0]
-		session.engine.logger.Debug("[cache] get bean:", tableName, id)
+		session.engine.logger.Debugf("[cache] get bean: %s, %v", tableName, id)
 		sid, err := id.ToString()
 		if err != nil {
 			return false, err
@@ -344,10 +344,10 @@ func (session *Session) cacheGet(bean interface{}, sqlStr string, args ...interf
 				return has, err
 			}
 
-			session.engine.logger.Debug("[cache] cache bean:", tableName, id, cacheBean)
+			session.engine.logger.Debugf("[cache] cache bean: %s, %v, %v", tableName, id, cacheBean)
 			cacher.PutBean(tableName, sid, cacheBean)
 		} else {
-			session.engine.logger.Debug("[cache] cache hit:", tableName, id, cacheBean)
+			session.engine.logger.Debugf("[cache] cache hit: %s, %v, %v", tableName, id, cacheBean)
 			has = true
 		}
 		structValue.Set(reflect.Indirect(reflect.ValueOf(cacheBean)))

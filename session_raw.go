@@ -7,7 +7,6 @@ package xorm
 import (
 	"database/sql"
 	"reflect"
-	"time"
 
 	"xorm.io/xorm/core"
 	"xorm.io/xorm/internal/statements"
@@ -27,27 +26,8 @@ func (session *Session) queryRows(sqlStr string, args ...interface{}) (*core.Row
 
 	session.queryPreprocess(&sqlStr, args...)
 
-	if session.showSQL {
-		session.lastSQL = sqlStr
-		session.lastSQLArgs = args
-		if session.engine.showExecTime {
-			b4ExecTime := time.Now()
-			defer func() {
-				execDuration := time.Since(b4ExecTime)
-				if len(args) > 0 {
-					session.engine.logger.Infof("[SQL] %s %#v - took: %v", sqlStr, args, execDuration)
-				} else {
-					session.engine.logger.Infof("[SQL] %s - took: %v", sqlStr, execDuration)
-				}
-			}()
-		} else {
-			if len(args) > 0 {
-				session.engine.logger.Infof("[SQL] %v %#v", sqlStr, args)
-			} else {
-				session.engine.logger.Infof("[SQL] %v", sqlStr)
-			}
-		}
-	}
+	session.lastSQL = sqlStr
+	session.lastSQLArgs = args
 
 	if session.isAutoCommit {
 		var db *core.DB
@@ -156,25 +136,8 @@ func (session *Session) exec(sqlStr string, args ...interface{}) (sql.Result, er
 
 	session.queryPreprocess(&sqlStr, args...)
 
-	if session.engine.showSQL {
-		if session.engine.showExecTime {
-			b4ExecTime := time.Now()
-			defer func() {
-				execDuration := time.Since(b4ExecTime)
-				if len(args) > 0 {
-					session.engine.logger.Infof("[SQL] %s %#v - took: %v", sqlStr, args, execDuration)
-				} else {
-					session.engine.logger.Infof("[SQL] %s - took: %v", sqlStr, execDuration)
-				}
-			}()
-		} else {
-			if len(args) > 0 {
-				session.engine.logger.Infof("[SQL] %v %#v", sqlStr, args)
-			} else {
-				session.engine.logger.Infof("[SQL] %v", sqlStr)
-			}
-		}
-	}
+	session.lastSQL = sqlStr
+	session.lastSQLArgs = args
 
 	if !session.isAutoCommit {
 		return session.tx.ExecContext(session.ctx, sqlStr, args...)
