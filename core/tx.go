@@ -19,14 +19,15 @@ type Tx struct {
 
 func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
 	start := time.Now()
-	if db.Logger != nil {
+	showSQL := db.NeedLogSQL(ctx)
+	if showSQL {
 		db.Logger.BeforeSQL(log.LogContext{
 			Ctx: ctx,
 			SQL: "BEGIN TRANSACTION",
 		})
 	}
 	tx, err := db.DB.BeginTx(ctx, opts)
-	if db.Logger != nil {
+	if showSQL {
 		db.Logger.AfterSQL(log.LogContext{
 			Ctx:         ctx,
 			SQL:         "BEGIN TRANSACTION",
@@ -54,14 +55,15 @@ func (tx *Tx) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 	})
 
 	start := time.Now()
-	if tx.db.Logger != nil {
+	showSQL := tx.db.NeedLogSQL(ctx)
+	if showSQL {
 		tx.db.Logger.BeforeSQL(log.LogContext{
 			Ctx: ctx,
 			SQL: "PREPARE",
 		})
 	}
 	stmt, err := tx.Tx.PrepareContext(ctx, query)
-	if tx.db.Logger != nil {
+	if showSQL {
 		tx.db.Logger.AfterSQL(log.LogContext{
 			Ctx:         ctx,
 			SQL:         "PREPARE",
@@ -110,7 +112,8 @@ func (tx *Tx) ExecStructContext(ctx context.Context, query string, st interface{
 
 func (tx *Tx) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	start := time.Now()
-	if tx.db.Logger != nil {
+	showSQL := tx.db.NeedLogSQL(ctx)
+	if showSQL {
 		tx.db.Logger.BeforeSQL(log.LogContext{
 			Ctx:  ctx,
 			SQL:  query,
@@ -118,7 +121,7 @@ func (tx *Tx) ExecContext(ctx context.Context, query string, args ...interface{}
 		})
 	}
 	res, err := tx.Tx.ExecContext(ctx, query, args...)
-	if tx.db.Logger != nil {
+	if showSQL {
 		tx.db.Logger.AfterSQL(log.LogContext{
 			Ctx:         ctx,
 			SQL:         query,
@@ -136,7 +139,8 @@ func (tx *Tx) ExecStruct(query string, st interface{}) (sql.Result, error) {
 
 func (tx *Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*Rows, error) {
 	start := time.Now()
-	if tx.db.Logger != nil {
+	showSQL := tx.db.NeedLogSQL(ctx)
+	if showSQL {
 		tx.db.Logger.BeforeSQL(log.LogContext{
 			Ctx:  ctx,
 			SQL:  query,
@@ -144,7 +148,7 @@ func (tx *Tx) QueryContext(ctx context.Context, query string, args ...interface{
 		})
 	}
 	rows, err := tx.Tx.QueryContext(ctx, query, args...)
-	if tx.db.Logger != nil {
+	if showSQL {
 		tx.db.Logger.AfterSQL(log.LogContext{
 			Ctx:         ctx,
 			SQL:         query,

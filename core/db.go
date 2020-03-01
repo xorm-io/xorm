@@ -83,7 +83,7 @@ type DB struct {
 	Mapper            names.Mapper
 	reflectCache      map[reflect.Type]*cacheStruct
 	reflectCacheMutex sync.RWMutex
-	Logger            log.SQLLogger
+	Logger            log.ContextLogger
 }
 
 // Open opens a database
@@ -108,6 +108,19 @@ func FromDB(db *sql.DB) *DB {
 	}
 }
 
+// NeedLogSQL returns true if need to log SQL
+func (db *DB) NeedLogSQL(ctx context.Context) bool {
+	if db.Logger == nil {
+		return false
+	}
+
+	v := ctx.Value("__xorm_show_sql")
+	if showSQL, ok := v.(bool); ok {
+		return showSQL
+	}
+	return db.Logger.IsShowSQL()
+}
+
 func (db *DB) reflectNew(typ reflect.Type) reflect.Value {
 	db.reflectCacheMutex.Lock()
 	defer db.reflectCacheMutex.Unlock()
@@ -124,7 +137,8 @@ func (db *DB) reflectNew(typ reflect.Type) reflect.Value {
 // QueryContext overwrites sql.DB.QueryContext
 func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*Rows, error) {
 	start := time.Now()
-	if db.Logger != nil {
+	showSQL := db.NeedLogSQL(ctx)
+	if showSQL {
 		db.Logger.BeforeSQL(log.LogContext{
 			Ctx:  ctx,
 			SQL:  query,
@@ -132,7 +146,7 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{
 		})
 	}
 	rows, err := db.DB.QueryContext(ctx, query, args...)
-	if db.Logger != nil {
+	if showSQL {
 		db.Logger.AfterSQL(log.LogContext{
 			Ctx:         ctx,
 			SQL:         query,
@@ -246,7 +260,8 @@ func (db *DB) ExecStructContext(ctx context.Context, query string, st interface{
 
 func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	start := time.Now()
-	if db.Logger != nil {
+	showSQL := db.NeedLogSQL(ctx)
+	if showSQL {
 		db.Logger.BeforeSQL(log.LogContext{
 			Ctx:  ctx,
 			SQL:  query,
@@ -254,7 +269,7 @@ func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}
 		})
 	}
 	res, err := db.DB.ExecContext(ctx, query, args...)
-	if db.Logger != nil {
+	if showSQL {
 		db.Logger.AfterSQL(log.LogContext{
 			Ctx:         ctx,
 			SQL:         query,

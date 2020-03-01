@@ -58,8 +58,6 @@ type Session struct {
 	prepareStmt bool
 	stmtCache   map[uint32]*core.Stmt //key: hash.Hash32 of (queryStr, len(queryStr))
 
-	// !evalphobia! stored the last executed query on this session
-	//beforeSQLExec func(string, ...interface{})
 	lastSQL     string
 	lastSQLArgs []interface{}
 	showSQL     bool
@@ -82,7 +80,6 @@ func (session *Session) Init() {
 		session.engine.DatabaseTZ,
 	)
 
-	//session.showSQL = session.engine.showSQL
 	session.isAutoCommit = true
 	session.isCommitedOrRollbacked = false
 	session.isAutoClose = false
@@ -241,11 +238,11 @@ func (session *Session) Cascade(trueOrFalse ...bool) *Session {
 
 // MustLogSQL means record SQL or not and don't follow engine's setting
 func (session *Session) MustLogSQL(log ...bool) *Session {
+	var showSQL = true
 	if len(log) > 0 {
-		session.showSQL = log[0]
-	} else {
-		session.showSQL = true
+		showSQL = log[0]
 	}
+	session.ctx = context.WithValue(session.ctx, "__xorm_show_sql", showSQL)
 	return session
 }
 

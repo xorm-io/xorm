@@ -61,11 +61,7 @@ func (engine *Engine) BufferSize(size int) *Session {
 // ShowSQL show SQL statement or not on logger if log level is great than INFO
 func (engine *Engine) ShowSQL(show ...bool) {
 	engine.logger.ShowSQL(show...)
-	if engine.logger.IsShowSQL() {
-		engine.db.Logger = engine.logger
-	} else {
-		engine.db.Logger = &log.DiscardSQLLogger{}
-	}
+	engine.db.Logger = engine.logger
 }
 
 // Logger return the logger interface
@@ -83,11 +79,7 @@ func (engine *Engine) SetLogger(logger interface{}) {
 		realLogger = t
 	}
 	engine.logger = realLogger
-	if realLogger.IsShowSQL() {
-		engine.db.Logger = realLogger
-	} else {
-		engine.db.Logger = &log.DiscardSQLLogger{}
-	}
+	engine.db.Logger = realLogger
 }
 
 // SetLogLevel sets the logger level

@@ -32,14 +32,15 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
 	})
 
 	start := time.Now()
-	if db.Logger != nil {
+	showSQL := db.NeedLogSQL(ctx)
+	if showSQL {
 		db.Logger.BeforeSQL(log.LogContext{
 			Ctx: ctx,
 			SQL: "PREPARE",
 		})
 	}
 	stmt, err := db.DB.PrepareContext(ctx, query)
-	if db.Logger != nil {
+	if showSQL {
 		db.Logger.AfterSQL(log.LogContext{
 			Ctx:         ctx,
 			SQL:         "PREPARE",
@@ -94,7 +95,8 @@ func (s *Stmt) ExecStruct(st interface{}) (sql.Result, error) {
 
 func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error) {
 	start := time.Now()
-	if s.db.Logger != nil {
+	showSQL := s.db.NeedLogSQL(ctx)
+	if showSQL {
 		s.db.Logger.BeforeSQL(log.LogContext{
 			Ctx:  ctx,
 			SQL:  s.query,
@@ -102,7 +104,7 @@ func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result
 		})
 	}
 	res, err := s.Stmt.ExecContext(ctx, args)
-	if s.db.Logger != nil {
+	if showSQL {
 		s.db.Logger.AfterSQL(log.LogContext{
 			Ctx:         ctx,
 			SQL:         s.query,
@@ -116,7 +118,8 @@ func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result
 
 func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*Rows, error) {
 	start := time.Now()
-	if s.db.Logger != nil {
+	showSQL := s.db.NeedLogSQL(ctx)
+	if showSQL {
 		s.db.Logger.BeforeSQL(log.LogContext{
 			Ctx:  ctx,
 			SQL:  s.query,
@@ -124,7 +127,7 @@ func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*Rows, er
 		})
 	}
 	rows, err := s.Stmt.QueryContext(ctx, args...)
-	if s.db.Logger != nil {
+	if showSQL {
 		s.db.Logger.AfterSQL(log.LogContext{
 			Ctx:         ctx,
 			SQL:         s.query,

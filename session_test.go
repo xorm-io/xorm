@@ -43,3 +43,14 @@ func TestNullFloatStruct(t *testing.T) {
 	})
 	assert.NoError(t, err)
 }
+
+func TestMustLogSQL(t *testing.T) {
+	assert.NoError(t, prepareEngine())
+	testEngine.ShowSQL(false)
+	defer testEngine.ShowSQL(true)
+
+	assertSync(t, new(Userinfo))
+
+	_, err := testEngine.Table("userinfo").MustLogSQL(true).Get(new(Userinfo))
+	assert.NoError(t, err)
+}

@@ -19,16 +19,9 @@ type LogContext struct {
 }
 
 type SQLLogger interface {
-	BeforeSQL(context LogContext)
-	AfterSQL(context LogContext)
+	BeforeSQL(context LogContext) // only invoked when IsShowSQL is true
+	AfterSQL(context LogContext)  // only invoked when IsShowSQL is true
 }
-
-type DiscardSQLLogger struct{}
-
-var _ SQLLogger = &DiscardSQLLogger{}
-
-func (DiscardSQLLogger) BeforeSQL(LogContext) {}
-func (DiscardSQLLogger) AfterSQL(LogContext)  {}
 
 // ContextLogger represents a logger interface with context
 type ContextLogger interface {
@@ -64,10 +57,6 @@ func NewLoggerAdapter(logger Logger) ContextLogger {
 func (l *LoggerAdapter) BeforeSQL(ctx LogContext) {}
 
 func (l *LoggerAdapter) AfterSQL(ctx LogContext) {
-	if !l.logger.IsShowSQL() {
-		return
-	}
-
 	if ctx.ExecuteTime > 0 {
 		l.logger.Infof("[SQL] %v %v - %v", ctx.SQL, ctx.Args, ctx.ExecuteTime)
 	} else {
