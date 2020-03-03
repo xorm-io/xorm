@@ -833,3 +833,38 @@ func TestJoinFindLimit(t *testing.T) {
 		Limit(10, 10).Find(&finds)
 	assert.NoError(t, err)
 }
+
+func TestMoreExtends(t *testing.T) {
+	type MoreExtendsUsers struct {
+		ID        int64     `xorm:"id autoincr pk" json:"id"`
+		Name      string    `xorm:"name not null" json:"name"`
+		CreatedAt time.Time `xorm:"created not null" json:"created_at"`
+		UpdatedAt time.Time `xorm:"updated not null" json:"updated_at"`
+		DeletedAt time.Time `xorm:"deleted" json:"deleted_at"`
+	}
+
+	type MoreExtendsBooks struct {
+		ID        int64     `xorm:"id autoincr pk" json:"id"`
+		Name      string    `xorm:"name not null" json:"name"`
+		UserID    int64     `xorm:"user_id not null" json:"user_id"`
+		CreatedAt time.Time `xorm:"created not null" json:"created_at"`
+		UpdatedAt time.Time `xorm:"updated not null" json:"updated_at"`
+		DeletedAt time.Time `xorm:"deleted" json:"deleted_at"`
+	}
+
+	type MoreExtendsBooksExtend struct {
+		MoreExtendsBooks `xorm:"extends"`
+		Users            MoreExtendsUsers `xorm:"extends" json:"users"`
+	}
+
+	assert.NoError(t, prepareEngine())
+	assertSync(t, new(MoreExtendsUsers), new(MoreExtendsBooks))
+
+	var books []MoreExtendsBooksExtend
+	err := testEngine.Table("more_extends_books").Select("more_extends_books.*, more_extends_users.*").
+		Join("INNER", "more_extends_users", "more_extends_books.user_id = more_extends_users.id").
+		Where("more_extends_books.name LIKE ?", "abc").
+		Limit(10, 10).
+		Find(&books)
+	assert.NoError(t, err)
+}

@@ -992,18 +992,23 @@ func (statement *Statement) joinColumns(cols []*schemas.Column, includeTableName
 
 // CondDeleted returns the conditions whether a record is soft deleted.
 func (statement *Statement) CondDeleted(col *schemas.Column) builder.Cond {
+	var colName = col.Name
+	if statement.JoinStr != "" {
+		colName = statement.quote(statement.TableName()) +
+			"." + statement.quote(col.Name)
+	}
 	var cond = builder.NewCond()
 	if col.SQLType.IsNumeric() {
-		cond = builder.Eq{col.Name: 0}
+		cond = builder.Eq{colName: 0}
 	} else {
 		// FIXME: mssql: The conversion of a nvarchar data type to a datetime data type resulted in an out-of-range value.
 		if statement.dialect.DBType() != schemas.MSSQL {
-			cond = builder.Eq{col.Name: utils.ZeroTime1}
+			cond = builder.Eq{colName: utils.ZeroTime1}
 		}
 	}
 
 	if col.Nullable {
-		cond = cond.Or(builder.IsNull{col.Name})
+		cond = cond.Or(builder.IsNull{colName})
 	}
 
 	return cond
