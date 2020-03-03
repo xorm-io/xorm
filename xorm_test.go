@@ -37,9 +37,9 @@ var (
 	splitter           = flag.String("splitter", ";", "the splitter on connstr for cluster")
 	schema             = flag.String("schema", "", "specify the schema")
 	ignoreSelectUpdate = flag.Bool("ignore_select_update", false, "ignore select update if implementation difference, only for tidb")
-
-	tableMapper names.Mapper
-	colMapper   names.Mapper
+	ingoreUpdateLimit  = flag.Bool("ignore_update_limit", false, "ignore update limit if implementation difference, only for cockroach")
+	tableMapper        names.Mapper
+	colMapper          names.Mapper
 )
 
 func createEngine(dbType, connStr string) error {
@@ -59,11 +59,11 @@ func createEngine(dbType, connStr string) error {
 				db.Close()
 				*ignoreSelectUpdate = true
 			case schemas.POSTGRES:
-				db, err := sql.Open(dbType, connStr)
+				db, err := sql.Open(dbType, strings.Replace(connStr, "xorm_test", "postgres", -1))
 				if err != nil {
 					return err
 				}
-				rows, err := db.Query(fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname = 'xorm_test'"))
+				rows, err := db.Query("SELECT 1 FROM pg_database WHERE datname = 'xorm_test'")
 				if err != nil {
 					return fmt.Errorf("db.Query: %v", err)
 				}
@@ -75,6 +75,12 @@ func createEngine(dbType, connStr string) error {
 					}
 				}
 				if *schema != "" {
+					db.Close()
+					db, err = sql.Open(dbType, connStr)
+					if err != nil {
+						return err
+					}
+					defer db.Close()
 					if _, err = db.Exec("CREATE SCHEMA IF NOT EXISTS " + *schema); err != nil {
 						return fmt.Errorf("CREATE SCHEMA: %v", err)
 					}
@@ -178,6 +184,7 @@ func TestMain(m *testing.M) {
 
 		if err := prepareEngine(); err != nil {
 			fmt.Println(err)
+			os.Exit(1)
 			return
 		}
 

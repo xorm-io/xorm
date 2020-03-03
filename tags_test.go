@@ -1031,6 +1031,7 @@ func TestTagDefault4(t *testing.T) {
 	}
 	assert.True(t, isDefaultExist)
 	assert.True(t, "CURRENT_TIMESTAMP" == defaultVal ||
+		"current_timestamp()" == defaultVal || // for cockroach
 		"now()" == defaultVal ||
 		"getdate" == defaultVal, defaultVal)
 }

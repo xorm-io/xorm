@@ -10,6 +10,12 @@ GOFILES := $(shell find . -name "*.go" -type f)
 
 PACKAGES ?= $(shell GO111MODULE=on $(GO) list ./...)
 
+TEST_COCKROACH_HOST ?= cockroach:26257
+TEST_COCKROACH_SCHEMA ?=
+TEST_COCKROACH_DBNAME ?= xorm_test
+TEST_COCKROACH_USERNAME ?= postgres
+TEST_COCKROACH_PASSWORD ?=
+
 TEST_MSSQL_HOST ?= mssql:1433
 TEST_MSSQL_DBNAME ?= gitea
 TEST_MSSQL_USERNAME ?= sa
@@ -114,6 +120,18 @@ misspell-check:
 
 .PHONY: test
 test: test-sqlite
+
+.PNONY: test-cockroach
+test-cockroach: go-check
+	$(GO) test -race -db=postgres -schema='$(TEST_COCKROACH_SCHEMA)' -cache=$(TEST_CACHE_ENABLE) \
+	-conn_str="postgres://$(TEST_COCKROACH_USERNAME):$(TEST_COCKROACH_PASSWORD)@$(TEST_COCKROACH_HOST)/$(TEST_COCKROACH_DBNAME)?sslmode=disable&experimental_serial_normalization=sql_sequence" \
+	-ignore_update_limit=true -coverprofile=cockroach.$(TEST_COCKROACH_SCHEMA).$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
+
+.PHONY: test-cockroach\#%
+test-cockroach\#%: go-check
+	$(GO) test -race -run $* -db=postgres -schema='$(TEST_COCKROACH_SCHEMA)' -cache=$(TEST_CACHE_ENABLE) \
+	-conn_str="postgres://$(TEST_COCKROACH_USERNAME):$(TEST_COCKROACH_PASSWORD)@$(TEST_COCKROACH_HOST)/$(TEST_COCKROACH_DBNAME)?sslmode=disable&experimental_serial_normalization=sql_sequence" \
+	-ignore_update_limit=true -coverprofile=cockroach.$(TEST_COCKROACH_SCHEMA).$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PNONY: test-mssql
 test-mssql: go-check

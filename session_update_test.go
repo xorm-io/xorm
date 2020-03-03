@@ -42,6 +42,11 @@ func TestUpdateMap(t *testing.T) {
 }
 
 func TestUpdateLimit(t *testing.T) {
+	if *ingoreUpdateLimit {
+		t.Skip()
+		return
+	}
+
 	assert.NoError(t, prepareEngine())
 
 	type UpdateTable2 struct {

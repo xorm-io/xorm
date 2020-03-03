@@ -335,13 +335,13 @@ func TestJSONString(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, has)
 	assert.EqualValues(t, 1, js.Id)
-	assert.EqualValues(t, `["1","2"]`, js.Content)
+	assert.True(t, `["1","2"]` == js.Content || `["1", "2"]` == js.Content)
 
 	var jss []JsonString
 	err = testEngine.Table("json_json").Find(&jss)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(jss))
-	assert.EqualValues(t, `["1","2"]`, jss[0].Content)
+	assert.True(t, `["1","2"]` == jss[0].Content || `["1", "2"]` == jss[0].Content)
 }
 
 func TestGetActionMapping(t *testing.T) {

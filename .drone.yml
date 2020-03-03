@@ -180,6 +180,25 @@ steps:
     - push
     - pull_request
 
+- name: test-cockroach
+  pull: default
+  image: golang:1.13
+  environment:
+    GO111MODULE: "on"
+    GOPROXY: "https://goproxy.cn"
+    TEST_COCKROACH_HOST: "cockroach:26257"
+    TEST_COCKROACH_DBNAME: xorm_test
+    TEST_COCKROACH_USERNAME: root
+    TEST_COCKROACH_PASSWORD:
+  commands:
+  - sleep 10
+  - make test-cockroach
+  - TEST_CACHE_ENABLE=true make test-cockroach
+  when:
+    event:
+    - push
+    - pull_request
+
 - name: merge_coverage
   pull: default
   image: golang:1.12
@@ -196,6 +215,7 @@ steps:
   - test-postgres-schema
   - test-mssql
   - test-tidb
+  - test-cockroach
   commands:
   - make coverage
   when:
@@ -258,6 +278,17 @@ services:
 - name: tidb
   pull: default
   image: pingcap/tidb:v3.0.3
+  when:
+    event:
+    - push
+    - tag
+    - pull_request
+
+- name: cockroach
+  pull: default
+  image: cockroachdb/cockroach:v19.2.4
+  commands:
+  - /cockroach/cockroach start --insecure
   when:
     event:
     - push
