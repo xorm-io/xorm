@@ -554,7 +554,7 @@ func (db *oracle) IsReserved(name string) bool {
 }
 
 func (db *oracle) Quoter() schemas.Quoter {
-	return schemas.Quoter{"[", "]"}
+	return schemas.Quoter{"\"", "\""}
 }
 
 func (db *oracle) SupportEngine() bool {
