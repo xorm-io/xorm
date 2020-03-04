@@ -11,7 +11,9 @@ import (
 )
 
 func TestLevelDBStore(t *testing.T) {
-	store := NewLevelDBStore("./level.db")
+	store, err := NewLevelDBStore("./level.db")
+	assert.NoError(t, err)
+
 	var kvs = map[string]interface{}{
 		"a": "b",
 	}

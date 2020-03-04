@@ -139,13 +139,11 @@ func TestIn(t *testing.T) {
 	users := make([]Userinfo, 0)
 	err = testEngine.In("id", ids[0], ids[1], ids[2]).Find(&users)
 	assert.NoError(t, err)
-	fmt.Println(users)
 	assert.EqualValues(t, 3, len(users))
 
 	users = make([]Userinfo, 0)
 	err = testEngine.In("id", ids).Find(&users)
 	assert.NoError(t, err)
-	fmt.Println(users)
 	assert.EqualValues(t, 3, len(users))
 
 	for _, user := range users {
@@ -163,7 +161,6 @@ func TestIn(t *testing.T) {
 
 	err = testEngine.Where(department+" = ?", "dev").In("id", idsInterface...).Find(&users)
 	assert.NoError(t, err)
-	fmt.Println(users)
 	assert.EqualValues(t, 3, len(users))
 
 	for _, user := range users {
@@ -177,7 +174,6 @@ func TestIn(t *testing.T) {
 
 	err = testEngine.In("id", 1).In("id", 2).In(department, dev).Find(&users)
 	assert.NoError(t, err)
-	fmt.Println(users)
 
 	cnt, err = testEngine.In("id", ids[0]).Update(&Userinfo{Departname: "dev-"})
 	assert.NoError(t, err)

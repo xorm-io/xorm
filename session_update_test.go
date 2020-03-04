@@ -5,7 +5,6 @@
 package xorm
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"testing"
@@ -277,10 +276,7 @@ func TestUpdateMap2(t *testing.T) {
 	_, err := testEngine.Table("update_must_cols").Where("id =?", 1).Update(map[string]interface{}{
 		"bool": true,
 	})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 }
 
 func TestUpdate1(t *testing.T) {
@@ -293,14 +289,8 @@ func TestUpdate1(t *testing.T) {
 
 	var ori Userinfo
 	has, err := testEngine.Get(&ori)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		t.Error(errors.New("not exist"))
-		panic(errors.New("not exist"))
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	// update by id
 	user := Userinfo{Username: "xxx", Height: 1.2}
@@ -324,10 +314,7 @@ func TestUpdate1(t *testing.T) {
 	{
 		user := &Userinfo{Username: "not null data", Height: 180.5}
 		_, err := testEngine.Insert(user)
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
 		userID := user.Uid
 
 		has, err := testEngine.ID(userID).
@@ -337,29 +324,15 @@ func TestUpdate1(t *testing.T) {
 			And("detail_id = ?", 0).
 			And("is_man = ?", 0).
 			Get(&Userinfo{})
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
-		if !has {
-			err = errors.New("cannot insert properly")
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
+		assert.True(t, has, "cannot insert properly")
 
 		updatedUser := &Userinfo{Username: "null data"}
 		cnt, err = testEngine.ID(userID).
 			Nullable("height", "departname", "is_man", "created").
 			Update(updatedUser)
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
-		if cnt != 1 {
-			err = errors.New("update not returned 1")
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
+		assert.EqualValues(t, 1, cnt, "update not returned 1")
 
 		has, err = testEngine.ID(userID).
 			And("username = ?", updatedUser.Username).
@@ -369,60 +342,27 @@ func TestUpdate1(t *testing.T) {
 			And("created IS NULL").
 			And("detail_id = ?", 0).
 			Get(&Userinfo{})
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
-		if !has {
-			err = errors.New("cannot update with null properly")
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
+		assert.True(t, has, "cannot update with null properly")
 
 		cnt, err = testEngine.ID(userID).Delete(&Userinfo{})
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
-		if cnt != 1 {
-			err = errors.New("delete not returned 1")
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
+		assert.EqualValues(t, 1, cnt, "delete not returned 1")
 	}
 
 	err = testEngine.StoreEngine("Innodb").Sync2(&Article{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	defer func() {
 		err = testEngine.DropTables(&Article{})
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
 	}()
 
 	a := &Article{0, "1", "2", "3", "4", "5", 2}
 	cnt, err = testEngine.Insert(a)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-
-	if cnt != 1 {
-		err = fmt.Errorf("insert not returned 1 but %d", cnt)
-		t.Error(err)
-		panic(err)
-	}
-
-	if a.Id == 0 {
-		err = errors.New("insert returned id is 0")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt, fmt.Sprintf("insert not returned 1 but %d", cnt))
+	assert.Greater(t, a.Id, int32(0), "insert returned id is 0")
 
 	cnt, err = testEngine.ID(a.Id).Update(&Article{Name: "6"})
 	assert.NoError(t, err)
@@ -448,28 +388,18 @@ func TestUpdate1(t *testing.T) {
 	assert.EqualValues(t, *col2, *col3)
 
 	{
-
 		col1 := &UpdateMustCols{}
 		err = testEngine.Sync(col1)
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
 
 		_, err = testEngine.Insert(col1)
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
 
 		col2 := &UpdateMustCols{col1.Id, true, ""}
 		boolStr := testEngine.GetColumnMapper().Obj2Table("Bool")
 		stringStr := testEngine.GetColumnMapper().Obj2Table("String")
 		_, err = testEngine.ID(col2.Id).MustCols(boolStr, stringStr).Update(col2)
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
 
 		col3 := &UpdateMustCols{}
 		has, err := testEngine.ID(col2.Id).Get(col3)
@@ -547,32 +477,19 @@ func TestUpdateUpdated(t *testing.T) {
 
 	di := new(UpdatedUpdate)
 	err := testEngine.Sync2(di)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	_, err = testEngine.Insert(&UpdatedUpdate{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	ci := &UpdatedUpdate{}
 	_, err = testEngine.ID(1).Update(ci)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	has, err := testEngine.ID(1).Get(di)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !has {
-		t.Fatal(ErrNotExist)
-	}
-	if ci.Updated.Unix() != di.Updated.Unix() {
-		t.Fatal("should equal:", ci, di)
-	}
-	fmt.Println("ci:", ci, "di:", di)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, ci.Updated.Unix(), di.Updated.Unix())
 
 	di2 := new(UpdatedUpdate2)
 	err = testEngine.Sync2(di2)
@@ -603,88 +520,51 @@ func TestUpdateUpdated(t *testing.T) {
 
 	di3 := new(UpdatedUpdate3)
 	err = testEngine.Sync2(di3)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	_, err = testEngine.Insert(&UpdatedUpdate3{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
+
 	ci3 := &UpdatedUpdate3{}
 	_, err = testEngine.ID(1).Update(ci3)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	has, err = testEngine.ID(1).Get(di3)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !has {
-		t.Fatal(ErrNotExist)
-	}
-	if ci3.Updated != di3.Updated {
-		t.Fatal("should equal:", ci3, di3)
-	}
-	fmt.Println("ci3:", ci3, "di3:", di3)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, ci3.Updated, di3.Updated)
 
 	di4 := new(UpdatedUpdate4)
 	err = testEngine.Sync2(di4)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	_, err = testEngine.Insert(&UpdatedUpdate4{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	ci4 := &UpdatedUpdate4{}
 	_, err = testEngine.ID(1).Update(ci4)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	has, err = testEngine.ID(1).Get(di4)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !has {
-		t.Fatal(ErrNotExist)
-	}
-	if ci4.Updated != di4.Updated {
-		t.Fatal("should equal:", ci4, di4)
-	}
-	fmt.Println("ci4:", ci4, "di4:", di4)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, ci4.Updated, di4.Updated)
 
 	di5 := new(UpdatedUpdate5)
 	err = testEngine.Sync2(di5)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	_, err = testEngine.Insert(&UpdatedUpdate5{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
+
 	ci5 := &UpdatedUpdate5{}
 	_, err = testEngine.ID(1).Update(ci5)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	has, err = testEngine.ID(1).Get(di5)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !has {
-		t.Fatal(ErrNotExist)
-	}
-	if ci5.Updated.Unix() != di5.Updated.Unix() {
-		t.Fatal("should equal:", ci5, di5)
-	}
-	fmt.Println("ci5:", ci5, "di5:", di5)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, ci5.Updated.Unix(), di5.Updated.Unix())
 }
 
 func TestUpdateSameMapper(t *testing.T) {
@@ -749,18 +629,8 @@ func TestUpdateSameMapper(t *testing.T) {
 	a := &Article{0, "1", "2", "3", "4", "5", 2}
 	cnt, err = testEngine.Insert(a)
 	assert.NoError(t, err)
-
-	if cnt != 1 {
-		err = fmt.Errorf("insert not returned 1 but %d", cnt)
-		t.Error(err)
-		panic(err)
-	}
-
-	if a.Id == 0 {
-		err = errors.New("insert returned id is 0")
-		t.Error(err)
-		panic(err)
-	}
+	assert.EqualValues(t, 1, cnt)
+	assert.Greater(t, a.Id, int32(0))
 
 	cnt, err = testEngine.ID(a.Id).Update(&Article{Name: "6"})
 	assert.NoError(t, err)
@@ -807,44 +677,20 @@ func TestUpdateSameMapper(t *testing.T) {
 	{
 		col1 := &UpdateIncr{}
 		err = testEngine.Sync(col1)
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
 
 		_, err = testEngine.Insert(col1)
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
 
 		cnt, err := testEngine.ID(col1.Id).Incr("`Cnt`").Update(col1)
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
-		if cnt != 1 {
-			err = errors.New("update incr failed")
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
+		assert.EqualValues(t, 1, cnt)
 
 		newCol := new(UpdateIncr)
 		has, err := testEngine.ID(col1.Id).Get(newCol)
-		if err != nil {
-			t.Error(err)
-			panic(err)
-		}
-		if !has {
-			err = errors.New("has incr failed")
-			t.Error(err)
-			panic(err)
-		}
-		if 1 != newCol.Cnt {
-			err = errors.New("incr failed")
-			t.Error(err)
-			panic(err)
-		}
+		assert.NoError(t, err)
+		assert.True(t, has)
+		assert.EqualValues(t, 1, newCol.Cnt)
 	}
 }
 
@@ -853,17 +699,11 @@ func TestUseBool(t *testing.T) {
 	assertSync(t, new(Userinfo))
 
 	cnt1, err := testEngine.Count(&Userinfo{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	users := make([]Userinfo, 0)
 	err = testEngine.Find(&users)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 	var fNumber int64
 	for _, u := range users {
 		if u.IsMan == false {
@@ -872,10 +712,7 @@ func TestUseBool(t *testing.T) {
 	}
 
 	cnt2, err := testEngine.UseBool().Update(&Userinfo{IsMan: true})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 	if fNumber != cnt2 {
 		fmt.Println("cnt1", cnt1, "fNumber", fNumber, "cnt2", cnt2)
 		/*err = errors.New("Updated number is not corrected.")
@@ -884,11 +721,7 @@ func TestUseBool(t *testing.T) {
 	}
 
 	_, err = testEngine.Update(&Userinfo{IsMan: true})
-	if err == nil {
-		err = errors.New("error condition")
-		t.Error(err)
-		panic(err)
-	}
+	assert.Error(t, err)
 }
 
 func TestBool(t *testing.T) {
@@ -896,41 +729,21 @@ func TestBool(t *testing.T) {
 	assertSync(t, new(Userinfo))
 
 	_, err := testEngine.UseBool().Update(&Userinfo{IsMan: true})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 	users := make([]Userinfo, 0)
 	err = testEngine.Find(&users)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 	for _, user := range users {
-		if !user.IsMan {
-			err = errors.New("update bool or find bool error")
-			t.Error(err)
-			panic(err)
-		}
+		assert.True(t, user.IsMan)
 	}
 
 	_, err = testEngine.UseBool().Update(&Userinfo{IsMan: false})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 	users = make([]Userinfo, 0)
 	err = testEngine.Find(&users)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 	for _, user := range users {
-		if user.IsMan {
-			err = errors.New("update bool or find bool error")
-			t.Error(err)
-			panic(err)
-		}
+		assert.True(t, user.IsMan)
 	}
 }
 
@@ -1451,4 +1264,42 @@ func TestUpdateMap3(t *testing.T) {
 	rows, err = testEngine.Table(new(UpdateMapUser)).ID(1).Update(update)
 	assert.Error(t, err)
 	assert.EqualValues(t, 0, rows)
+}
+
+func TestUpdateIgnoreOnlyFromDBFields(t *testing.T) {
+	type TestOnlyFromDBField struct {
+		Id              int64  `xorm:"PK"`
+		OnlyFromDBField string `xorm:"<-"`
+		OnlyToDBField   string `xorm:"->"`
+		IngoreField     string `xorm:"-"`
+	}
+
+	assertGetRecord := func() *TestOnlyFromDBField {
+		var record TestOnlyFromDBField
+		has, err := testEngine.Where("id = ?", 1).Get(&record)
+		assert.NoError(t, err)
+		assert.EqualValues(t, true, has)
+		assert.EqualValues(t, "", record.OnlyFromDBField)
+		return &record
+
+	}
+	assert.NoError(t, prepareEngine())
+	assertSync(t, new(TestOnlyFromDBField))
+
+	_, err := testEngine.Insert(&TestOnlyFromDBField{
+		Id:              1,
+		OnlyFromDBField: "a",
+		OnlyToDBField:   "b",
+		IngoreField:     "c",
+	})
+	assert.NoError(t, err)
+
+	assertGetRecord()
+
+	_, err = testEngine.ID(1).Update(&TestOnlyFromDBField{
+		OnlyToDBField:   "b",
+		OnlyFromDBField: "test",
+	})
+	assert.NoError(t, err)
+	assertGetRecord()
 }

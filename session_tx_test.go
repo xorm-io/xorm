@@ -53,9 +53,7 @@ func TestCombineTransaction(t *testing.T) {
 
 	counter := func() {
 		total, err := testEngine.Count(&Userinfo{})
-		if err != nil {
-			t.Error(err)
-		}
+		assert.NoError(t, err)
 		fmt.Printf("----now total %v records\n", total)
 	}
 
@@ -97,9 +95,7 @@ func TestCombineTransactionSameMapper(t *testing.T) {
 
 	counter := func() {
 		total, err := testEngine.Count(&Userinfo{})
-		if err != nil {
-			t.Error(err)
-		}
+		assert.NoError(t, err)
 		fmt.Printf("----now total %v records\n", total)
 	}
 

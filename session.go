@@ -22,6 +22,16 @@ import (
 	"xorm.io/xorm/schemas"
 )
 
+// ErrFieldIsNotValid is not valid
+type ErrFieldIsNotValid struct {
+	FieldName string
+	TableName string
+}
+
+func (e ErrFieldIsNotValid) Error() string {
+	return fmt.Sprintf("field %s is not valid on table %s", e.FieldName, e.TableName)
+}
+
 type sessionType int
 
 const (
@@ -882,4 +892,20 @@ func (session *Session) incrVersionFieldValue(fieldValue *reflect.Value) {
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		fieldValue.SetUint(fieldValue.Uint() + 1)
 	}
+}
+
+// Context sets the context on this session
+func (session *Session) Context(ctx context.Context) *Session {
+	session.ctx = ctx
+	return session
+}
+
+// PingContext test if database is ok
+func (session *Session) PingContext(ctx context.Context) error {
+	if session.isAutoClose {
+		defer session.Close()
+	}
+
+	session.engine.logger.Infof("PING DATABASE %v", session.engine.DriverName())
+	return session.DB().PingContext(ctx)
 }

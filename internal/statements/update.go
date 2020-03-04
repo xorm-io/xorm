@@ -6,6 +6,7 @@ package statements
 
 import (
 	"database/sql/driver"
+	"errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -200,8 +201,7 @@ func (statement *Statement) BuildUpdates(bean interface{},
 								continue
 							}
 						} else {
-							// TODO: how to handler?
-							panic("not supported")
+							return nil, nil, errors.New("Not supported multiple primary keys")
 						}
 					}
 				} else {
@@ -209,7 +209,7 @@ func (statement *Statement) BuildUpdates(bean interface{},
 					if requiredField || !utils.IsStructZero(fieldValue) {
 						bytes, err := json.DefaultJSONHandler.Marshal(fieldValue.Interface())
 						if err != nil {
-							panic(fmt.Sprintf("mashal %v failed", fieldValue.Interface()))
+							return nil, nil, fmt.Errorf("mashal %v failed", fieldValue.Interface())
 						}
 						if col.SQLType.IsText() {
 							val = string(bytes)

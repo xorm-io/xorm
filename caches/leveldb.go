@@ -19,14 +19,14 @@ type LevelDBStore struct {
 
 var _ CacheStore = &LevelDBStore{}
 
-func NewLevelDBStore(dbfile string) *LevelDBStore {
+func NewLevelDBStore(dbfile string) (*LevelDBStore, error) {
 	db := &LevelDBStore{}
-	if h, err := leveldb.OpenFile(dbfile, nil); err != nil {
-		panic(err)
-	} else {
-		db.store = h
+	h, err := leveldb.OpenFile(dbfile, nil)
+	if err != nil {
+		return nil, err
 	}
-	return db
+	db.store = h
+	return db, nil
 }
 
 func (s *LevelDBStore) Put(key string, value interface{}) error {

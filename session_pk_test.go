@@ -5,7 +5,6 @@
 package xorm
 
 import (
-	"errors"
 	"sort"
 	"testing"
 	"time"
@@ -70,626 +69,280 @@ func TestIntId(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&IntId{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&IntId{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	cnt, err := testEngine.Insert(&IntId{Name: "test"})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	bean := new(IntId)
 	has, err := testEngine.Get(bean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	beans := make([]IntId, 0)
 	err = testEngine.Find(&beans)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans))
 
 	beans2 := make(map[int]IntId)
 	err = testEngine.Find(&beans2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans2) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans2))
 
 	cnt, err = testEngine.ID(bean.Id).Delete(&IntId{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestInt16Id(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&Int16Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&Int16Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	cnt, err := testEngine.Insert(&Int16Id{Name: "test"})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	bean := new(Int16Id)
 	has, err := testEngine.Get(bean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	beans := make([]Int16Id, 0)
 	err = testEngine.Find(&beans)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans))
 
 	beans2 := make(map[int16]Int16Id, 0)
 	err = testEngine.Find(&beans2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans2) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans2))
 
 	cnt, err = testEngine.ID(bean.Id).Delete(&Int16Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestInt32Id(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&Int32Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&Int32Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	cnt, err := testEngine.Insert(&Int32Id{Name: "test"})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	bean := new(Int32Id)
 	has, err := testEngine.Get(bean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	beans := make([]Int32Id, 0)
 	err = testEngine.Find(&beans)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans))
 
 	beans2 := make(map[int32]Int32Id, 0)
 	err = testEngine.Find(&beans2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans2) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans2))
 
 	cnt, err = testEngine.ID(bean.Id).Delete(&Int32Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestUintId(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&UintId{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&UintId{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	cnt, err := testEngine.Insert(&UintId{Name: "test"})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	var inserts = []UintId{
 		{Name: "test1"},
 		{Name: "test2"},
 	}
 	cnt, err = testEngine.Insert(&inserts)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 2 {
-		err = errors.New("insert count should be two")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 2, cnt)
 
 	bean := new(UintId)
 	has, err := testEngine.Get(bean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	beans := make([]UintId, 0)
 	err = testEngine.Find(&beans)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans) != 3 {
-		err = errors.New("get count should be three")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 3, len(beans))
 
 	beans2 := make(map[uint]UintId, 0)
 	err = testEngine.Find(&beans2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans2) != 3 {
-		err = errors.New("get count should be three")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 3, len(beans2))
 
 	cnt, err = testEngine.ID(bean.Id).Delete(&UintId{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestUint16Id(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&Uint16Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&Uint16Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	cnt, err := testEngine.Insert(&Uint16Id{Name: "test"})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.EqualValues(t, 1, cnt)
 
 	bean := new(Uint16Id)
 	has, err := testEngine.Get(bean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	beans := make([]Uint16Id, 0)
 	err = testEngine.Find(&beans)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans))
 
 	beans2 := make(map[uint16]Uint16Id, 0)
 	err = testEngine.Find(&beans2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans2) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans2))
 
 	cnt, err = testEngine.ID(bean.Id).Delete(&Uint16Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestUint32Id(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&Uint32Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&Uint32Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	cnt, err := testEngine.Insert(&Uint32Id{Name: "test"})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.EqualValues(t, 1, cnt)
 
 	bean := new(Uint32Id)
 	has, err := testEngine.Get(bean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	beans := make([]Uint32Id, 0)
 	err = testEngine.Find(&beans)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans))
 
 	beans2 := make(map[uint32]Uint32Id, 0)
 	err = testEngine.Find(&beans2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans2) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans2))
 
 	cnt, err = testEngine.ID(bean.Id).Delete(&Uint32Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestUint64Id(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&Uint64Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&Uint64Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	idbean := &Uint64Id{Name: "test"}
 	cnt, err := testEngine.Insert(idbean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.EqualValues(t, 1, cnt)
 
 	bean := new(Uint64Id)
 	has, err := testEngine.Get(bean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
-
-	if bean.Id != idbean.Id {
-		panic(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, bean.Id, idbean.Id)
 
 	beans := make([]Uint64Id, 0)
 	err = testEngine.Find(&beans)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
-
-	if *bean != beans[0] {
-		panic(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans))
+	assert.EqualValues(t, *bean, beans[0])
 
 	beans2 := make(map[uint64]Uint64Id, 0)
 	err = testEngine.Find(&beans2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans2) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
-
-	if *bean != beans2[bean.Id] {
-		panic(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans2))
+	assert.EqualValues(t, *bean, beans2[bean.Id])
 
 	cnt, err = testEngine.ID(bean.Id).Delete(&Uint64Id{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestStringPK(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&StringPK{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&StringPK{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	cnt, err := testEngine.Insert(&StringPK{Id: "1-1-2", Name: "test"})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.EqualValues(t, 1, cnt)
 
 	bean := new(StringPK)
 	has, err := testEngine.Get(bean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	beans := make([]StringPK, 0)
 	err = testEngine.Find(&beans)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans))
 
 	beans2 := make(map[string]StringPK)
 	err = testEngine.Find(&beans2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans2) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans2))
 
 	cnt, err = testEngine.ID(bean.Id).Delete(&StringPK{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 type CompositeKey struct {
@@ -702,68 +355,40 @@ func TestCompositeKey(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&CompositeKey{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&CompositeKey{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	cnt, err := testEngine.Insert(&CompositeKey{11, 22, ""})
-	if err != nil {
-		t.Error(err)
-	} else if cnt != 1 {
-		t.Error(errors.New("failed to insert CompositeKey{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	cnt, err = testEngine.Insert(&CompositeKey{11, 22, ""})
-	if err == nil || cnt == 1 {
-		t.Error(errors.New("inserted CompositeKey{11, 22}"))
-	}
+	assert.Error(t, err)
+	assert.NotEqual(t, int64(1), cnt)
 
 	var compositeKeyVal CompositeKey
 	has, err := testEngine.ID(schemas.PK{11, 22}).Get(&compositeKeyVal)
-	if err != nil {
-		t.Error(err)
-	} else if !has {
-		t.Error(errors.New("can't get CompositeKey{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	var compositeKeyVal2 CompositeKey
 	// test passing PK ptr, this test seem failed withCache
 	has, err = testEngine.ID(&schemas.PK{11, 22}).Get(&compositeKeyVal2)
-	if err != nil {
-		t.Error(err)
-	} else if !has {
-		t.Error(errors.New("can't get CompositeKey{11, 22}"))
-	}
-
-	if compositeKeyVal != compositeKeyVal2 {
-		t.Error(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, compositeKeyVal, compositeKeyVal2)
 
 	var cps = make([]CompositeKey, 0)
 	err = testEngine.Find(&cps)
-	if err != nil {
-		t.Error(err)
-	}
-	if len(cps) != 1 {
-		t.Error(errors.New("should has one record"))
-	}
-	if cps[0] != compositeKeyVal {
-		t.Error(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(cps))
+	assert.EqualValues(t, cps[0], compositeKeyVal)
 
 	cnt, err = testEngine.Insert(&CompositeKey{22, 22, ""})
-	if err != nil {
-		t.Error(err)
-	} else if cnt != 1 {
-		t.Error(errors.New("failed to insert CompositeKey{22, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	cps = make([]CompositeKey, 0)
 	err = testEngine.Find(&cps)
@@ -773,18 +398,12 @@ func TestCompositeKey(t *testing.T) {
 
 	compositeKeyVal = CompositeKey{UpdateStr: "test1"}
 	cnt, err = testEngine.ID(schemas.PK{11, 22}).Update(&compositeKeyVal)
-	if err != nil {
-		t.Error(err)
-	} else if cnt != 1 {
-		t.Error(errors.New("can't update CompositeKey{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	cnt, err = testEngine.ID(schemas.PK{11, 22}).Delete(&CompositeKey{})
-	if err != nil {
-		t.Error(err)
-	} else if cnt != 1 {
-		t.Error(errors.New("can't delete CompositeKey{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestCompositeKey2(t *testing.T) {
@@ -798,60 +417,37 @@ func TestCompositeKey2(t *testing.T) {
 	}
 
 	err := testEngine.DropTables(&User{})
-
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&User{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	cnt, err := testEngine.Insert(&User{"11", "nick", 22, 5})
-	if err != nil {
-		t.Error(err)
-	} else if cnt != 1 {
-		t.Error(errors.New("failed to insert User{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	cnt, err = testEngine.Insert(&User{"11", "nick", 22, 6})
-	if err == nil || cnt == 1 {
-		t.Error(errors.New("inserted User{11, 22}"))
-	}
+	assert.Error(t, err)
+	assert.NotEqual(t, 1, cnt)
 
 	var user User
 	has, err := testEngine.ID(schemas.PK{"11", 22}).Get(&user)
-	if err != nil {
-		t.Error(err)
-	} else if !has {
-		t.Error(errors.New("can't get User{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	// test passing PK ptr, this test seem failed withCache
 	has, err = testEngine.ID(&schemas.PK{"11", 22}).Get(&user)
-	if err != nil {
-		t.Error(err)
-	} else if !has {
-		t.Error(errors.New("can't get User{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	user = User{NickName: "test1"}
 	cnt, err = testEngine.ID(schemas.PK{"11", 22}).Update(&user)
-	if err != nil {
-		t.Error(err)
-	} else if cnt != 1 {
-		t.Error(errors.New("can't update User{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	cnt, err = testEngine.ID(schemas.PK{"11", 22}).Delete(&User{})
-	if err != nil {
-		t.Error(err)
-	} else if cnt != 1 {
-		t.Error(errors.New("can't delete CompositeKey{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 type MyString string
@@ -867,235 +463,112 @@ func TestCompositeKey3(t *testing.T) {
 
 	err := testEngine.DropTables(&UserPK2{})
 
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&UserPK2{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	cnt, err := testEngine.Insert(&UserPK2{"11", "nick", 22, 5})
-	if err != nil {
-		t.Error(err)
-	} else if cnt != 1 {
-		t.Error(errors.New("failed to insert User{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	cnt, err = testEngine.Insert(&UserPK2{"11", "nick", 22, 6})
-	if err == nil || cnt == 1 {
-		t.Error(errors.New("inserted User{11, 22}"))
-	}
+	assert.Error(t, err)
+	assert.NotEqual(t, 1, cnt)
 
 	var user UserPK2
 	has, err := testEngine.ID(schemas.PK{"11", 22}).Get(&user)
-	if err != nil {
-		t.Error(err)
-	} else if !has {
-		t.Error(errors.New("can't get User{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	// test passing PK ptr, this test seem failed withCache
 	has, err = testEngine.ID(&schemas.PK{"11", 22}).Get(&user)
-	if err != nil {
-		t.Error(err)
-	} else if !has {
-		t.Error(errors.New("can't get User{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
 
 	user = UserPK2{NickName: "test1"}
 	cnt, err = testEngine.ID(schemas.PK{"11", 22}).Update(&user)
-	if err != nil {
-		t.Error(err)
-	} else if cnt != 1 {
-		t.Error(errors.New("can't update User{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	cnt, err = testEngine.ID(schemas.PK{"11", 22}).Delete(&UserPK2{})
-	if err != nil {
-		t.Error(err)
-	} else if cnt != 1 {
-		t.Error(errors.New("can't delete CompositeKey{11, 22}"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestMyIntId(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&MyIntPK{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&MyIntPK{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	idbean := &MyIntPK{Name: "test"}
 	cnt, err := testEngine.Insert(idbean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.EqualValues(t, 1, cnt)
 
 	bean := new(MyIntPK)
 	has, err := testEngine.Get(bean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
-
-	if bean.ID != idbean.ID {
-		panic(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, bean.ID, idbean.ID)
 
 	var beans []MyIntPK
 	err = testEngine.Find(&beans)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
-
-	if *bean != beans[0] {
-		panic(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans))
+	assert.EqualValues(t, *bean, beans[0])
 
 	beans2 := make(map[ID]MyIntPK, 0)
 	err = testEngine.Find(&beans2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans2) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
-
-	if *bean != beans2[bean.ID] {
-		panic(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans2))
+	assert.EqualValues(t, *bean, beans2[bean.ID])
 
 	cnt, err = testEngine.ID(bean.ID).Delete(&MyIntPK{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestMyStringId(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&MyStringPK{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.CreateTables(&MyStringPK{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	idbean := &MyStringPK{ID: "1111", Name: "test"}
 	cnt, err := testEngine.Insert(idbean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 
 	bean := new(MyStringPK)
 	has, err := testEngine.Get(bean)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if !has {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
-
-	if bean.ID != idbean.ID {
-		panic(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, bean.ID, idbean.ID)
 
 	var beans []MyStringPK
 	err = testEngine.Find(&beans)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
-
-	if *bean != beans[0] {
-		panic(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans))
+	assert.EqualValues(t, *bean, beans[0])
 
 	beans2 := make(map[StrID]MyStringPK, 0)
 	err = testEngine.Find(&beans2)
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if len(beans2) != 1 {
-		err = errors.New("get count should be one")
-		t.Error(err)
-		panic(err)
-	}
-
-	if *bean != beans2[bean.ID] {
-		panic(errors.New("should be equal"))
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(beans2))
+	assert.EqualValues(t, *bean, beans2[bean.ID])
 
 	cnt, err = testEngine.ID(bean.ID).Delete(&MyStringPK{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
-	if cnt != 1 {
-		err = errors.New("insert count should be one")
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 func TestSingleAutoIncrColumn(t *testing.T) {

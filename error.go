@@ -37,13 +37,3 @@ type ErrFieldIsNotExist struct {
 func (e ErrFieldIsNotExist) Error() string {
 	return fmt.Sprintf("field %s is not valid on table %s", e.FieldName, e.TableName)
 }
-
-// ErrFieldIsNotValid is not valid
-type ErrFieldIsNotValid struct {
-	FieldName string
-	TableName string
-}
-
-func (e ErrFieldIsNotValid) Error() string {
-	return fmt.Sprintf("field %s is not valid on table %s", e.FieldName, e.TableName)
-}

@@ -260,16 +260,10 @@ func TestCharst(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables("user_charset")
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	err = testEngine.Charset("utf8").Table("user_charset").CreateTable(&Userinfo{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 }
 
 func TestSync2_1(t *testing.T) {

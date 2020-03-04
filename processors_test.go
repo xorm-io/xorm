@@ -125,17 +125,11 @@ func TestProcessors(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
 	err := testEngine.DropTables(&ProcessorsStruct{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 	p := &ProcessorsStruct{}
 
 	err = testEngine.CreateTables(&ProcessorsStruct{})
-	if err != nil {
-		t.Error(err)
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	b4InsertFunc := func(bean interface{}) {
 		if v, ok := (bean).(*ProcessorsStruct); ok {
@@ -259,42 +253,22 @@ func TestProcessors(t *testing.T) {
 	_, err = testEngine.Before(b4UpdateFunc).After(afterUpdateFunc).Update(p)
 	assert.NoError(t, err)
 
-	if p.B4UpdateFlag == 0 {
-		t.Error(errors.New("B4UpdateFlag not set"))
-	}
-	if p.AfterUpdatedFlag == 0 {
-		t.Error(errors.New("AfterUpdatedFlag not set"))
-	}
-	if p.B4UpdateViaExt == 0 {
-		t.Error(errors.New("B4UpdateViaExt not set"))
-	}
-	if p.AfterUpdatedViaExt == 0 {
-		t.Error(errors.New("AfterUpdatedViaExt not set"))
-	}
+	assert.False(t, p.B4UpdateFlag == 0, "B4UpdateFlag not set")
+	assert.False(t, p.AfterUpdatedFlag == 0, "AfterUpdatedFlag not set")
+	assert.False(t, p.B4UpdateViaExt == 0, "B4UpdateViaExt not set")
+	assert.False(t, p.AfterUpdatedViaExt == 0, "AfterUpdatedViaExt not set")
 
 	p2 = &ProcessorsStruct{}
 	has, err = testEngine.ID(p.Id).Get(p2)
 	assert.NoError(t, err)
 	assert.True(t, has)
 
-	if p2.B4UpdateFlag == 0 {
-		t.Error(errors.New("B4UpdateFlag not set"))
-	}
-	if p2.AfterUpdatedFlag != 0 {
-		t.Error(errors.New("AfterUpdatedFlag is set: " + string(p.AfterUpdatedFlag)))
-	}
-	if p2.B4UpdateViaExt == 0 {
-		t.Error(errors.New("B4UpdateViaExt not set"))
-	}
-	if p2.AfterUpdatedViaExt != 0 {
-		t.Error(errors.New("AfterUpdatedViaExt is set: " + string(p.AfterUpdatedViaExt)))
-	}
-	if p2.BeforeSetFlag != 9 {
-		t.Error(fmt.Errorf("BeforeSetFlag is %d not 9", p2.BeforeSetFlag))
-	}
-	if p2.AfterSetFlag != 9 {
-		t.Error(fmt.Errorf("AfterSetFlag is %d not 9", p2.BeforeSetFlag))
-	}
+	assert.False(t, p2.B4UpdateFlag == 0, "B4UpdateFlag not set")
+	assert.False(t, p2.AfterUpdatedFlag != 0, fmt.Sprintf("AfterUpdatedFlag is set: %d", p.AfterUpdatedFlag))
+	assert.False(t, p2.B4UpdateViaExt == 0, "B4UpdateViaExt not set")
+	assert.False(t, p2.AfterUpdatedViaExt != 0, fmt.Sprintf("AfterUpdatedViaExt is set: %d", p.AfterUpdatedViaExt))
+	assert.False(t, p2.BeforeSetFlag != 9, fmt.Sprintf("BeforeSetFlag is %d not 9", p2.BeforeSetFlag))
+	assert.False(t, p2.AfterSetFlag != 9, fmt.Sprintf("AfterSetFlag is %d not 9", p2.BeforeSetFlag))
 	// --
 
 	// test delete processors
@@ -450,12 +424,7 @@ func TestProcessorsTx(t *testing.T) {
 	p2 := &ProcessorsStruct{}
 	_, err = testEngine.ID(p.Id).Get(p2)
 	assert.NoError(t, err)
-
-	if p2.Id > 0 {
-		err = errors.New("tx got committed upon insert!?")
-		t.Error(err)
-		panic(err)
-	}
+	assert.False(t, p2.Id > 0, "tx got committed upon insert!?")
 	// --
 
 	// test insert processors with tx commit
@@ -846,7 +815,6 @@ func TestProcessorsTx(t *testing.T) {
 		t.Error(errors.New("AfterUpdatedFlag set"))
 	}
 	session.Close()
-	// --
 }
 
 type AfterLoadStructA struct {

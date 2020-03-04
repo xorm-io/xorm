@@ -5,12 +5,26 @@
 package xorm
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestPingContext(t *testing.T) {
+	assert.NoError(t, prepareEngine())
+
+	ctx, canceled := context.WithTimeout(context.Background(), time.Nanosecond)
+	defer canceled()
+
+	time.Sleep(time.Nanosecond)
+
+	err := testEngine.(*Engine).PingContext(ctx)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "context deadline exceeded")
+}
 
 func TestAutoTransaction(t *testing.T) {
 	assert.NoError(t, prepareEngine())

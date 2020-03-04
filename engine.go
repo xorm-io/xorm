@@ -1260,3 +1260,43 @@ func (engine *Engine) Unscoped() *Session {
 func (engine *Engine) tbNameWithSchema(v string) string {
 	return dialects.TableNameWithSchema(engine.dialect, v)
 }
+
+// Context creates a session with the context
+func (engine *Engine) Context(ctx context.Context) *Session {
+	session := engine.NewSession()
+	session.isAutoClose = true
+	return session.Context(ctx)
+}
+
+// SetDefaultContext set the default context
+func (engine *Engine) SetDefaultContext(ctx context.Context) {
+	engine.defaultContext = ctx
+}
+
+// PingContext tests if database is alive
+func (engine *Engine) PingContext(ctx context.Context) error {
+	session := engine.NewSession()
+	defer session.Close()
+	return session.PingContext(ctx)
+}
+
+// Transaction Execute sql wrapped in a transaction(abbr as tx), tx will automatic commit if no errors occurred
+func (engine *Engine) Transaction(f func(*Session) (interface{}, error)) (interface{}, error) {
+	session := engine.NewSession()
+	defer session.Close()
+
+	if err := session.Begin(); err != nil {
+		return nil, err
+	}
+
+	result, err := f(session)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := session.Commit(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

@@ -8,9 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"xorm.io/xorm/caches"
 	"xorm.io/xorm/schemas"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDelete(t *testing.T) {
