@@ -62,7 +62,7 @@ func TestCacheFind(t *testing.T) {
 	}
 
 	boxes = make([]MailBox, 0, 2)
-	assert.NoError(t, testEngine.Alias("a").Where("a.id > -1").Asc("a.id").Find(&boxes))
+	assert.NoError(t, testEngine.Alias("a").Where("`a`.`id` > -1").Asc("`a`.`id`").Find(&boxes))
 	assert.EqualValues(t, 2, len(boxes))
 	for i, box := range boxes {
 		assert.Equal(t, inserts[i].Id, box.Id)
@@ -77,7 +77,7 @@ func TestCacheFind(t *testing.T) {
 	}
 
 	boxes2 := make([]MailBox4, 0, 2)
-	assert.NoError(t, testEngine.Table("mail_box").Where("mail_box.id > -1").Asc("mail_box.id").Find(&boxes2))
+	assert.NoError(t, testEngine.Table("mail_box").Where("`mail_box`.`id` > -1").Asc("mail_box.id").Find(&boxes2))
 	assert.EqualValues(t, 2, len(boxes2))
 	for i, box := range boxes2 {
 		assert.Equal(t, inserts[i].Id, box.Id)
@@ -164,14 +164,14 @@ func TestCacheGet(t *testing.T) {
 	assert.NoError(t, err)
 
 	var box1 MailBox3
-	has, err := testEngine.Where("id = ?", inserts[0].Id).Get(&box1)
+	has, err := testEngine.Where("`id` = ?", inserts[0].Id).Get(&box1)
 	assert.NoError(t, err)
 	assert.True(t, has)
 	assert.EqualValues(t, "user1", box1.Username)
 	assert.EqualValues(t, "pass1", box1.Password)
 
 	var box2 MailBox3
-	has, err = testEngine.Where("id = ?", inserts[0].Id).Get(&box2)
+	has, err = testEngine.Where("`id` = ?", inserts[0].Id).Get(&box2)
 	assert.NoError(t, err)
 	assert.True(t, has)
 	assert.EqualValues(t, "user1", box2.Username)

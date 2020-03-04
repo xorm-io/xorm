@@ -337,7 +337,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 	// for postgres, many of them didn't implement lastInsertId, so we should
 	// implemented it ourself.
 	if session.engine.dialect.URI().DBType == schemas.ORACLE && len(table.AutoIncrement) > 0 {
-		res, err := session.queryBytes("select seq_atable.currval from dual", args...)
+		_, err := session.exec(sqlStr, args...)
 		if err != nil {
 			return 0, err
 		}
@@ -355,6 +355,10 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 			}
 		}
 
+		res, err := session.queryBytes("select seq_atable.currval from dual")
+		if err != nil {
+			return 0, err
+		}
 		if len(res) < 1 {
 			return 0, errors.New("insert no error but not returned id")
 		}

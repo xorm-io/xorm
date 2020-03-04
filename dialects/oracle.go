@@ -725,8 +725,8 @@ func (db *oracle) GetColumns(queryer core.Queryer, ctx context.Context, tableNam
 }
 
 func (db *oracle) GetTables(queryer core.Queryer, ctx context.Context) ([]*schemas.Table, error) {
-	args := []interface{}{}
-	s := "SELECT table_name FROM user_tables"
+	s := "SELECT table_name FROM user_tables WHERE TABLESPACE_NAME = :1 AND table_name NOT LIKE :2"
+	args := []interface{}{strings.ToUpper(db.uri.User), "%$%"}
 
 	rows, err := queryer.QueryContext(ctx, s, args...)
 	if err != nil {
