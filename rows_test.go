@@ -104,7 +104,6 @@ func TestRowsMyTableName(t *testing.T) {
 
 	rows, err := testEngine.Table(tableName).Rows(new(UserRowsMyTable))
 	assert.NoError(t, err)
-	defer rows.Close()
 
 	cnt = 0
 	user := new(UserRowsMyTable)
@@ -114,6 +113,21 @@ func TestRowsMyTableName(t *testing.T) {
 		cnt++
 	}
 	assert.EqualValues(t, 1, cnt)
+
+	rows.Close()
+
+	rows, err = testEngine.Table(tableName).Rows(&UserRowsMyTable{
+		Id: 2,
+	})
+	assert.NoError(t, err)
+	cnt = 0
+	user = new(UserRowsMyTable)
+	for rows.Next() {
+		err = rows.Scan(user)
+		assert.NoError(t, err)
+		cnt++
+	}
+	assert.EqualValues(t, 0, cnt)
 }
 
 type UserRowsSpecTable struct {

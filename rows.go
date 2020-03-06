@@ -6,9 +6,11 @@ package xorm
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 
+	"xorm.io/builder"
 	"xorm.io/xorm/core"
 	"xorm.io/xorm/internal/utils"
 )
@@ -30,6 +32,13 @@ func newRows(session *Session, bean interface{}) (*Rows, error) {
 	var args []interface{}
 	var err error
 
+	beanValue := reflect.ValueOf(bean)
+	if beanValue.Kind() != reflect.Ptr {
+		return nil, errors.New("needs a pointer to a value")
+	} else if beanValue.Elem().Kind() == reflect.Ptr {
+		return nil, errors.New("a pointer to a pointer is not allowed")
+	}
+
 	if err = rows.session.statement.SetRefBean(bean); err != nil {
 		return nil, err
 	}
@@ -39,7 +48,34 @@ func newRows(session *Session, bean interface{}) (*Rows, error) {
 	}
 
 	if rows.session.statement.RawSQL == "" {
-		sqlStr, args, err = rows.session.statement.GenGetSQL(bean)
+		var autoCond builder.Cond
+		var addedTableName = (len(session.statement.JoinStr) > 0)
+		var table = rows.session.statement.RefTable
+
+		if !session.statement.NoAutoCondition {
+			var err error
+			autoCond, err = session.statement.BuildConds(table, bean, true, true, false, true, addedTableName)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// !oinume! Add "<col> IS NULL" to WHERE whatever condiBean is given.
+			// See https://gitea.com/xorm/xorm/issues/179
+			if col := table.DeletedColumn(); col != nil && !session.statement.GetUnscoped() { // tag "deleted" is enabled
+				var colName = session.engine.Quote(col.Name)
+				if addedTableName {
+					var nm = session.statement.TableName()
+					if len(session.statement.TableAlias) > 0 {
+						nm = session.statement.TableAlias
+					}
+					colName = session.engine.Quote(nm) + "." + colName
+				}
+
+				autoCond = session.statement.CondDeleted(col)
+			}
+		}
+
+		sqlStr, args, err = rows.session.statement.GenFindSQL(autoCond)
 		if err != nil {
 			return nil, err
 		}

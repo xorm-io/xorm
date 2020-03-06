@@ -23,6 +23,9 @@ func (session *Session) queryPreprocess(sqlStr *string, paramStr ...interface{})
 
 func (session *Session) queryRows(sqlStr string, args ...interface{}) (*core.Rows, error) {
 	defer session.resetStatement()
+	if session.statement.LastError != nil {
+		return nil, session.statement.LastError
+	}
 
 	session.queryPreprocess(&sqlStr, args...)
 
