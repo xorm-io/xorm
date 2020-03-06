@@ -8,13 +8,11 @@ package xorm
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"runtime"
 	"time"
 
 	"xorm.io/xorm/caches"
-	"xorm.io/xorm/core"
 	"xorm.io/xorm/dialects"
 	"xorm.io/xorm/log"
 	"xorm.io/xorm/names"
@@ -34,27 +32,7 @@ func close(engine *Engine) {
 // NewEngine new a db manager according to the parameter. Currently support four
 // drivers
 func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
-	driver := dialects.QueryDriver(driverName)
-	if driver == nil {
-		return nil, fmt.Errorf("Unsupported driver name: %v", driverName)
-	}
-
-	uri, err := driver.Parse(driverName, dataSourceName)
-	if err != nil {
-		return nil, err
-	}
-
-	dialect := dialects.QueryDialect(uri.DBType)
-	if dialect == nil {
-		return nil, fmt.Errorf("Unsupported dialect type: %v", uri.DBType)
-	}
-
-	db, err := core.Open(driverName, dataSourceName)
-	if err != nil {
-		return nil, err
-	}
-
-	err = dialect.Init(db, uri, driverName, dataSourceName)
+	dialect, err := dialects.OpenDialect(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -64,15 +42,16 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	tagParser := tags.NewParser("xorm", dialect, mapper, mapper, cacherMgr)
 
 	engine := &Engine{
-		db:             db,
 		dialect:        dialect,
 		TZLocation:     time.Local,
 		defaultContext: context.Background(),
 		cacherMgr:      cacherMgr,
 		tagParser:      tagParser,
+		driverName:     driverName,
+		dataSourceName: dataSourceName,
 	}
 
-	if uri.DBType == schemas.SQLITE {
+	if dialect.URI().DBType == schemas.SQLITE {
 		engine.DatabaseTZ = time.UTC
 	} else {
 		engine.DatabaseTZ = time.Local

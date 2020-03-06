@@ -57,16 +57,12 @@ func (statement *Statement) GenQuerySQL(sqlOrArgs ...interface{}) (string, []int
 		return "", nil, err
 	}
 
-	condSQL, condArgs, err := builder.ToSQL(statement.cond)
+	sqlStr, condArgs, err := statement.genSelectSQL(columnStr, true, true)
 	if err != nil {
 		return "", nil, err
 	}
-
 	args := append(statement.joinArgs, condArgs...)
-	sqlStr, err := statement.GenSelectSQL(columnStr, condSQL, true, true)
-	if err != nil {
-		return "", nil, err
-	}
+
 	// for mssql and use limit
 	qs := strings.Count(sqlStr, "?")
 	if len(args)*2 == qs {
@@ -92,12 +88,11 @@ func (statement *Statement) GenSumSQL(bean interface{}, columns ...string) (stri
 	}
 	sumSelect := strings.Join(sumStrs, ", ")
 
-	condSQL, condArgs, err := statement.GenConds(bean)
-	if err != nil {
+	if err := statement.mergeConds(bean); err != nil {
 		return "", nil, err
 	}
 
-	sqlStr, err := statement.GenSelectSQL(sumSelect, condSQL, true, true)
+	sqlStr, condArgs, err := statement.genSelectSQL(sumSelect, true, true)
 	if err != nil {
 		return "", nil, err
 	}
@@ -147,12 +142,8 @@ func (statement *Statement) GenGetSQL(bean interface{}) (string, []interface{}, 
 			return "", nil, err
 		}
 	}
-	condSQL, condArgs, err := builder.ToSQL(statement.cond)
-	if err != nil {
-		return "", nil, err
-	}
 
-	sqlStr, err := statement.GenSelectSQL(columnStr, condSQL, true, true)
+	sqlStr, condArgs, err := statement.genSelectSQL(columnStr, true, true)
 	if err != nil {
 		return "", nil, err
 	}
@@ -165,17 +156,13 @@ func (statement *Statement) GenCountSQL(beans ...interface{}) (string, []interfa
 		return statement.RawSQL, statement.RawParams, nil
 	}
 
-	var condSQL string
 	var condArgs []interface{}
 	var err error
 	if len(beans) > 0 {
 		statement.SetRefBean(beans[0])
-		condSQL, condArgs, err = statement.GenConds(beans[0])
-	} else {
-		condSQL, condArgs, err = builder.ToSQL(statement.cond)
-	}
-	if err != nil {
-		return "", nil, err
+		if err := statement.mergeConds(beans[0]); err != nil {
+			return "", nil, err
+		}
 	}
 
 	var selectSQL = statement.SelectStr
@@ -186,7 +173,7 @@ func (statement *Statement) GenCountSQL(beans ...interface{}) (string, []interfa
 			selectSQL = "count(*)"
 		}
 	}
-	sqlStr, err := statement.GenSelectSQL(selectSQL, condSQL, false, false)
+	sqlStr, condArgs, err := statement.genSelectSQL(selectSQL, false, false)
 	if err != nil {
 		return "", nil, err
 	}
@@ -194,7 +181,7 @@ func (statement *Statement) GenCountSQL(beans ...interface{}) (string, []interfa
 	return sqlStr, append(statement.joinArgs, condArgs...), nil
 }
 
-func (statement *Statement) GenSelectSQL(columnStr, condSQL string, needLimit, needOrderBy bool) (string, error) {
+func (statement *Statement) genSelectSQL(columnStr string, needLimit, needOrderBy bool) (string, []interface{}, error) {
 	var (
 		distinct                  string
 		dialect                   = statement.dialect
@@ -204,6 +191,11 @@ func (statement *Statement) GenSelectSQL(columnStr, condSQL string, needLimit, n
 	)
 	if statement.IsDistinct && !strings.HasPrefix(columnStr, "count") {
 		distinct = "DISTINCT "
+	}
+
+	condSQL, condArgs, err := builder.ToSQL(statement.cond)
+	if err != nil {
+		return "", nil, err
 	}
 	if len(condSQL) > 0 {
 		whereStr = " WHERE " + condSQL
@@ -313,10 +305,10 @@ func (statement *Statement) GenSelectSQL(columnStr, condSQL string, needLimit, n
 		}
 	}
 	if statement.IsForUpdate {
-		return dialect.ForUpdateSQL(buf.String()), nil
+		return dialect.ForUpdateSQL(buf.String()), condArgs, nil
 	}
 
-	return buf.String(), nil
+	return buf.String(), condArgs, nil
 }
 
 func (statement *Statement) GenExistSQL(bean ...interface{}) (string, []interface{}, error) {
@@ -428,16 +420,12 @@ func (statement *Statement) GenFindSQL(autoCond builder.Cond) (string, []interfa
 	}
 
 	statement.cond = statement.cond.And(autoCond)
-	condSQL, condArgs, err := builder.ToSQL(statement.cond)
-	if err != nil {
-		return "", nil, err
-	}
 
-	args = append(statement.joinArgs, condArgs...)
-	sqlStr, err = statement.GenSelectSQL(columnStr, condSQL, true, true)
+	sqlStr, condArgs, err := statement.genSelectSQL(columnStr, true, true)
 	if err != nil {
 		return "", nil, err
 	}
+	args = append(statement.joinArgs, condArgs...)
 	// for mssql and use limit
 	qs := strings.Count(sqlStr, "?")
 	if len(args)*2 == qs {

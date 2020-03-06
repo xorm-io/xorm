@@ -13,6 +13,14 @@ import (
 	"xorm.io/xorm/schemas"
 )
 
+var (
+	// ErrNeedDeletedCond delete needs less one condition error
+	ErrNeedDeletedCond = errors.New("Delete action needs at least one condition")
+
+	// ErrNotImplemented not implemented
+	ErrNotImplemented = errors.New("Not implemented")
+)
+
 func (session *Session) cacheDelete(table *schemas.Table, tableName, sqlStr string, args ...interface{}) error {
 	if table == nil ||
 		session.tx != nil {

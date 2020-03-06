@@ -4,6 +4,12 @@
 
 package dialects
 
+import (
+	"fmt"
+
+	"xorm.io/xorm/core"
+)
+
 type Driver interface {
 	Parse(string, string) (*URI, error)
 }
@@ -28,4 +34,30 @@ func QueryDriver(driverName string) Driver {
 
 func RegisteredDriverSize() int {
 	return len(drivers)
+}
+
+// OpenDialect opens a dialect via driver name and connection string
+func OpenDialect(driverName, connstr string) (Dialect, error) {
+	driver := QueryDriver(driverName)
+	if driver == nil {
+		return nil, fmt.Errorf("Unsupported driver name: %v", driverName)
+	}
+
+	uri, err := driver.Parse(driverName, connstr)
+	if err != nil {
+		return nil, err
+	}
+
+	dialect := QueryDialect(uri.DBType)
+	if dialect == nil {
+		return nil, fmt.Errorf("Unsupported dialect type: %v", uri.DBType)
+	}
+
+	db, err := core.Open(driverName, connstr)
+	if err != nil {
+		return nil, err
+	}
+	dialect.Init(db, uri)
+
+	return dialect, nil
 }

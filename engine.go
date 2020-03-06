@@ -39,6 +39,9 @@ type Engine struct {
 	logger         log.ContextLogger
 	tagParser      *tags.Parser
 
+	driverName     string
+	dataSourceName string
+
 	TZLocation *time.Location // The timezone of the application
 	DatabaseTZ *time.Location // The timezone of the database
 }
@@ -61,7 +64,7 @@ func (engine *Engine) BufferSize(size int) *Session {
 // ShowSQL show SQL statement or not on logger if log level is great than INFO
 func (engine *Engine) ShowSQL(show ...bool) {
 	engine.logger.ShowSQL(show...)
-	engine.db.Logger = engine.logger
+	engine.DB().Logger = engine.logger
 }
 
 // Logger return the logger interface
@@ -79,7 +82,7 @@ func (engine *Engine) SetLogger(logger interface{}) {
 		realLogger = t
 	}
 	engine.logger = realLogger
-	engine.db.Logger = realLogger
+	engine.DB().Logger = realLogger
 }
 
 // SetLogLevel sets the logger level
@@ -94,12 +97,12 @@ func (engine *Engine) SetDisableGlobalCache(disable bool) {
 
 // DriverName return the current sql driver's name
 func (engine *Engine) DriverName() string {
-	return engine.dialect.DriverName()
+	return engine.driverName
 }
 
 // DataSourceName return the current connection string
 func (engine *Engine) DataSourceName() string {
-	return engine.dialect.DataSourceName()
+	return engine.dataSourceName
 }
 
 // SetMapper set the name mapping rules
@@ -164,17 +167,17 @@ func (engine *Engine) AutoIncrStr() string {
 
 // SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 func (engine *Engine) SetConnMaxLifetime(d time.Duration) {
-	engine.db.SetConnMaxLifetime(d)
+	engine.DB().SetConnMaxLifetime(d)
 }
 
 // SetMaxOpenConns is only available for go 1.2+
 func (engine *Engine) SetMaxOpenConns(conns int) {
-	engine.db.SetMaxOpenConns(conns)
+	engine.DB().SetMaxOpenConns(conns)
 }
 
 // SetMaxIdleConns set the max idle connections on pool, default is 2
 func (engine *Engine) SetMaxIdleConns(conns int) {
-	engine.db.SetMaxIdleConns(conns)
+	engine.DB().SetMaxIdleConns(conns)
 }
 
 // SetDefaultCacher set the default cacher. Xorm's default not enable cacher.
@@ -210,12 +213,12 @@ func (engine *Engine) MapCacher(bean interface{}, cacher caches.Cacher) error {
 
 // NewDB provides an interface to operate database directly
 func (engine *Engine) NewDB() (*core.DB, error) {
-	return dialects.OpenDialect(engine.dialect)
+	return core.Open(engine.driverName, engine.dataSourceName)
 }
 
 // DB return the wrapper of sql.DB
 func (engine *Engine) DB() *core.DB {
-	return engine.db
+	return engine.dialect.DB()
 }
 
 // Dialect return database dialect
@@ -232,7 +235,7 @@ func (engine *Engine) NewSession() *Session {
 
 // Close the engine
 func (engine *Engine) Close() error {
-	return engine.db.Close()
+	return engine.DB().Close()
 }
 
 // Ping tests if database is alive
@@ -364,7 +367,7 @@ func (engine *Engine) dumpTables(tables []*schemas.Table, w io.Writer, tp ...sch
 		if dialect == nil {
 			return errors.New("Unsupported database type")
 		}
-		dialect.Init(nil, engine.dialect.URI(), "", "")
+		dialect.Init(nil, engine.dialect.URI())
 		distDBName = string(tp[0])
 	}
 
@@ -1209,10 +1212,6 @@ func (engine *Engine) nowTime(col *schemas.Column) (interface{}, time.Time) {
 		tz = col.TimeZone
 	}
 	return dialects.FormatTime(engine.dialect, col.SQLType.Name, t.In(tz)), t.In(engine.TZLocation)
-}
-
-func (engine *Engine) formatColTime(col *schemas.Column, t time.Time) (v interface{}) {
-	return dialects.FormatColumnTime(engine.dialect, engine.DatabaseTZ, col, t)
 }
 
 // GetColumnMapper returns the column name mapper

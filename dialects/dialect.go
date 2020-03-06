@@ -31,16 +31,13 @@ type URI struct {
 
 // Dialect represents a kind of database
 type Dialect interface {
-	Init(*core.DB, *URI, string, string) error
+	Init(*core.DB, *URI) error
 	URI() *URI
 	DB() *core.DB
 	DBType() schemas.DBType
 	SQLType(*schemas.Column) string
 	FormatBytes(b []byte) string
 	DefaultSchema() string
-
-	DriverName() string
-	DataSourceName() string
 
 	IsReserved(string) bool
 	Quoter() schemas.Quoter
@@ -77,17 +74,11 @@ type Dialect interface {
 	SetParams(params map[string]string)
 }
 
-func OpenDialect(dialect Dialect) (*core.DB, error) {
-	return core.Open(dialect.DriverName(), dialect.DataSourceName())
-}
-
 // Base represents a basic dialect and all real dialects could embed this struct
 type Base struct {
-	db             *core.DB
-	dialect        Dialect
-	driverName     string
-	dataSourceName string
-	uri            *URI
+	db      *core.DB
+	dialect Dialect
+	uri     *URI
 }
 
 func (b *Base) DB() *core.DB {
@@ -98,9 +89,8 @@ func (b *Base) DefaultSchema() string {
 	return ""
 }
 
-func (b *Base) Init(db *core.DB, dialect Dialect, uri *URI, drivername, dataSourceName string) error {
+func (b *Base) Init(db *core.DB, dialect Dialect, uri *URI) error {
 	b.db, b.dialect, b.uri = db, dialect, uri
-	b.driverName, b.dataSourceName = drivername, dataSourceName
 	return nil
 }
 
@@ -165,16 +155,8 @@ func (b *Base) FormatBytes(bs []byte) string {
 	return fmt.Sprintf("0x%x", bs)
 }
 
-func (b *Base) DriverName() string {
-	return b.driverName
-}
-
 func (b *Base) ShowCreateNull() bool {
 	return true
-}
-
-func (b *Base) DataSourceName() string {
-	return b.dataSourceName
 }
 
 func (db *Base) SupportDropIfExists() bool {

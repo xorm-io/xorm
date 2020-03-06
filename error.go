@@ -20,10 +20,6 @@ var (
 	ErrNotExist = errors.New("Record does not exist")
 	// ErrCacheFailed cache failed error
 	ErrCacheFailed = errors.New("Cache failed")
-	// ErrNeedDeletedCond delete needs less one condition error
-	ErrNeedDeletedCond = errors.New("Delete action needs at least one condition")
-	// ErrNotImplemented not implemented
-	ErrNotImplemented = errors.New("Not implemented")
 	// ErrConditionType condition type unsupported
 	ErrConditionType = errors.New("Unsupported condition type")
 )

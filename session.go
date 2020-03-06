@@ -284,7 +284,7 @@ func (session *Session) Having(conditions string) *Session {
 // DB db return the wrapper of sql.DB
 func (session *Session) DB() *core.DB {
 	if session.db == nil {
-		session.db = session.engine.db
+		session.db = session.engine.DB()
 		session.stmtCache = make(map[uint32]*core.Stmt, 0)
 	}
 	return session.db

@@ -82,6 +82,7 @@ type EngineInterface interface {
 	CreateTables(...interface{}) error
 	DBMetas() ([]*schemas.Table, error)
 	Dialect() dialects.Dialect
+	DriverName() string
 	DropTables(...interface{}) error
 	DumpAllToFile(fp string, tp ...schemas.DBType) error
 	GetCacher(string) caches.Cacher

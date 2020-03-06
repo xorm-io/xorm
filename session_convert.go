@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"xorm.io/xorm/convert"
+	"xorm.io/xorm/dialects"
 	"xorm.io/xorm/internal/json"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
@@ -583,7 +584,7 @@ func (session *Session) value2Interface(col *schemas.Column, fieldValue reflect.
 	case reflect.Struct:
 		if fieldType.ConvertibleTo(schemas.TimeType) {
 			t := fieldValue.Convert(schemas.TimeType).Interface().(time.Time)
-			tf := session.engine.formatColTime(col, t)
+			tf := dialects.FormatColumnTime(session.engine.dialect, session.engine.DatabaseTZ, col, t)
 			return tf, nil
 		} else if fieldType.ConvertibleTo(nullFloatType) {
 			t := fieldValue.Convert(nullFloatType).Interface().(sql.NullFloat64)

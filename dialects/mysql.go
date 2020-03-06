@@ -177,8 +177,8 @@ type mysql struct {
 	rowFormat         string
 }
 
-func (db *mysql) Init(d *core.DB, uri *URI, drivername, dataSourceName string) error {
-	return db.Base.Init(d, db, uri, drivername, dataSourceName)
+func (db *mysql) Init(d *core.DB, uri *URI) error {
+	return db.Base.Init(d, db, uri)
 }
 
 func (db *mysql) SetParams(params map[string]string) {

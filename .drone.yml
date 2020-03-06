@@ -22,8 +22,10 @@ steps:
   commands:
   - make test-sqlite
   - TEST_CACHE_ENABLE=true make test-sqlite
-  - go test ./caches/... ./convert/... ./core/... ./dialects/... \
+  - go test ./caches/... ./contexts/... ./convert/... ./core/... ./dialects/... \
+    ./internal/json/... ./internal/statements/... ./internal/utils/... \
     ./log/... ./migrate/... ./names/... ./schemas/... ./tags/...
+
   when:
     event:
     - push

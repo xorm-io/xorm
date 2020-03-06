@@ -34,7 +34,7 @@ func (session *Session) Rollback() error {
 		session.isAutoCommit = true
 
 		start := time.Now()
-		needSQL := session.engine.db.NeedLogSQL(session.ctx)
+		needSQL := session.DB().NeedLogSQL(session.ctx)
 		if needSQL {
 			session.engine.logger.BeforeSQL(log.LogContext{
 				Ctx: session.ctx,
@@ -63,7 +63,7 @@ func (session *Session) Commit() error {
 		session.isAutoCommit = true
 
 		start := time.Now()
-		needSQL := session.engine.db.NeedLogSQL(session.ctx)
+		needSQL := session.DB().NeedLogSQL(session.ctx)
 		if needSQL {
 			session.engine.logger.BeforeSQL(log.LogContext{
 				Ctx: session.ctx,
