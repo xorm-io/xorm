@@ -161,6 +161,8 @@ var (
 		"YEAR_MONTH":   true,
 		"ZEROFILL":     true,
 	}
+
+	mysqlQuoter = schemas.Quoter{'`', '`', schemas.AlwaysReserve}
 )
 
 type mysql struct {
@@ -178,6 +180,7 @@ type mysql struct {
 }
 
 func (db *mysql) Init(d *core.DB, uri *URI) error {
+	db.quoter = mysqlQuoter
 	return db.Base.Init(d, db, uri)
 }
 
@@ -272,12 +275,8 @@ func (db *mysql) SupportInsertMany() bool {
 }
 
 func (db *mysql) IsReserved(name string) bool {
-	_, ok := mysqlReservedWords[name]
+	_, ok := mysqlReservedWords[strings.ToUpper(name)]
 	return ok
-}
-
-func (db *mysql) Quoter() schemas.Quoter {
-	return schemas.Quoter{"`", "`"}
 }
 
 func (db *mysql) SupportEngine() bool {
@@ -458,6 +457,23 @@ func (db *mysql) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	return tables, nil
 }
 
+func (db *mysql) SetQuotePolicy(quotePolicy QuotePolicy) {
+	switch quotePolicy {
+	case QuotePolicyNone:
+		var q = mysqlQuoter
+		q.IsReserved = schemas.AlwaysNoReserve
+		db.quoter = q
+	case QuotePolicyReserved:
+		var q = mysqlQuoter
+		q.IsReserved = db.IsReserved
+		db.quoter = q
+	case QuotePolicyAlways:
+		fallthrough
+	default:
+		db.quoter = mysqlQuoter
+	}
+}
+
 func (db *mysql) GetIndexes(ctx context.Context, tableName string) (map[string]*schemas.Index, error) {
 	args := []interface{}{db.uri.DBName, tableName}
 	s := "SELECT `INDEX_NAME`, `NON_UNIQUE`, `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`STATISTICS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
@@ -538,7 +554,7 @@ func (db *mysql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, ch
 
 		if len(pkList) > 1 {
 			sql += "PRIMARY KEY ( "
-			sql += quoter.Quote(strings.Join(pkList, quoter.ReverseQuote(",")))
+			sql += quoter.Join(pkList, ",")
 			sql += " ), "
 		}
 

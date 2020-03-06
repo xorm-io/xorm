@@ -26,20 +26,36 @@ func (s *QuoteFilter) Do(sql string) string {
 		return sql
 	}
 
-	prefix, suffix := s.quoter[0][0], s.quoter[1][0]
-	raw := []byte(sql)
-	for i, cnt := 0, 0; i < len(raw); i = i + 1 {
-		if raw[i] == '`' {
-			if cnt%2 == 0 {
-				raw[i] = prefix
-			} else {
-				raw[i] = suffix
+	var buf strings.Builder
+	buf.Grow(len(sql))
+
+	var beginSingleQuote bool
+	for i := 0; i < len(sql); i++ {
+		if !beginSingleQuote && sql[i] == '`' {
+			var j = i + 1
+			for ; j < len(sql); j++ {
+				if sql[j] == '`' {
+					break
+				}
 			}
-			cnt++
+			word := sql[i+1 : j]
+			isReserved := s.quoter.IsReserved(word)
+			if isReserved {
+				buf.WriteByte(s.quoter.Prefix)
+			}
+			buf.WriteString(word)
+			if isReserved {
+				buf.WriteByte(s.quoter.Suffix)
+			}
+			i = j
+		} else {
+			if sql[i] == '\'' {
+				beginSingleQuote = !beginSingleQuote
+			}
+			buf.WriteByte(sql[i])
 		}
 	}
-	return string(raw)
-
+	return buf.String()
 }
 
 // SeqFilter filter SQL replace ?, ? ... to $1, $2 ...

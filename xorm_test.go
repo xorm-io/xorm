@@ -18,6 +18,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	_ "github.com/ziutek/mymysql/godrv"
 	"xorm.io/xorm/caches"
+	"xorm.io/xorm/dialects"
 	"xorm.io/xorm/log"
 	"xorm.io/xorm/names"
 	"xorm.io/xorm/schemas"
@@ -38,6 +39,7 @@ var (
 	schema             = flag.String("schema", "", "specify the schema")
 	ignoreSelectUpdate = flag.Bool("ignore_select_update", false, "ignore select update if implementation difference, only for tidb")
 	ingoreUpdateLimit  = flag.Bool("ignore_update_limit", false, "ignore update limit if implementation difference, only for cockroach")
+	quotePolicyStr     = flag.String("quote", "always", "quote could be always, none, reversed")
 	tableMapper        names.Mapper
 	colMapper          names.Mapper
 )
@@ -130,6 +132,14 @@ func createEngine(dbType, connStr string) error {
 			case "gonic":
 				testEngine.SetMapper(names.LintGonicMapper)
 			}
+		}
+
+		if *quotePolicyStr == "none" {
+			testEngine.SetQuotePolicy(dialects.QuotePolicyNone)
+		} else if *quotePolicyStr == "reserved" {
+			testEngine.SetQuotePolicy(dialects.QuotePolicyReserved)
+		} else {
+			testEngine.SetQuotePolicy(dialects.QuotePolicyAlways)
 		}
 	}
 

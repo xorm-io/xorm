@@ -104,6 +104,7 @@ type EngineInterface interface {
 	SetMapper(names.Mapper)
 	SetMaxOpenConns(int)
 	SetMaxIdleConns(int)
+	SetQuotePolicy(dialects.QuotePolicy)
 	SetSchema(string)
 	SetTableMapper(names.Mapper)
 	SetTZDatabase(tz *time.Location)

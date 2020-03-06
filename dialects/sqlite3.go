@@ -143,6 +143,8 @@ var (
 		"WITH":              true,
 		"WITHOUT":           true,
 	}
+
+	sqlite3Quoter = schemas.Quoter{'`', '`', schemas.AlwaysReserve}
 )
 
 type sqlite3 struct {
@@ -150,7 +152,25 @@ type sqlite3 struct {
 }
 
 func (db *sqlite3) Init(d *core.DB, uri *URI) error {
+	db.quoter = sqlite3Quoter
 	return db.Base.Init(d, db, uri)
+}
+
+func (db *sqlite3) SetQuotePolicy(quotePolicy QuotePolicy) {
+	switch quotePolicy {
+	case QuotePolicyNone:
+		var q = sqlite3Quoter
+		q.IsReserved = schemas.AlwaysNoReserve
+		db.quoter = q
+	case QuotePolicyReserved:
+		var q = sqlite3Quoter
+		q.IsReserved = db.IsReserved
+		db.quoter = q
+	case QuotePolicyAlways:
+		fallthrough
+	default:
+		db.quoter = sqlite3Quoter
+	}
 }
 
 func (db *sqlite3) SQLType(c *schemas.Column) string {
@@ -196,12 +216,8 @@ func (db *sqlite3) SupportInsertMany() bool {
 }
 
 func (db *sqlite3) IsReserved(name string) bool {
-	_, ok := sqlite3ReservedWords[name]
+	_, ok := sqlite3ReservedWords[strings.ToUpper(name)]
 	return ok
-}
-
-func (db *sqlite3) Quoter() schemas.Quoter {
-	return schemas.Quoter{"`", "`"}
 }
 
 func (db *sqlite3) AutoIncrStr() string {
@@ -250,18 +266,24 @@ func (db *sqlite3) ForUpdateSQL(query string) string {
 }
 
 func (db *sqlite3) IsColumnExist(ctx context.Context, tableName, colName string) (bool, error) {
-	args := []interface{}{tableName}
-	query := "SELECT name FROM sqlite_master WHERE type='table' and name = ? and ((sql like '%`" + colName + "`%') or (sql like '%[" + colName + "]%'))"
-
-	rows, err := db.DB().QueryContext(ctx, query, args...)
+	query := "SELECT * FROM " + tableName + " LIMIT 0"
+	rows, err := db.DB().QueryContext(ctx, query)
 	if err != nil {
 		return false, err
 	}
 	defer rows.Close()
 
-	if rows.Next() {
-		return true, nil
+	cols, err := rows.Columns()
+	if err != nil {
+		return false, err
 	}
+
+	for _, col := range cols {
+		if strings.EqualFold(col, colName) {
+			return true, nil
+		}
+	}
+
 	return false, nil
 }
 

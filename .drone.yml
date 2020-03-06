@@ -22,9 +22,10 @@ steps:
   commands:
   - make test-sqlite
   - TEST_CACHE_ENABLE=true make test-sqlite
+  - TEST_QUOTE_POLICY=reserved make test-sqlite
   - go test ./caches/... ./contexts/... ./convert/... ./core/... ./dialects/... \
+    ./log/... ./migrate/... ./names/... ./schemas/... ./tags/... \
     ./internal/json/... ./internal/statements/... ./internal/utils/... \
-    ./log/... ./migrate/... ./names/... ./schemas/... ./tags/...
 
   when:
     event:
@@ -44,6 +45,7 @@ steps:
   commands:
   - make test-mysql
   - TEST_CACHE_ENABLE=true make test-mysql
+  - TEST_QUOTE_POLICY=reserved make test-mysql
   when:
     event:
     - push
@@ -62,6 +64,7 @@ steps:
   commands:
   - make test-mysql
   - TEST_CACHE_ENABLE=true make test-mysql
+  - TEST_QUOTE_POLICY=reserved make test-mysql
   when:
     event:
     - push
@@ -82,6 +85,7 @@ steps:
   commands:
   - make test-mysql
   - TEST_CACHE_ENABLE=true make test-mysql
+  - TEST_QUOTE_POLICY=reserved make test-mysql
   when:
     event:
     - push
@@ -102,6 +106,7 @@ steps:
   commands:
   - make test-mymysql
   - TEST_CACHE_ENABLE=true make test-mymysql
+  - TEST_QUOTE_POLICY=reserved make test-mymysql
   when:
     event:
     - push
@@ -120,6 +125,7 @@ steps:
   commands:
   - make test-postgres
   - TEST_CACHE_ENABLE=true make test-postgres
+  - TEST_QUOTE_POLICY=reserved make test-postgres
   when:
     event:
     - push
@@ -141,6 +147,7 @@ steps:
   commands:
   - make test-postgres
   - TEST_CACHE_ENABLE=true make test-postgres
+  - TEST_QUOTE_POLICY=reserved make test-postgres
   when:
     event:
     - push
@@ -159,6 +166,7 @@ steps:
   commands:
   - make test-mssql
   - TEST_CACHE_ENABLE=true make test-mssql
+  - TEST_QUOTE_POLICY=reserved make test-mssql
   when:
     event:
     - push
@@ -177,6 +185,7 @@ steps:
   commands:
   - make test-tidb
   - TEST_CACHE_ENABLE=true make test-tidb
+  - TEST_QUOTE_POLICY=reserved make test-tidb
   when:
     event:
     - push

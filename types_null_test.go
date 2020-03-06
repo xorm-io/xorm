@@ -22,7 +22,7 @@ type NullType struct {
 	Age          sql.NullInt64
 	Height       sql.NullFloat64
 	IsMan        sql.NullBool `xorm:"null"`
-	CustomStruct CustomStruct `xorm:"valchar(64) null"`
+	CustomStruct CustomStruct `xorm:"varchar(64) null"`
 }
 
 type CustomStruct struct {
@@ -58,14 +58,12 @@ func (m CustomStruct) Value() (driver.Value, error) {
 
 func TestCreateNullStructTable(t *testing.T) {
 	assert.NoError(t, prepareEngine())
-
 	err := testEngine.CreateTables(new(NullType))
 	assert.NoError(t, err)
 }
 
 func TestDropNullStructTable(t *testing.T) {
 	assert.NoError(t, prepareEngine())
-
 	err := testEngine.DropTables(new(NullType))
 	assert.NoError(t, err)
 }
@@ -78,7 +76,7 @@ func TestNullStructInsert(t *testing.T) {
 		item := new(NullType)
 		_, err := testEngine.Insert(item)
 		assert.NoError(t, err)
-		assert.EqualValues(t, item.Id, 1)
+		assert.EqualValues(t, 1, item.Id)
 	}
 
 	if true {
@@ -90,12 +88,11 @@ func TestNullStructInsert(t *testing.T) {
 		}
 		_, err := testEngine.Insert(&item)
 		assert.NoError(t, err)
-		assert.EqualValues(t, item.Id, 2)
+		assert.EqualValues(t, 2, item.Id)
 	}
 
 	if true {
 		items := []NullType{}
-
 		for i := 0; i < 5; i++ {
 			item := NullType{
 				Name:         sql.NullString{String: "haolei_" + fmt.Sprint(i+1), Valid: true},
@@ -152,7 +149,7 @@ func TestNullStructUpdate(t *testing.T) {
 
 		affected, err := testEngine.ID(2).Cols("age", "height", "is_man").Update(item)
 		assert.NoError(t, err)
-		assert.EqualValues(t, affected, 1)
+		assert.EqualValues(t, 1, affected)
 	}
 
 	if true { // 测试In update
@@ -160,7 +157,7 @@ func TestNullStructUpdate(t *testing.T) {
 		item.Age = sql.NullInt64{Int64: 23, Valid: true}
 		affected, err := testEngine.In("id", 3, 4).Cols("age", "height", "is_man").Update(item)
 		assert.NoError(t, err)
-		assert.EqualValues(t, affected, 2)
+		assert.EqualValues(t, 2, affected)
 	}
 
 	if true { // 测试where
@@ -183,9 +180,7 @@ func TestNullStructUpdate(t *testing.T) {
 
 		_, err := testEngine.AllCols().ID(6).Update(item)
 		assert.NoError(t, err)
-		fmt.Println(item)
 	}
-
 }
 
 func TestNullStructFind(t *testing.T) {
@@ -274,9 +269,8 @@ func TestNullStructCount(t *testing.T) {
 
 	if true {
 		item := new(NullType)
-		total, err := testEngine.Where("age IS NOT NULL").Count(item)
+		_, err := testEngine.Where("age IS NOT NULL").Count(item)
 		assert.NoError(t, err)
-		fmt.Println(total)
 	}
 }
 
@@ -292,7 +286,6 @@ func TestNullStructRows(t *testing.T) {
 	for rows.Next() {
 		err = rows.Scan(item)
 		assert.NoError(t, err)
-		fmt.Println(item)
 	}
 }
 

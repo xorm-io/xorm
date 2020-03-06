@@ -54,6 +54,10 @@ func (engine *Engine) GetCacher(tableName string) caches.Cacher {
 	return engine.cacherMgr.GetCacher(tableName)
 }
 
+func (engine *Engine) SetQuotePolicy(quotePolicy dialects.QuotePolicy) {
+	engine.dialect.SetQuotePolicy(quotePolicy)
+}
+
 // BufferSize sets buffer size for iterate
 func (engine *Engine) BufferSize(size int) *Session {
 	session := engine.NewSession()

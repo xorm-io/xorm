@@ -8,56 +8,35 @@ import (
 	"strings"
 )
 
-// Quoter represents two quote characters
-type Quoter [2]string
+// Quoter represents a quoter to the SQL table name and column name
+type Quoter struct {
+	Prefix     byte
+	Suffix     byte
+	IsReserved func(string) bool
+}
 
-// CommonQuoter represetns a common quoter
-var CommonQuoter = Quoter{"`", "`"}
+var (
+	// AlwaysFalseReverse always think it's not a reverse word
+	AlwaysNoReserve = func(string) bool { return false }
+
+	// AlwaysReverse always reverse the word
+	AlwaysReserve = func(string) bool { return true }
+
+	// CommanQuoteMark represnets the common quote mark
+	CommanQuoteMark byte = '`'
+
+	// CommonQuoter represetns a common quoter
+	CommonQuoter = Quoter{CommanQuoteMark, CommanQuoteMark, AlwaysReserve}
+)
 
 func (q Quoter) IsEmpty() bool {
-	return q[0] == "" && q[1] == ""
+	return q.Prefix == 0 && q.Suffix == 0
 }
 
 func (q Quoter) Quote(s string) string {
 	var buf strings.Builder
 	q.QuoteTo(&buf, s)
 	return buf.String()
-}
-
-func (q Quoter) Replace(sql string, newQuoter Quoter) string {
-	if q.IsEmpty() {
-		return sql
-	}
-
-	if newQuoter.IsEmpty() {
-		var buf strings.Builder
-		for i := 0; i < len(sql); i = i + 1 {
-			if sql[i] != q[0][0] && sql[i] != q[1][0] {
-				_ = buf.WriteByte(sql[i])
-			}
-		}
-		return buf.String()
-	}
-
-	prefix, suffix := newQuoter[0][0], newQuoter[1][0]
-	var buf strings.Builder
-	for i, cnt := 0, 0; i < len(sql); i = i + 1 {
-		if cnt == 0 && sql[i] == q[0][0] {
-			_ = buf.WriteByte(prefix)
-			cnt = 1
-		} else if cnt == 1 && sql[i] == q[1][0] {
-			_ = buf.WriteByte(suffix)
-			cnt = 0
-		} else {
-			_ = buf.WriteByte(sql[i])
-		}
-	}
-	return buf.String()
-}
-
-func (q Quoter) ReverseQuote(s string) string {
-	reverseQuoter := Quoter{q[1], q[0]}
-	return reverseQuoter.Quote(s)
 }
 
 // Trim removes quotes from s
@@ -69,10 +48,10 @@ func (q Quoter) Trim(s string) string {
 	var buf strings.Builder
 	for i := 0; i < len(s); i++ {
 		switch {
-		case i == 0 && s[i:i+1] == q[0]:
-		case i == len(s)-1 && s[i:i+1] == q[1]:
-		case s[i:i+1] == q[1] && s[i+1] == '.':
-		case s[i:i+1] == q[0] && s[i-1] == '.':
+		case i == 0 && s[i] == q.Prefix:
+		case i == len(s)-1 && s[i] == q.Suffix:
+		case s[i] == q.Suffix && s[i+1] == '.':
+		case s[i] == q.Prefix && s[i-1] == '.':
 		default:
 			buf.WriteByte(s[i])
 		}
@@ -81,31 +60,8 @@ func (q Quoter) Trim(s string) string {
 }
 
 func (q Quoter) Join(a []string, sep string) string {
-	switch len(a) {
-	case 0:
-		return ""
-	case 1:
-		return a[0]
-	}
-	n := len(sep) * (len(a) - 1)
-	for i := 0; i < len(a); i++ {
-		n += len(a[i])
-	}
-
 	var b strings.Builder
-	b.Grow(n)
-	for i, s := range a {
-		if i > 0 {
-			b.WriteString(sep)
-		}
-		if q[0] != "" && s != "*" {
-			b.WriteString(q[0])
-		}
-		b.WriteString(strings.TrimSpace(s))
-		if q[1] != "" && s != "*" {
-			b.WriteString(q[1])
-		}
-	}
+	q.JoinWrite(&b, a, sep)
 	return b.String()
 }
 
@@ -126,88 +82,117 @@ func (q Quoter) JoinWrite(b *strings.Builder, a []string, sep string) error {
 				return err
 			}
 		}
-		if q[0] != "" && s != "*" && s[0] != '`' {
-			if _, err := b.WriteString(q[0]); err != nil {
-				return err
-			}
-		}
-		if _, err := b.WriteString(strings.TrimSpace(s)); err != nil {
-			return err
-		}
-		if q[1] != "" && s != "*" && s[0] != '`' {
-			if _, err := b.WriteString(q[1]); err != nil {
-				return err
-			}
+		if s != "*" {
+			q.QuoteTo(b, strings.TrimSpace(s))
 		}
 	}
 	return nil
 }
 
+func findWord(v string, start int) int {
+	for j := start; j < len(v); j++ {
+		switch v[j] {
+		case '.', ' ':
+			return j
+		}
+	}
+	return len(v)
+}
+
+func findStart(value string, start int) int {
+	if value[start] == '.' {
+		return start + 1
+	}
+	if value[start] != ' ' {
+		return start
+	}
+
+	var k int
+	for j := start; j < len(value); j++ {
+		if value[j] != ' ' {
+			k = j
+			break
+		}
+	}
+	if k-1 == len(value) {
+		return len(value)
+	}
+	if (value[k] == 'A' || value[k] == 'a') && (value[k+1] == 'S' || value[k+1] == 's') {
+		k = k + 2
+	}
+
+	for j := k; j < len(value); j++ {
+		if value[j] != ' ' {
+			return j
+		}
+	}
+	return len(value)
+}
+
+func (q Quoter) quoteWordTo(buf *strings.Builder, word string) error {
+	var realWord = word
+	if (word[0] == CommanQuoteMark && word[len(word)-1] == CommanQuoteMark) ||
+		(word[0] == q.Prefix && word[len(word)-1] == q.Suffix) {
+		realWord = word[1 : len(word)-1]
+	}
+
+	if q.IsEmpty() {
+		_, err := buf.WriteString(realWord)
+		return err
+	}
+
+	isReserved := q.IsReserved(realWord)
+	if isReserved {
+		if err := buf.WriteByte(q.Prefix); err != nil {
+			return err
+		}
+	}
+	if _, err := buf.WriteString(realWord); err != nil {
+		return err
+	}
+	if isReserved {
+		return buf.WriteByte(q.Suffix)
+	}
+
+	return nil
+}
+
+// QuoteTo quotes the table or column names. i.e. if the quotes are [ and ]
+//   name -> [name]
+//   `name` -> [name]
+//   [name] -> [name]
+//   schema.name -> [schema].[name]
+//   `schema`.`name` -> [schema].[name]
+//   `schema`.name -> [schema].[name]
+//   schema.`name` -> [schema].[name]
+//   [schema].name -> [schema].[name]
+//   schema.[name] -> [schema].[name]
+//   name AS a  ->  [name] AS a
+//   schema.name AS a  ->  [schema].[name] AS a
+func (q Quoter) QuoteTo(buf *strings.Builder, value string) error {
+	var i int
+	for i < len(value) {
+		start := findStart(value, i)
+		if start > i {
+			if _, err := buf.WriteString(value[i:start]); err != nil {
+				return err
+			}
+		}
+		var nextEnd = findWord(value, start)
+
+		if err := q.quoteWordTo(buf, value[start:nextEnd]); err != nil {
+			return err
+		}
+		i = nextEnd
+	}
+	return nil
+}
+
+// Strings quotes a slice of string
 func (q Quoter) Strings(s []string) []string {
 	var res = make([]string, 0, len(s))
 	for _, a := range s {
 		res = append(res, q.Quote(a))
 	}
 	return res
-}
-
-func (q Quoter) QuoteTo(buf *strings.Builder, value string) {
-	if q.IsEmpty() {
-		buf.WriteString(value)
-		return
-	}
-
-	prefix, suffix := q[0][0], q[1][0]
-	lastCh := 0 // 0 prefix, 1 char, 2 suffix
-	i := 0
-	for i < len(value) {
-		// start of a token; might be already quoted
-		if value[i] == '.' {
-			_ = buf.WriteByte('.')
-			lastCh = 1
-			i++
-		} else if value[i] == prefix || value[i] == '`' {
-			// Has quotes; skip/normalize `name` to prefix+name+sufix
-			var ch byte
-			if value[i] == prefix {
-				ch = suffix
-			} else {
-				ch = '`'
-			}
-			_ = buf.WriteByte(prefix)
-			i++
-			lastCh = 0
-			for ; i < len(value) && value[i] != ch && value[i] != ' '; i++ {
-				_ = buf.WriteByte(value[i])
-				lastCh = 1
-			}
-			_ = buf.WriteByte(suffix)
-			lastCh = 2
-			i++
-		} else if value[i] == ' ' {
-			if lastCh != 2 {
-				_ = buf.WriteByte(suffix)
-				lastCh = 2
-			}
-
-			// a AS b or a b
-			for ; i < len(value); i++ {
-				if value[i] != ' ' && value[i-1] == ' ' && (len(value) > i+1 && !strings.EqualFold(value[i:i+2], "AS")) {
-					break
-				}
-
-				_ = buf.WriteByte(value[i])
-				lastCh = 1
-			}
-		} else {
-			// Requires quotes
-			_ = buf.WriteByte(prefix)
-			for ; i < len(value) && value[i] != '.' && value[i] != ' '; i++ {
-				_ = buf.WriteByte(value[i])
-				lastCh = 1
-			}
-			_ = buf.WriteByte(suffix)
-			lastCh = 2
-		}
-	}
 }

@@ -41,6 +41,7 @@ type Dialect interface {
 
 	IsReserved(string) bool
 	Quoter() schemas.Quoter
+	SetQuotePolicy(quotePolicy QuotePolicy)
 
 	AutoIncrStr() string
 
@@ -79,6 +80,11 @@ type Base struct {
 	db      *core.DB
 	dialect Dialect
 	uri     *URI
+	quoter  schemas.Quoter
+}
+
+func (b *Base) Quoter() schemas.Quoter {
+	return b.quoter
 }
 
 func (b *Base) DB() *core.DB {
@@ -210,7 +216,7 @@ func (db *Base) CreateIndexSQL(tableName string, index *schemas.Index) string {
 	idxName = index.XName(tableName)
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v)", unique,
 		quoter.Quote(idxName), quoter.Quote(tableName),
-		quoter.Quote(strings.Join(index.Cols, quoter.ReverseQuote(","))))
+		quoter.Join(index.Cols, ","))
 }
 
 func (db *Base) DropIndexSQL(tableName string, index *schemas.Index) string {
@@ -258,7 +264,7 @@ func (b *Base) CreateTableSQL(table *schemas.Table, tableName, storeEngine, char
 
 		if len(pkList) > 1 {
 			sql += "PRIMARY KEY ( "
-			sql += quoter.Quote(strings.Join(pkList, quoter.ReverseQuote(",")))
+			sql += quoter.Join(pkList, ",")
 			sql += " ), "
 		}
 

@@ -498,6 +498,8 @@ var (
 		"YEAR":                      true,
 		"ZONE":                      true,
 	}
+
+	oracleQuoter = schemas.Quoter{'[', ']', schemas.AlwaysReserve}
 )
 
 type oracle struct {
@@ -505,6 +507,7 @@ type oracle struct {
 }
 
 func (db *oracle) Init(d *core.DB, uri *URI) error {
+	db.quoter = oracleQuoter
 	return db.Base.Init(d, db, uri)
 }
 
@@ -549,12 +552,8 @@ func (db *oracle) SupportInsertMany() bool {
 }
 
 func (db *oracle) IsReserved(name string) bool {
-	_, ok := oracleReservedWords[name]
+	_, ok := oracleReservedWords[strings.ToUpper(name)]
 	return ok
-}
-
-func (db *oracle) Quoter() schemas.Quoter {
-	return schemas.Quoter{"\"", "\""}
 }
 
 func (db *oracle) SupportEngine() bool {
@@ -601,7 +600,7 @@ func (db *oracle) CreateTableSQL(table *schemas.Table, tableName, storeEngine, c
 
 	if len(pkList) > 0 {
 		sql += "PRIMARY KEY ( "
-		sql += quoter.Quote(strings.Join(pkList, quoter.ReverseQuote(",")))
+		sql += quoter.Join(pkList, ",")
 		sql += " ), "
 	}
 
@@ -618,6 +617,23 @@ func (db *oracle) CreateTableSQL(table *schemas.Table, tableName, storeEngine, c
 		}
 	}
 	return sql
+}
+
+func (db *oracle) SetQuotePolicy(quotePolicy QuotePolicy) {
+	switch quotePolicy {
+	case QuotePolicyNone:
+		var q = oracleQuoter
+		q.IsReserved = schemas.AlwaysNoReserve
+		db.quoter = q
+	case QuotePolicyReserved:
+		var q = oracleQuoter
+		q.IsReserved = db.IsReserved
+		db.quoter = q
+	case QuotePolicyAlways:
+		fallthrough
+	default:
+		db.quoter = oracleQuoter
+	}
 }
 
 func (db *oracle) IndexCheckSQL(tableName, idxName string) (string, []interface{}) {

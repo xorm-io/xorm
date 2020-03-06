@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"xorm.io/xorm/caches"
+	"xorm.io/xorm/dialects"
 	"xorm.io/xorm/log"
 	"xorm.io/xorm/names"
 )
@@ -178,6 +179,13 @@ func (eg *EngineGroup) SetMaxOpenConns(conns int) {
 func (eg *EngineGroup) SetPolicy(policy GroupPolicy) *EngineGroup {
 	eg.policy = policy
 	return eg
+}
+
+func (eg *EngineGroup) SetQuotePolicy(quotePolicy dialects.QuotePolicy) {
+	eg.Engine.SetQuotePolicy(quotePolicy)
+	for i := 0; i < len(eg.slaves); i++ {
+		eg.slaves[i].SetQuotePolicy(quotePolicy)
+	}
 }
 
 // SetTableMapper set the table name mapping rule
