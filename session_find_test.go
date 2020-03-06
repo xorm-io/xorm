@@ -5,13 +5,13 @@
 package xorm
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/names"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestJoinLimit(t *testing.T) {
@@ -79,11 +79,9 @@ func TestWhere(t *testing.T) {
 	users := make([]Userinfo, 0)
 	err := testEngine.Where("id > ?", 2).Find(&users)
 	assert.NoError(t, err)
-	fmt.Println(users)
 
 	err = testEngine.Where("id > ?", 2).And("id < ?", 10).Find(&users)
 	assert.NoError(t, err)
-	fmt.Println(users)
 }
 
 func TestFind(t *testing.T) {
@@ -94,9 +92,6 @@ func TestFind(t *testing.T) {
 
 	err := testEngine.Find(&users)
 	assert.NoError(t, err)
-	for _, user := range users {
-		fmt.Println(user)
-	}
 
 	users2 := make([]Userinfo, 0)
 	var tbName = testEngine.Quote(testEngine.TableName(new(Userinfo), true))
@@ -112,10 +107,6 @@ func TestFind2(t *testing.T) {
 
 	err := testEngine.Find(&users)
 	assert.NoError(t, err)
-
-	for _, user := range users {
-		fmt.Println(user)
-	}
 }
 
 type Team struct {
@@ -191,9 +182,29 @@ func TestFindMap(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 	assertSync(t, new(Userinfo))
 
-	users := make(map[int64]Userinfo)
-	err := testEngine.Find(&users)
+	cnt, err := testEngine.Insert(&Userinfo{
+		Username:   "lunny",
+		Departname: "depart1",
+		IsMan:      true,
+	})
 	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	users := make(map[int64]Userinfo)
+	err = testEngine.Find(&users)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(users))
+	assert.EqualValues(t, "lunny", users[1].Username)
+	assert.EqualValues(t, "depart1", users[1].Departname)
+	assert.True(t, users[1].IsMan)
+
+	users = make(map[int64]Userinfo)
+	err = testEngine.Cols("username, departname").Find(&users)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(users))
+	assert.EqualValues(t, "lunny", users[1].Username)
+	assert.EqualValues(t, "depart1", users[1].Departname)
+	assert.False(t, users[1].IsMan)
 }
 
 func TestFindMap2(t *testing.T) {

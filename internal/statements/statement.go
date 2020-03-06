@@ -389,7 +389,7 @@ func col2NewCols(columns ...string) []string {
 func (statement *Statement) Cols(columns ...string) *Statement {
 	cols := col2NewCols(columns...)
 	for _, nc := range cols {
-		statement.ColumnMap.add(nc)
+		statement.ColumnMap.Add(nc)
 	}
 	return statement
 }

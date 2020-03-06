@@ -30,7 +30,15 @@ func (m columnMap) Contain(colName string) bool {
 	return false
 }
 
-func (m *columnMap) add(colName string) bool {
+func (m columnMap) Len() int {
+	return len(m)
+}
+
+func (m columnMap) IsEmpty() bool {
+	return len(m) == 0
+}
+
+func (m *columnMap) Add(colName string) bool {
 	if m.Contain(colName) {
 		return false
 	}
