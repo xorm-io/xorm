@@ -146,13 +146,12 @@ func createEngine(dbType, connStr string) error {
 	if err != nil {
 		return err
 	}
-	var tableNames = make([]interface{}, 0, len(tables))
 	for _, table := range tables {
-		tableNames = append(tableNames, table.Name)
+		if err = testEngine.DropTables(table); err != nil {
+			return err
+		}
 	}
-	if err = testEngine.DropTables(tableNames...); err != nil {
-		return err
-	}
+
 	return nil
 }
 

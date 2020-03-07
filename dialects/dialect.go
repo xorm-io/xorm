@@ -59,7 +59,7 @@ type Dialect interface {
 	GetTables(queryer core.Queryer, ctx context.Context) ([]*schemas.Table, error)
 	IsTableExist(queryer core.Queryer, ctx context.Context, tableName string) (bool, error)
 	CreateTableSQL(table *schemas.Table, tableName string) ([]string, bool)
-	DropTableSQL(tableName string) (string, bool)
+	DropTableSQL(tableName, autoincrCol string) ([]string, bool)
 
 	GetColumns(queryer core.Queryer, ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error)
 	IsColumnExist(queryer core.Queryer, ctx context.Context, tableName string, colName string) (bool, error)
@@ -100,9 +100,9 @@ func (b *Base) FormatBytes(bs []byte) string {
 	return fmt.Sprintf("0x%x", bs)
 }
 
-func (db *Base) DropTableSQL(tableName string) (string, bool) {
+func (db *Base) DropTableSQL(tableName, autoincrCol string) ([]string, bool) {
 	quote := db.dialect.Quoter().Quote
-	return fmt.Sprintf("DROP TABLE IF EXISTS %s", quote(tableName)), true
+	return []string{fmt.Sprintf("DROP TABLE IF EXISTS %s", quote(tableName))}, true
 }
 
 func (db *Base) HasRecords(queryer core.Queryer, ctx context.Context, query string, args ...interface{}) (bool, error) {

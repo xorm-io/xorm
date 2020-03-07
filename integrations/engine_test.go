@@ -60,8 +60,7 @@ func TestAutoTransaction(t *testing.T) {
 	engine.Transaction(func(session *xorm.Session) (interface{}, error) {
 		_, err := session.Insert(TestTx{Msg: "hi"})
 		assert.NoError(t, err)
-
-		return nil, nil
+		return nil, err
 	})
 
 	has, err := engine.Exist(&TestTx{Msg: "hi"})

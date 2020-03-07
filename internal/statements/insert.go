@@ -59,6 +59,10 @@ func (statement *Statement) GenInsertSQL(colNames []string, args []interface{}) 
 			return "", nil, err
 		}
 
+		if len(table.AutoIncrement) > 0 && statement.dialect.URI().DBType == schemas.ORACLE {
+			colNames = append(colNames, table.AutoIncrement)
+		}
+
 		if err := statement.dialect.Quoter().JoinWrite(buf.Builder, append(colNames, exprs.ColNames...), ","); err != nil {
 			return "", nil, err
 		}
@@ -110,6 +114,16 @@ func (statement *Statement) GenInsertSQL(colNames []string, args []interface{}) 
 
 			if err := statement.WriteArgs(buf, args); err != nil {
 				return "", nil, err
+			}
+
+			// Insert tablename (id) Values(seq_tablename.nextval)
+			if len(table.AutoIncrement) > 0 && statement.dialect.URI().DBType == schemas.ORACLE {
+				if _, err := buf.WriteString(","); err != nil {
+					return "", nil, err
+				}
+				if _, err := buf.WriteString("seq_" + tableName + ".nextval"); err != nil {
+					return "", nil, err
+				}
 			}
 
 			if len(exprs.Args) > 0 {

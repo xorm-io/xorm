@@ -279,7 +279,9 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 	if err := session.statement.SetRefBean(bean); err != nil {
 		return 0, err
 	}
-	if len(session.statement.TableName()) <= 0 {
+
+	var tableName = session.statement.TableName()
+	if tableName == "" {
 		return 0, ErrTableNotFound
 	}
 
@@ -293,7 +295,6 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		processor.BeforeInsert()
 	}
 
-	var tableName = session.statement.TableName()
 	table := session.statement.RefTable
 
 	colNames, args, err := session.genInsertColumns(bean)
@@ -355,18 +356,13 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 			}
 		}
 
-		res, err := session.queryBytes("select seq_atable.currval from dual")
+		var id int64
+		err = session.queryRow(fmt.Sprintf("select %s.currval from dual", tableName)).Scan(&id)
 		if err != nil {
-			return 0, err
-		}
-		if len(res) < 1 {
-			return 0, errors.New("insert no error but not returned id")
-		}
-
-		idByte := res[0][table.AutoIncrement]
-		id, err := strconv.ParseInt(string(idByte), 10, 64)
-		if err != nil || id <= 0 {
 			return 1, err
+		}
+		if id == 0 {
+			return 1, errors.New("insert no error but not returned id")
 		}
 
 		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
