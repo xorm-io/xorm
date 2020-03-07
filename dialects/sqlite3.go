@@ -211,10 +211,6 @@ func (db *sqlite3) FormatBytes(bs []byte) string {
 	return fmt.Sprintf("X'%x'", bs)
 }
 
-func (db *sqlite3) SupportInsertMany() bool {
-	return true
-}
-
 func (db *sqlite3) IsReserved(name string) bool {
 	_, ok := sqlite3ReservedWords[strings.ToUpper(name)]
 	return ok
@@ -229,9 +225,8 @@ func (db *sqlite3) IndexCheckSQL(tableName, idxName string) (string, []interface
 	return "SELECT name FROM sqlite_master WHERE type='index' and name = ?", args
 }
 
-func (db *sqlite3) TableCheckSQL(tableName string) (string, []interface{}) {
-	args := []interface{}{tableName}
-	return "SELECT name FROM sqlite_master WHERE type='table' and name = ?", args
+func (db *sqlite3) IsTableExist(ctx context.Context, tableName string) (bool, error) {
+	return db.HasRecords(ctx, "SELECT name FROM sqlite_master WHERE type='table' and name = ?", tableName)
 }
 
 func (db *sqlite3) DropIndexSQL(tableName string, index *schemas.Index) string {
@@ -249,7 +244,7 @@ func (db *sqlite3) DropIndexSQL(tableName string, index *schemas.Index) string {
 	return fmt.Sprintf("DROP INDEX %v", db.Quoter().Quote(idxName))
 }
 
-func (db *sqlite3) CreateTableSQL(table *schemas.Table, tableName string) string {
+func (db *sqlite3) CreateTableSQL(table *schemas.Table, tableName string) (string, bool) {
 	var sql string
 	sql = "CREATE TABLE IF NOT EXISTS "
 	if tableName == "" {
@@ -284,7 +279,7 @@ func (db *sqlite3) CreateTableSQL(table *schemas.Table, tableName string) string
 	}
 	sql += ")"
 
-	return sql
+	return sql, true
 }
 
 func (db *sqlite3) ForUpdateSQL(query string) string {

@@ -43,8 +43,6 @@ type Dialect interface {
 	SetQuotePolicy(quotePolicy QuotePolicy)
 
 	AutoIncrStr() string
-	SupportInsertMany() bool
-	SupportDropIfExists() bool
 
 	GetIndexes(ctx context.Context, tableName string) (map[string]*schemas.Index, error)
 	IndexCheckSQL(tableName, idxName string) (string, []interface{})
@@ -52,9 +50,9 @@ type Dialect interface {
 	DropIndexSQL(tableName string, index *schemas.Index) string
 
 	GetTables(ctx context.Context) ([]*schemas.Table, error)
-	TableCheckSQL(tableName string) (string, []interface{})
-	CreateTableSQL(table *schemas.Table, tableName string) string
-	DropTableSQL(tableName string) string
+	IsTableExist(ctx context.Context, tableName string) (bool, error)
+	CreateTableSQL(table *schemas.Table, tableName string) (string, bool)
+	DropTableSQL(tableName string) (string, bool)
 
 	GetColumns(ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error)
 	IsColumnExist(ctx context.Context, tableName string, colName string) (bool, error)
@@ -149,13 +147,9 @@ func (b *Base) FormatBytes(bs []byte) string {
 	return fmt.Sprintf("0x%x", bs)
 }
 
-func (db *Base) SupportDropIfExists() bool {
-	return true
-}
-
-func (db *Base) DropTableSQL(tableName string) string {
+func (db *Base) DropTableSQL(tableName string) (string, bool) {
 	quote := db.dialect.Quoter().Quote
-	return fmt.Sprintf("DROP TABLE IF EXISTS %s", quote(tableName))
+	return fmt.Sprintf("DROP TABLE IF EXISTS %s", quote(tableName)), true
 }
 
 func (db *Base) HasRecords(ctx context.Context, query string, args ...interface{}) (bool, error) {

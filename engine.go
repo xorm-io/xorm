@@ -125,14 +125,6 @@ func (engine *Engine) SetColumnMapper(mapper names.Mapper) {
 	engine.tagParser.SetColumnMapper(mapper)
 }
 
-// SupportInsertMany If engine's database support batch insert records like
-// "insert into user values (name, age), (name, age)".
-// When the return is ture, then engine.Insert(&users) will
-// generate batch sql and exeute.
-func (engine *Engine) SupportInsertMany() bool {
-	return engine.dialect.SupportInsertMany()
-}
-
 // Quote Use QuoteStr quote the string sql
 func (engine *Engine) Quote(value string) string {
 	value = strings.TrimSpace(value)
@@ -388,7 +380,8 @@ func (engine *Engine) dumpTables(tables []*schemas.Table, w io.Writer, tp ...sch
 				return err
 			}
 		}
-		_, err = io.WriteString(w, dialect.CreateTableSQL(table, "")+";\n")
+		s, _ := dialect.CreateTableSQL(table, "")
+		_, err = io.WriteString(w, s+";\n")
 		if err != nil {
 			return err
 		}

@@ -643,7 +643,8 @@ func (statement *Statement) genColumnStr() string {
 func (statement *Statement) GenCreateTableSQL() string {
 	statement.RefTable.StoreEngine = statement.StoreEngine
 	statement.RefTable.Charset = statement.Charset
-	return statement.dialect.CreateTableSQL(statement.RefTable, statement.TableName())
+	s, _ := statement.dialect.CreateTableSQL(statement.RefTable, statement.TableName())
+	return s
 }
 
 func (statement *Statement) GenIndexSQL() []string {

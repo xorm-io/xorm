@@ -270,10 +270,6 @@ func (db *mysql) SQLType(c *schemas.Column) string {
 	return res
 }
 
-func (db *mysql) SupportInsertMany() bool {
-	return true
-}
-
 func (db *mysql) IsReserved(name string) bool {
 	_, ok := mysqlReservedWords[strings.ToUpper(name)]
 	return ok
@@ -290,10 +286,9 @@ func (db *mysql) IndexCheckSQL(tableName, idxName string) (string, []interface{}
 	return sql, args
 }
 
-func (db *mysql) TableCheckSQL(tableName string) (string, []interface{}) {
-	args := []interface{}{db.uri.DBName, tableName}
+func (db *mysql) IsTableExist(ctx context.Context, tableName string) (bool, error) {
 	sql := "SELECT `TABLE_NAME` from `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? and `TABLE_NAME`=?"
-	return sql, args
+	return db.HasRecords(ctx, sql, db.uri.DBName, tableName)
 }
 
 func (db *mysql) AddColumnSQL(tableName string, col *schemas.Column) string {
@@ -512,7 +507,7 @@ func (db *mysql) GetIndexes(ctx context.Context, tableName string) (map[string]*
 	return indexes, nil
 }
 
-func (db *mysql) CreateTableSQL(table *schemas.Table, tableName string) string {
+func (db *mysql) CreateTableSQL(table *schemas.Table, tableName string) (string, bool) {
 	var sql = "CREATE TABLE IF NOT EXISTS "
 	if tableName == "" {
 		tableName = table.Name
@@ -565,7 +560,7 @@ func (db *mysql) CreateTableSQL(table *schemas.Table, tableName string) string {
 	if db.rowFormat != "" {
 		sql += " ROW_FORMAT=" + db.rowFormat
 	}
-	return sql
+	return sql, true
 }
 
 func (db *mysql) Filters() []Filter {

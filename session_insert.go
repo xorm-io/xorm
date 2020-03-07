@@ -75,21 +75,11 @@ func (session *Session) Insert(beans ...interface{}) (int64, error) {
 					return 0, ErrNoElementsOnSlice
 				}
 
-				if session.engine.SupportInsertMany() {
-					cnt, err := session.innerInsertMulti(bean)
-					if err != nil {
-						return affected, err
-					}
-					affected += cnt
-				} else {
-					for i := 0; i < size; i++ {
-						cnt, err := session.innerInsert(sliceValue.Index(i).Interface())
-						if err != nil {
-							return affected, err
-						}
-						affected += cnt
-					}
+				cnt, err := session.innerInsertMulti(bean)
+				if err != nil {
+					return affected, err
 				}
+				affected += cnt
 			} else {
 				cnt, err := session.innerInsert(bean)
 				if err != nil {

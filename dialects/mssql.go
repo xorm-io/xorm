@@ -281,10 +281,6 @@ func (db *mssql) SQLType(c *schemas.Column) string {
 	return res
 }
 
-func (db *mssql) SupportInsertMany() bool {
-	return true
-}
-
 func (db *mssql) IsReserved(name string) bool {
 	_, ok := mssqlReservedWords[strings.ToUpper(name)]
 	return ok
@@ -311,10 +307,10 @@ func (db *mssql) AutoIncrStr() string {
 	return "IDENTITY"
 }
 
-func (db *mssql) DropTableSQL(tableName string) string {
+func (db *mssql) DropTableSQL(tableName string) (string, bool) {
 	return fmt.Sprintf("IF EXISTS (SELECT * FROM sysobjects WHERE id = "+
 		"object_id(N'%s') and OBJECTPROPERTY(id, N'IsUserTable') = 1) "+
-		"DROP TABLE \"%s\"", tableName, tableName)
+		"DROP TABLE \"%s\"", tableName, tableName), true
 }
 
 func (db *mssql) IndexCheckSQL(tableName, idxName string) (string, []interface{}) {
@@ -329,10 +325,9 @@ func (db *mssql) IsColumnExist(ctx context.Context, tableName, colName string) (
 	return db.HasRecords(ctx, query, tableName, colName)
 }
 
-func (db *mssql) TableCheckSQL(tableName string) (string, []interface{}) {
-	args := []interface{}{}
+func (db *mssql) IsTableExist(ctx context.Context, tableName string) (bool, error) {
 	sql := "select * from sysobjects where id = object_id(N'" + tableName + "') and OBJECTPROPERTY(id, N'IsUserTable') = 1"
-	return sql, args
+	return db.HasRecords(ctx, sql)
 }
 
 func (db *mssql) GetColumns(ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error) {
@@ -491,7 +486,7 @@ WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 	return indexes, nil
 }
 
-func (db *mssql) CreateTableSQL(table *schemas.Table, tableName string) string {
+func (db *mssql) CreateTableSQL(table *schemas.Table, tableName string) (string, bool) {
 	var sql string
 	if tableName == "" {
 		tableName = table.Name
@@ -522,7 +517,7 @@ func (db *mssql) CreateTableSQL(table *schemas.Table, tableName string) string {
 
 	sql = sql[:len(sql)-2] + ")"
 	sql += ";"
-	return sql
+	return sql, true
 }
 
 func (db *mssql) ForUpdateSQL(query string) string {
