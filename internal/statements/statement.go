@@ -641,8 +641,9 @@ func (statement *Statement) genColumnStr() string {
 }
 
 func (statement *Statement) GenCreateTableSQL() string {
-	return statement.dialect.CreateTableSQL(statement.RefTable, statement.TableName(),
-		statement.StoreEngine, statement.Charset)
+	statement.RefTable.StoreEngine = statement.StoreEngine
+	statement.RefTable.Charset = statement.Charset
+	return statement.dialect.CreateTableSQL(statement.RefTable, statement.TableName())
 }
 
 func (statement *Statement) GenIndexSQL() []string {
@@ -680,20 +681,8 @@ func (statement *Statement) GenDelIndexSQL() []string {
 	if idx > -1 {
 		tbName = tbName[idx+1:]
 	}
-	idxPrefixName := strings.Replace(tbName, `"`, "", -1)
-	idxPrefixName = strings.Replace(idxPrefixName, `.`, "_", -1)
-	for idxName, index := range statement.RefTable.Indexes {
-		var rIdxName string
-		if index.Type == schemas.UniqueType {
-			rIdxName = uniqueName(idxPrefixName, idxName)
-		} else if index.Type == schemas.IndexType {
-			rIdxName = utils.IndexName(idxPrefixName, idxName)
-		}
-		sql := fmt.Sprintf("DROP INDEX %v", statement.quote(dialects.FullTableName(statement.dialect, statement.tagParser.GetTableMapper(), rIdxName, true)))
-		if statement.dialect.IndexOnTable() {
-			sql += fmt.Sprintf(" ON %v", statement.quote(tbName))
-		}
-		sqls = append(sqls, sql)
+	for _, index := range statement.RefTable.Indexes {
+		sqls = append(sqls, statement.dialect.DropIndexSQL(tbName, index))
 	}
 	return sqls
 }
@@ -714,7 +703,8 @@ func (statement *Statement) buildConds2(table *schemas.Table, bean interface{},
 			continue
 		}
 
-		if statement.dialect.DBType() == schemas.MSSQL && (col.SQLType.Name == schemas.Text || col.SQLType.IsBlob() || col.SQLType.Name == schemas.TimeStampz) {
+		if statement.dialect.URI().DBType == schemas.MSSQL && (col.SQLType.Name == schemas.Text ||
+			col.SQLType.IsBlob() || col.SQLType.Name == schemas.TimeStampz) {
 			continue
 		}
 		if col.SQLType.IsJson() {
@@ -1002,7 +992,7 @@ func (statement *Statement) CondDeleted(col *schemas.Column) builder.Cond {
 		cond = builder.Eq{colName: 0}
 	} else {
 		// FIXME: mssql: The conversion of a nvarchar data type to a datetime data type resulted in an out-of-range value.
-		if statement.dialect.DBType() != schemas.MSSQL {
+		if statement.dialect.URI().DBType != schemas.MSSQL {
 			cond = builder.Eq{colName: utils.ZeroTime1}
 		}
 	}

@@ -154,7 +154,7 @@ func TestGetVar(t *testing.T) {
 	assert.Equal(t, "1.5", fmt.Sprintf("%.1f", money))
 
 	var money2 float64
-	if testEngine.Dialect().DBType() == schemas.MSSQL {
+	if testEngine.Dialect().URI().DBType == schemas.MSSQL {
 		has, err = testEngine.SQL("SELECT TOP 1 money FROM " + testEngine.TableName("get_var", true)).Get(&money2)
 	} else {
 		has, err = testEngine.SQL("SELECT money FROM " + testEngine.TableName("get_var", true) + " LIMIT 1").Get(&money2)
@@ -234,7 +234,7 @@ func TestGetStruct(t *testing.T) {
 	defer session.Close()
 
 	var err error
-	if testEngine.Dialect().DBType() == schemas.MSSQL {
+	if testEngine.Dialect().URI().DBType == schemas.MSSQL {
 		err = session.Begin()
 		assert.NoError(t, err)
 		_, err = session.Exec("SET IDENTITY_INSERT userinfo_get ON")
@@ -243,7 +243,7 @@ func TestGetStruct(t *testing.T) {
 	cnt, err := session.Insert(&UserinfoGet{Uid: 2})
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, cnt)
-	if testEngine.Dialect().DBType() == schemas.MSSQL {
+	if testEngine.Dialect().URI().DBType == schemas.MSSQL {
 		err = session.Commit()
 		assert.NoError(t, err)
 	}

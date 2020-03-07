@@ -279,20 +279,8 @@ func (db *mysql) IsReserved(name string) bool {
 	return ok
 }
 
-func (db *mysql) SupportEngine() bool {
-	return true
-}
-
 func (db *mysql) AutoIncrStr() string {
 	return "AUTO_INCREMENT"
-}
-
-func (db *mysql) SupportCharset() bool {
-	return true
-}
-
-func (db *mysql) IndexOnTable() bool {
-	return true
 }
 
 func (db *mysql) IndexCheckSQL(tableName, idxName string) (string, []interface{}) {
@@ -524,7 +512,7 @@ func (db *mysql) GetIndexes(ctx context.Context, tableName string) (map[string]*
 	return indexes, nil
 }
 
-func (db *mysql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, charset string) string {
+func (db *mysql) CreateTableSQL(table *schemas.Table, tableName string) string {
 	var sql = "CREATE TABLE IF NOT EXISTS "
 	if tableName == "" {
 		tableName = table.Name
@@ -562,10 +550,11 @@ func (db *mysql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, ch
 	}
 	sql += ")"
 
-	if storeEngine != "" {
-		sql += " ENGINE=" + storeEngine
+	if table.StoreEngine != "" {
+		sql += " ENGINE=" + table.StoreEngine
 	}
 
+	var charset = table.Charset
 	if len(charset) == 0 {
 		charset = db.URI().Charset
 	}

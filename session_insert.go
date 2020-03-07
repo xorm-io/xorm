@@ -254,7 +254,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 	quoter := session.engine.dialect.Quoter()
 	var sql string
 	colStr := quoter.Join(colNames, ",")
-	if session.engine.dialect.DBType() == schemas.ORACLE {
+	if session.engine.dialect.URI().DBType == schemas.ORACLE {
 		temp := fmt.Sprintf(") INTO %s (%v) VALUES (",
 			quoter.Quote(tableName),
 			colStr)
@@ -361,7 +361,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 	var tableName = session.statement.TableName()
 	var output string
-	if session.engine.dialect.DBType() == schemas.MSSQL && len(table.AutoIncrement) > 0 {
+	if session.engine.dialect.URI().DBType == schemas.MSSQL && len(table.AutoIncrement) > 0 {
 		output = fmt.Sprintf(" OUTPUT Inserted.%s", table.AutoIncrement)
 	}
 
@@ -371,7 +371,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 	}
 
 	if len(colPlaces) <= 0 {
-		if session.engine.dialect.DBType() == schemas.MYSQL {
+		if session.engine.dialect.URI().DBType == schemas.MYSQL {
 			if _, err := buf.WriteString(" VALUES ()"); err != nil {
 				return 0, err
 			}
@@ -433,7 +433,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		}
 	}
 
-	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == schemas.POSTGRES {
+	if len(table.AutoIncrement) > 0 && session.engine.dialect.URI().DBType == schemas.POSTGRES {
 		if _, err := buf.WriteString(" RETURNING " + session.engine.Quote(table.AutoIncrement)); err != nil {
 			return 0, err
 		}
@@ -472,7 +472,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 	// for postgres, many of them didn't implement lastInsertId, so we should
 	// implemented it ourself.
-	if session.engine.dialect.DBType() == schemas.ORACLE && len(table.AutoIncrement) > 0 {
+	if session.engine.dialect.URI().DBType == schemas.ORACLE && len(table.AutoIncrement) > 0 {
 		res, err := session.queryBytes("select seq_atable.currval from dual", args...)
 		if err != nil {
 			return 0, err
@@ -513,7 +513,8 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
 
 		return 1, nil
-	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == schemas.POSTGRES || session.engine.dialect.DBType() == schemas.MSSQL) {
+	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.URI().DBType == schemas.POSTGRES ||
+		session.engine.dialect.URI().DBType == schemas.MSSQL) {
 		res, err := session.queryBytes(sqlStr, args...)
 
 		if err != nil {

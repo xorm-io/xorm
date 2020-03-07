@@ -314,7 +314,7 @@ func TestCustomType2(t *testing.T) {
 	session := testEngine.NewSession()
 	defer session.Close()
 
-	if testEngine.Dialect().DBType() == schemas.MSSQL {
+	if testEngine.Dialect().URI().DBType == schemas.MSSQL {
 		err = session.Begin()
 		assert.NoError(t, err)
 		_, err = session.Exec("set IDENTITY_INSERT " + tableName + " on")
@@ -325,7 +325,7 @@ func TestCustomType2(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, cnt)
 
-	if testEngine.Dialect().DBType() == schemas.MSSQL {
+	if testEngine.Dialect().URI().DBType == schemas.MSSQL {
 		err = session.Commit()
 		assert.NoError(t, err)
 	}

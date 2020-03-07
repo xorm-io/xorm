@@ -45,7 +45,7 @@ func TestSetExpr(t *testing.T) {
 	assert.EqualValues(t, 1, cnt)
 
 	var not = "NOT"
-	if testEngine.Dialect().DBType() == schemas.MSSQL {
+	if testEngine.Dialect().URI().DBType == schemas.MSSQL {
 		not = "~"
 	}
 	cnt, err = testEngine.SetExpr("show", not+" `show`").ID(1).Update(new(UserExpr))

@@ -307,10 +307,6 @@ func (db *mssql) SetQuotePolicy(quotePolicy QuotePolicy) {
 	}
 }
 
-func (db *mssql) SupportEngine() bool {
-	return false
-}
-
 func (db *mssql) AutoIncrStr() string {
 	return "IDENTITY"
 }
@@ -321,25 +317,11 @@ func (db *mssql) DropTableSQL(tableName string) string {
 		"DROP TABLE \"%s\"", tableName, tableName)
 }
 
-func (db *mssql) SupportCharset() bool {
-	return false
-}
-
-func (db *mssql) IndexOnTable() bool {
-	return true
-}
-
 func (db *mssql) IndexCheckSQL(tableName, idxName string) (string, []interface{}) {
 	args := []interface{}{idxName}
 	sql := "select name from sysindexes where id=object_id('" + tableName + "') and name=?"
 	return sql, args
 }
-
-/*func (db *mssql) ColumnCheckSql(tableName, colName string) (string, []interface{}) {
-	args := []interface{}{tableName, colName}
-	sql := `SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "COLUMN_NAME" = ?`
-	return sql, args
-}*/
 
 func (db *mssql) IsColumnExist(ctx context.Context, tableName, colName string) (bool, error) {
 	query := `SELECT "COLUMN_NAME" FROM "INFORMATION_SCHEMA"."COLUMNS" WHERE "TABLE_NAME" = ? AND "COLUMN_NAME" = ?`
@@ -509,7 +491,7 @@ WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 	return indexes, nil
 }
 
-func (db *mssql) CreateTableSQL(table *schemas.Table, tableName, storeEngine, charset string) string {
+func (db *mssql) CreateTableSQL(table *schemas.Table, tableName string) string {
 	var sql string
 	if tableName == "" {
 		tableName = table.Name

@@ -65,7 +65,7 @@ func (session *Session) str2Time(col *schemas.Column, data string) (outTime time
 		}
 
 		sdata = strings.TrimSpace(sdata)
-		if session.engine.dialect.DBType() == schemas.MYSQL && len(sdata) > 8 {
+		if session.engine.dialect.URI().DBType == schemas.MYSQL && len(sdata) > 8 {
 			sdata = sdata[len(sdata)-8:]
 		}
 
@@ -159,7 +159,7 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 		var err error
 		// for mysql, when use bit, it returned \x01
 		if col.SQLType.Name == schemas.Bit &&
-			session.engine.dialect.DBType() == schemas.MYSQL { // !nashtsai! TODO dialect needs to provide conversion interface API
+			session.engine.dialect.URI().DBType == schemas.MYSQL { // !nashtsai! TODO dialect needs to provide conversion interface API
 			if len(data) == 1 {
 				x = int64(data[0])
 			} else {
@@ -399,7 +399,7 @@ func (session *Session) bytes2Value(col *schemas.Column, fieldValue *reflect.Val
 			var err error
 			// for mysql, when use bit, it returned \x01
 			if col.SQLType.Name == schemas.Bit &&
-				session.engine.dialect.DBType() == schemas.MYSQL {
+				session.engine.dialect.URI().DBType == schemas.MYSQL {
 				if len(data) == 1 {
 					x = int32(data[0])
 				} else {
