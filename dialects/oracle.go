@@ -556,7 +556,7 @@ func (db *oracle) DropTableSQL(tableName string) (string, bool) {
 	return fmt.Sprintf("DROP TABLE `%s`", tableName), false
 }
 
-func (db *oracle) CreateTableSQL(table *schemas.Table, tableName string) (string, bool) {
+func (db *oracle) CreateTableSQL(table *schemas.Table, tableName string) ([]string, bool) {
 	var sql = "CREATE TABLE "
 	if tableName == "" {
 		tableName = table.Name
@@ -585,7 +585,7 @@ func (db *oracle) CreateTableSQL(table *schemas.Table, tableName string) (string
 	}
 
 	sql = sql[:len(sql)-2] + ")"
-	return sql, false
+	return []string{sql}, false
 }
 
 func (db *oracle) SetQuotePolicy(quotePolicy QuotePolicy) {

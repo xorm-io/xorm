@@ -893,7 +893,7 @@ func (db *postgres) AutoIncrStr() string {
 	return ""
 }
 
-func (db *postgres) CreateTableSQL(table *schemas.Table, tableName string) (string, bool) {
+func (db *postgres) CreateTableSQL(table *schemas.Table, tableName string) ([]string, bool) {
 	var sql string
 	sql = "CREATE TABLE IF NOT EXISTS "
 	if tableName == "" {
@@ -928,7 +928,7 @@ func (db *postgres) CreateTableSQL(table *schemas.Table, tableName string) (stri
 	}
 	sql += ")"
 
-	return sql, true
+	return []string{sql}, true
 }
 
 func (db *postgres) IndexCheckSQL(tableName, idxName string) (string, []interface{}) {

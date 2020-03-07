@@ -51,7 +51,7 @@ type Dialect interface {
 
 	GetTables(ctx context.Context) ([]*schemas.Table, error)
 	IsTableExist(ctx context.Context, tableName string) (bool, error)
-	CreateTableSQL(table *schemas.Table, tableName string) (string, bool)
+	CreateTableSQL(table *schemas.Table, tableName string) ([]string, bool)
 	DropTableSQL(tableName string) (string, bool)
 
 	GetColumns(ctx context.Context, tableName string) ([]string, map[string]*schemas.Column, error)

@@ -380,10 +380,12 @@ func (engine *Engine) dumpTables(tables []*schemas.Table, w io.Writer, tp ...sch
 				return err
 			}
 		}
-		s, _ := dialect.CreateTableSQL(table, "")
-		_, err = io.WriteString(w, s+";\n")
-		if err != nil {
-			return err
+		sqls, _ := dialect.CreateTableSQL(table, "")
+		for _, s := range sqls {
+			_, err = io.WriteString(w, s+";\n")
+			if err != nil {
+				return err
+			}
 		}
 		for _, index := range table.Indexes {
 			_, err = io.WriteString(w, dialect.CreateIndexSQL(table.Name, index)+";\n")

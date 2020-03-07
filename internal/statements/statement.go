@@ -640,7 +640,7 @@ func (statement *Statement) genColumnStr() string {
 	return buf.String()
 }
 
-func (statement *Statement) GenCreateTableSQL() string {
+func (statement *Statement) GenCreateTableSQL() []string {
 	statement.RefTable.StoreEngine = statement.StoreEngine
 	statement.RefTable.Charset = statement.Charset
 	s, _ := statement.dialect.CreateTableSQL(statement.RefTable, statement.TableName())

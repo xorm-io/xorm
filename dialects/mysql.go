@@ -507,7 +507,7 @@ func (db *mysql) GetIndexes(ctx context.Context, tableName string) (map[string]*
 	return indexes, nil
 }
 
-func (db *mysql) CreateTableSQL(table *schemas.Table, tableName string) (string, bool) {
+func (db *mysql) CreateTableSQL(table *schemas.Table, tableName string) ([]string, bool) {
 	var sql = "CREATE TABLE IF NOT EXISTS "
 	if tableName == "" {
 		tableName = table.Name
@@ -560,7 +560,7 @@ func (db *mysql) CreateTableSQL(table *schemas.Table, tableName string) (string,
 	if db.rowFormat != "" {
 		sql += " ROW_FORMAT=" + db.rowFormat
 	}
-	return sql, true
+	return []string{sql}, true
 }
 
 func (db *mysql) Filters() []Filter {

@@ -37,9 +37,14 @@ func (session *Session) createTable(bean interface{}) error {
 		return err
 	}
 
-	sqlStr := session.statement.GenCreateTableSQL()
-	_, err := session.exec(sqlStr)
-	return err
+	sqlStrs := session.statement.GenCreateTableSQL()
+	for _, s := range sqlStrs {
+		_, err := session.exec(s)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // CreateIndexes create indexes
