@@ -35,9 +35,8 @@ var (
 
 // Statement save all the sql info for executing SQL
 type Statement struct {
-	RefTable *schemas.Table
-	dialect  dialects.Dialect
-	//Engine          *Engine
+	RefTable        *schemas.Table
+	dialect         dialects.Dialect
 	defaultTimeZone *time.Location
 	tagParser       *tags.Parser
 	Start           int
@@ -985,8 +984,13 @@ func (statement *Statement) joinColumns(cols []*schemas.Column, includeTableName
 func (statement *Statement) CondDeleted(col *schemas.Column) builder.Cond {
 	var colName = col.Name
 	if statement.JoinStr != "" {
-		colName = statement.quote(statement.TableName()) +
-			"." + statement.quote(col.Name)
+		var prefix string
+		if statement.TableAlias != "" {
+			prefix = statement.TableAlias
+		} else {
+			prefix = statement.TableName()
+		}
+		colName = statement.quote(prefix) + "." + statement.quote(col.Name)
 	}
 	var cond = builder.NewCond()
 	if col.SQLType.IsNumeric() {
