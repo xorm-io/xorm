@@ -326,8 +326,6 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		return 0, ErrTableNotFound
 	}
 
-	table := session.statement.RefTable
-
 	// handle BeforeInsertProcessor
 	for _, closure := range session.beforeClosures {
 		closure(bean)
@@ -338,99 +336,18 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		processor.BeforeInsert()
 	}
 
+	var tableName = session.statement.TableName()
+	table := session.statement.RefTable
+
 	colNames, args, err := session.genInsertColumns(bean)
 	if err != nil {
 		return 0, err
 	}
 
-	exprs := session.statement.ExprColumns
-	colPlaces := strings.Repeat("?, ", len(colNames))
-	if exprs.Len() <= 0 && len(colPlaces) > 0 {
-		colPlaces = colPlaces[0 : len(colPlaces)-2]
-	}
-
-	var tableName = session.statement.TableName()
-	var output string
-	if session.engine.dialect.URI().DBType == schemas.MSSQL && len(table.AutoIncrement) > 0 {
-		output = fmt.Sprintf(" OUTPUT Inserted.%s", table.AutoIncrement)
-	}
-
-	var buf = builder.NewWriter()
-	if _, err := buf.WriteString(fmt.Sprintf("INSERT INTO %s", session.engine.Quote(tableName))); err != nil {
+	sqlStr, args, err := session.statement.GenInsertSQL(colNames, args)
+	if err != nil {
 		return 0, err
 	}
-
-	if len(colPlaces) <= 0 {
-		if session.engine.dialect.URI().DBType == schemas.MYSQL {
-			if _, err := buf.WriteString(" VALUES ()"); err != nil {
-				return 0, err
-			}
-		} else {
-			if _, err := buf.WriteString(fmt.Sprintf("%s DEFAULT VALUES", output)); err != nil {
-				return 0, err
-			}
-		}
-	} else {
-		if _, err := buf.WriteString(" ("); err != nil {
-			return 0, err
-		}
-
-		if err := session.engine.dialect.Quoter().JoinWrite(buf.Builder, append(colNames, exprs.ColNames...), ","); err != nil {
-			return 0, err
-		}
-
-		if session.statement.Conds().IsValid() {
-			if _, err := buf.WriteString(fmt.Sprintf(")%s SELECT ", output)); err != nil {
-				return 0, err
-			}
-
-			if err := session.statement.WriteArgs(buf, args); err != nil {
-				return 0, err
-			}
-
-			if len(exprs.Args) > 0 {
-				if _, err := buf.WriteString(","); err != nil {
-					return 0, err
-				}
-			}
-			if err := exprs.WriteArgs(buf); err != nil {
-				return 0, err
-			}
-
-			if _, err := buf.WriteString(fmt.Sprintf(" FROM %v WHERE ", session.engine.Quote(tableName))); err != nil {
-				return 0, err
-			}
-
-			if err := session.statement.Conds().WriteTo(buf); err != nil {
-				return 0, err
-			}
-		} else {
-			buf.Append(args...)
-
-			if _, err := buf.WriteString(fmt.Sprintf(")%s VALUES (%v",
-				output,
-				colPlaces)); err != nil {
-				return 0, err
-			}
-
-			if err := exprs.WriteArgs(buf); err != nil {
-				return 0, err
-			}
-
-			if _, err := buf.WriteString(")"); err != nil {
-				return 0, err
-			}
-		}
-	}
-
-	if len(table.AutoIncrement) > 0 && session.engine.dialect.URI().DBType == schemas.POSTGRES {
-		if _, err := buf.WriteString(" RETURNING " + session.engine.Quote(table.AutoIncrement)); err != nil {
-			return 0, err
-		}
-	}
-
-	sqlStr := buf.String()
-	args = buf.Args()
 
 	handleAfterInsertProcessorFunc := func(bean interface{}) {
 		if session.isAutoCommit {
@@ -545,48 +462,48 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
 
 		return 1, nil
-	} else {
-		res, err := session.exec(sqlStr, args...)
-		if err != nil {
-			return 0, err
-		}
+	}
 
-		defer handleAfterInsertProcessorFunc(bean)
+	res, err := session.exec(sqlStr, args...)
+	if err != nil {
+		return 0, err
+	}
 
-		session.cacheInsert(tableName)
+	defer handleAfterInsertProcessorFunc(bean)
 
-		if table.Version != "" && session.statement.CheckVersion {
-			verValue, err := table.VersionColumn().ValueOf(bean)
-			if err != nil {
-				session.engine.logger.Errorf("%v", err)
-			} else if verValue.IsValid() && verValue.CanSet() {
-				session.incrVersionFieldValue(verValue)
-			}
-		}
+	session.cacheInsert(tableName)
 
-		if table.AutoIncrement == "" {
-			return res.RowsAffected()
-		}
-
-		var id int64
-		id, err = res.LastInsertId()
-		if err != nil || id <= 0 {
-			return res.RowsAffected()
-		}
-
-		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
+	if table.Version != "" && session.statement.CheckVersion {
+		verValue, err := table.VersionColumn().ValueOf(bean)
 		if err != nil {
 			session.engine.logger.Errorf("%v", err)
+		} else if verValue.IsValid() && verValue.CanSet() {
+			session.incrVersionFieldValue(verValue)
 		}
+	}
 
-		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
-			return res.RowsAffected()
-		}
-
-		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
-
+	if table.AutoIncrement == "" {
 		return res.RowsAffected()
 	}
+
+	var id int64
+	id, err = res.LastInsertId()
+	if err != nil || id <= 0 {
+		return res.RowsAffected()
+	}
+
+	aiValue, err := table.AutoIncrColumn().ValueOf(bean)
+	if err != nil {
+		session.engine.logger.Errorf("%v", err)
+	}
+
+	if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
+		return res.RowsAffected()
+	}
+
+	aiValue.Set(int64ToIntValue(id, aiValue.Type()))
+
+	return res.RowsAffected()
 }
 
 // InsertOne insert only one struct into database as a record.
