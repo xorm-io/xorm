@@ -6,6 +6,7 @@ package dialects
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/url"
@@ -658,6 +659,9 @@ func (db *oracle) GetColumns(queryer core.Queryer, ctx context.Context, tableNam
 	var pkName string
 	err := queryer.QueryRowContext(ctx, s, tableName).Scan(&pkName)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			err = nil
+		}
 		return nil, nil, err
 	}
 
@@ -715,8 +719,6 @@ func (db *oracle) GetColumns(queryer core.Queryer, ctx context.Context, tableNam
 			if has {
 				col.IsAutoIncrement = true
 			}
-
-			fmt.Println("-----", pkName, col.Name, col.IsPrimaryKey)
 		}
 
 		var (
@@ -887,8 +889,6 @@ func parseOracle(driverName, dataSourceName string) (*URI, error) {
 		db.User = u.User.Username()
 		db.Passwd, _ = u.User.Password()
 	}
-
-	fmt.Printf("%#v\n", db)
 
 	if db.DBName == "" {
 		return nil, errors.New("dbname is empty")
