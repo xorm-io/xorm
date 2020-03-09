@@ -16,11 +16,11 @@ import (
 
 func (statement *Statement) GenQuerySQL(sqlOrArgs ...interface{}) (string, []interface{}, error) {
 	if len(sqlOrArgs) > 0 {
-		return ConvertSQLOrArgs(sqlOrArgs...)
+		return statement.ConvertSQLOrArgs(sqlOrArgs...)
 	}
 
 	if statement.RawSQL != "" {
-		return statement.RawSQL, statement.RawParams, nil
+		return statement.GenRawSQL(), statement.RawParams, nil
 	}
 
 	if len(statement.TableName()) <= 0 {
@@ -74,7 +74,7 @@ func (statement *Statement) GenQuerySQL(sqlOrArgs ...interface{}) (string, []int
 
 func (statement *Statement) GenSumSQL(bean interface{}, columns ...string) (string, []interface{}, error) {
 	if statement.RawSQL != "" {
-		return statement.RawSQL, statement.RawParams, nil
+		return statement.GenRawSQL(), statement.RawParams, nil
 	}
 
 	statement.SetRefBean(bean)
@@ -83,6 +83,8 @@ func (statement *Statement) GenSumSQL(bean interface{}, columns ...string) (stri
 	for _, colName := range columns {
 		if !strings.Contains(colName, " ") && !strings.Contains(colName, "(") {
 			colName = statement.quote(colName)
+		} else {
+			colName = statement.ReplaceQuote(colName)
 		}
 		sumStrs = append(sumStrs, fmt.Sprintf("COALESCE(sum(%s),0)", colName))
 	}
@@ -153,7 +155,7 @@ func (statement *Statement) GenGetSQL(bean interface{}) (string, []interface{}, 
 
 func (statement *Statement) GenCountSQL(beans ...interface{}) (string, []interface{}, error) {
 	if statement.RawSQL != "" {
-		return statement.RawSQL, statement.RawParams, nil
+		return statement.GenRawSQL(), statement.RawParams, nil
 	}
 
 	var condArgs []interface{}
@@ -193,7 +195,7 @@ func (statement *Statement) genSelectSQL(columnStr string, needLimit, needOrderB
 		distinct = "DISTINCT "
 	}
 
-	condSQL, condArgs, err := builder.ToSQL(statement.cond)
+	condSQL, condArgs, err := statement.GenCondSQL(statement.cond)
 	if err != nil {
 		return "", nil, err
 	}
@@ -313,7 +315,7 @@ func (statement *Statement) genSelectSQL(columnStr string, needLimit, needOrderB
 
 func (statement *Statement) GenExistSQL(bean ...interface{}) (string, []interface{}, error) {
 	if statement.RawSQL != "" {
-		return statement.RawSQL, statement.RawParams, nil
+		return statement.GenRawSQL(), statement.RawParams, nil
 	}
 
 	var sqlStr string
@@ -332,7 +334,7 @@ func (statement *Statement) GenExistSQL(bean ...interface{}) (string, []interfac
 		}
 
 		if statement.Conds().IsValid() {
-			condSQL, condArgs, err := builder.ToSQL(statement.Conds())
+			condSQL, condArgs, err := statement.GenCondSQL(statement.Conds())
 			if err != nil {
 				return "", nil, err
 			}
@@ -382,7 +384,7 @@ func (statement *Statement) GenExistSQL(bean ...interface{}) (string, []interfac
 
 func (statement *Statement) GenFindSQL(autoCond builder.Cond) (string, []interface{}, error) {
 	if statement.RawSQL != "" {
-		return statement.RawSQL, statement.RawParams, nil
+		return statement.GenRawSQL(), statement.RawParams, nil
 	}
 
 	var sqlStr string

@@ -98,6 +98,27 @@ func (statement *Statement) omitStr() string {
 	return statement.dialect.Quoter().Join(statement.OmitColumnMap, " ,")
 }
 
+// GenRawSQL generates correct raw sql
+func (statement *Statement) GenRawSQL() string {
+	return statement.ReplaceQuote(statement.RawSQL)
+}
+
+func (statement *Statement) GenCondSQL(condOrBuilder interface{}) (string, []interface{}, error) {
+	condSQL, condArgs, err := builder.ToSQL(condOrBuilder)
+	if err != nil {
+		return "", nil, err
+	}
+	return statement.ReplaceQuote(condSQL), condArgs, nil
+}
+
+func (statement *Statement) ReplaceQuote(sql string) string {
+	if sql == "" || statement.dialect.URI().DBType == schemas.MYSQL ||
+		statement.dialect.URI().DBType == schemas.SQLITE {
+		return sql
+	}
+	return statement.dialect.Quoter().Replace(sql)
+}
+
 func (statement *Statement) SetContextCache(ctxCache contexts.ContextCache) {
 	statement.Context = ctxCache
 }
@@ -348,7 +369,11 @@ func (statement *Statement) Decr(column string, arg ...interface{}) *Statement {
 
 // SetExpr Generate  "Update ... Set column = {expression}" statement
 func (statement *Statement) SetExpr(column string, expression interface{}) *Statement {
-	statement.ExprColumns.addParam(column, expression)
+	if e, ok := expression.(string); ok {
+		statement.ExprColumns.addParam(column, statement.dialect.Quoter().Replace(e))
+	} else {
+		statement.ExprColumns.addParam(column, expression)
+	}
 	return statement
 }
 
@@ -367,7 +392,7 @@ func (statement *Statement) ForUpdate() *Statement {
 
 // Select replace select
 func (statement *Statement) Select(str string) *Statement {
-	statement.SelectStr = str
+	statement.SelectStr = statement.ReplaceQuote(str)
 	return statement
 }
 
@@ -458,7 +483,7 @@ func (statement *Statement) OrderBy(order string) *Statement {
 	if len(statement.OrderStr) > 0 {
 		statement.OrderStr += ", "
 	}
-	statement.OrderStr += order
+	statement.OrderStr += statement.ReplaceQuote(order)
 	return statement
 }
 
@@ -537,7 +562,7 @@ func (statement *Statement) Join(joinOP string, tablename interface{}, condition
 		aliasName := statement.dialect.Quoter().Trim(fields[len(fields)-1])
 		aliasName = schemas.CommonQuoter.Trim(aliasName)
 
-		fmt.Fprintf(&buf, "(%s) %s ON %v", subSQL, aliasName, condition)
+		fmt.Fprintf(&buf, "(%s) %s ON %v", statement.ReplaceQuote(subSQL), aliasName, statement.ReplaceQuote(condition))
 		statement.joinArgs = append(statement.joinArgs, subQueryArgs...)
 	case *builder.Builder:
 		subSQL, subQueryArgs, err := tp.ToSQL()
@@ -550,7 +575,7 @@ func (statement *Statement) Join(joinOP string, tablename interface{}, condition
 		aliasName := statement.dialect.Quoter().Trim(fields[len(fields)-1])
 		aliasName = schemas.CommonQuoter.Trim(aliasName)
 
-		fmt.Fprintf(&buf, "(%s) %s ON %v", subSQL, aliasName, condition)
+		fmt.Fprintf(&buf, "(%s) %s ON %v", statement.ReplaceQuote(subSQL), aliasName, statement.ReplaceQuote(condition))
 		statement.joinArgs = append(statement.joinArgs, subQueryArgs...)
 	default:
 		tbName := dialects.FullTableName(statement.dialect, statement.tagParser.GetTableMapper(), tablename, true)
@@ -559,7 +584,7 @@ func (statement *Statement) Join(joinOP string, tablename interface{}, condition
 			statement.dialect.Quoter().QuoteTo(&buf, tbName)
 			tbName = buf.String()
 		}
-		fmt.Fprintf(&buf, "%s ON %v", tbName, condition)
+		fmt.Fprintf(&buf, "%s ON %v", tbName, statement.ReplaceQuote(condition))
 	}
 
 	statement.JoinStr = buf.String()
@@ -578,13 +603,13 @@ func (statement *Statement) tbNameNoSchema(table *schemas.Table) string {
 
 // GroupBy generate "Group By keys" statement
 func (statement *Statement) GroupBy(keys string) *Statement {
-	statement.GroupByStr = keys
+	statement.GroupByStr = statement.ReplaceQuote(keys)
 	return statement
 }
 
 // Having generate "Having conditions" statement
 func (statement *Statement) Having(conditions string) *Statement {
-	statement.HavingStr = fmt.Sprintf("HAVING %v", conditions)
+	statement.HavingStr = fmt.Sprintf("HAVING %v", statement.ReplaceQuote(conditions))
 	return statement
 }
 
@@ -926,7 +951,7 @@ func (statement *Statement) GenConds(bean interface{}) (string, []interface{}, e
 		return "", nil, err
 	}
 
-	return builder.ToSQL(statement.cond)
+	return statement.GenCondSQL(statement.cond)
 }
 
 func (statement *Statement) quoteColumnStr(columnStr string) string {
@@ -934,7 +959,15 @@ func (statement *Statement) quoteColumnStr(columnStr string) string {
 	return statement.dialect.Quoter().Join(columns, ",")
 }
 
-func ConvertSQLOrArgs(sqlOrArgs ...interface{}) (string, []interface{}, error) {
+func (statement *Statement) ConvertSQLOrArgs(sqlOrArgs ...interface{}) (string, []interface{}, error) {
+	sql, args, err := convertSQLOrArgs(sqlOrArgs...)
+	if err != nil {
+		return "", nil, err
+	}
+	return statement.ReplaceQuote(sql), args, nil
+}
+
+func convertSQLOrArgs(sqlOrArgs ...interface{}) (string, []interface{}, error) {
 	switch sqlOrArgs[0].(type) {
 	case string:
 		return sqlOrArgs[0].(string), sqlOrArgs[1:], nil

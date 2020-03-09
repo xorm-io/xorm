@@ -146,3 +146,30 @@ func TestTrim(t *testing.T) {
 		assert.EqualValues(t, dst, Quoter{'[', ']', AlwaysReserve}.Trim(src))
 	}
 }
+
+func TestReplace(t *testing.T) {
+	q := Quoter{'[', ']', AlwaysReserve}
+	var kases = []struct {
+		source   string
+		expected string
+	}{
+		{
+			"SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?",
+			"SELECT [COLUMN_NAME] FROM [INFORMATION_SCHEMA].[COLUMNS] WHERE [TABLE_SCHEMA] = ? AND [TABLE_NAME] = ? AND [COLUMN_NAME] = ?",
+		},
+		{
+			"SELECT 'abc```test```''', `a` FROM b",
+			"SELECT 'abc```test```''', [a] FROM b",
+		},
+		{
+			"UPDATE table SET `a` = ~ `a`, `b`='abc`'",
+			"UPDATE table SET [a] = ~ [a], [b]='abc`'",
+		},
+	}
+
+	for _, kase := range kases {
+		t.Run(kase.source, func(t *testing.T) {
+			assert.EqualValues(t, kase.expected, q.Replace(kase.source))
+		})
+	}
+}

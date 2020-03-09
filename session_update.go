@@ -240,7 +240,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 			}
 			colNames = append(colNames, session.engine.Quote(colName)+"="+tp)
 		case *builder.Builder:
-			subQuery, subArgs, err := builder.ToSQL(tp)
+			subQuery, subArgs, err := session.statement.GenCondSQL(tp)
 			if err != nil {
 				return 0, err
 			}
@@ -317,7 +317,11 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 		}
 	}
 
-	condSQL, condArgs, err = builder.ToSQL(cond)
+	if len(colNames) <= 0 {
+		return 0, errors.New("No content found to be updated")
+	}
+
+	condSQL, condArgs, err = session.statement.GenCondSQL(cond)
 	if err != nil {
 		return 0, err
 	}
@@ -335,24 +339,25 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	var top string
 	if st.LimitN != nil {
 		limitValue := *st.LimitN
-		if session.engine.dialect.URI().DBType == schemas.MYSQL {
+		switch session.engine.dialect.URI().DBType {
+		case schemas.MYSQL:
 			condSQL = condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
-		} else if session.engine.dialect.URI().DBType == schemas.SQLITE {
+		case schemas.SQLITE:
 			tempCondSQL := condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
 			cond = cond.And(builder.Expr(fmt.Sprintf("rowid IN (SELECT rowid FROM %v %v)",
 				session.engine.Quote(tableName), tempCondSQL), condArgs...))
-			condSQL, condArgs, err = builder.ToSQL(cond)
+			condSQL, condArgs, err = session.statement.GenCondSQL(cond)
 			if err != nil {
 				return 0, err
 			}
 			if len(condSQL) > 0 {
 				condSQL = "WHERE " + condSQL
 			}
-		} else if session.engine.dialect.URI().DBType == schemas.POSTGRES {
+		case schemas.POSTGRES:
 			tempCondSQL := condSQL + fmt.Sprintf(" LIMIT %d", limitValue)
 			cond = cond.And(builder.Expr(fmt.Sprintf("CTID IN (SELECT CTID FROM %v %v)",
 				session.engine.Quote(tableName), tempCondSQL), condArgs...))
-			condSQL, condArgs, err = builder.ToSQL(cond)
+			condSQL, condArgs, err = session.statement.GenCondSQL(cond)
 			if err != nil {
 				return 0, err
 			}
@@ -360,14 +365,13 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 			if len(condSQL) > 0 {
 				condSQL = "WHERE " + condSQL
 			}
-		} else if session.engine.dialect.URI().DBType == schemas.MSSQL {
-			if st.OrderStr != "" && session.engine.dialect.URI().DBType == schemas.MSSQL &&
-				table != nil && len(table.PrimaryKeys) == 1 {
+		case schemas.MSSQL:
+			if st.OrderStr != "" && table != nil && len(table.PrimaryKeys) == 1 {
 				cond = builder.Expr(fmt.Sprintf("%s IN (SELECT TOP (%d) %s FROM %v%v)",
 					table.PrimaryKeys[0], limitValue, table.PrimaryKeys[0],
 					session.engine.Quote(tableName), condSQL), condArgs...)
 
-				condSQL, condArgs, err = builder.ToSQL(cond)
+				condSQL, condArgs, err = session.statement.GenCondSQL(cond)
 				if err != nil {
 					return 0, err
 				}
@@ -378,10 +382,6 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 				top = fmt.Sprintf("TOP (%d) ", limitValue)
 			}
 		}
-	}
-
-	if len(colNames) <= 0 {
-		return 0, errors.New("No content found to be updated")
 	}
 
 	var tableAlias = session.engine.Quote(tableName)
