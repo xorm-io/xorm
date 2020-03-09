@@ -176,7 +176,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 						setColumnInt(bean, col, 1)
 					})
 				} else {
-					arg, err := session.value2Interface(col, fieldValue)
+					arg, err := session.statement.Value2Interface(col, fieldValue)
 					if err != nil {
 						return 0, err
 					}
@@ -227,7 +227,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 						setColumnInt(bean, col, 1)
 					})
 				} else {
-					arg, err := session.value2Interface(col, fieldValue)
+					arg, err := session.statement.Value2Interface(col, fieldValue)
 					if err != nil {
 						return 0, err
 					}
@@ -567,25 +567,8 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 		}
 		fieldValue := *fieldValuePtr
 
-		if col.IsAutoIncrement {
-			switch fieldValue.Type().Kind() {
-			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int, reflect.Int64:
-				if fieldValue.Int() == 0 {
-					continue
-				}
-			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint, reflect.Uint64:
-				if fieldValue.Uint() == 0 {
-					continue
-				}
-			case reflect.String:
-				if len(fieldValue.String()) == 0 {
-					continue
-				}
-			case reflect.Ptr:
-				if fieldValue.Pointer() == 0 {
-					continue
-				}
-			}
+		if col.IsAutoIncrement && utils.IsValueZero(fieldValue) {
+			continue
 		}
 
 		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
@@ -609,7 +592,7 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 		} else if col.IsVersion && session.statement.CheckVersion {
 			args = append(args, 1)
 		} else {
-			arg, err := session.value2Interface(col, fieldValue)
+			arg, err := session.statement.Value2Interface(col, fieldValue)
 			if err != nil {
 				return colNames, args, err
 			}
