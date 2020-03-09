@@ -413,7 +413,7 @@ func (db *mysql) GetColumns(ctx context.Context, tableName string) ([]string, ma
 
 func (db *mysql) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	args := []interface{}{db.uri.DBName}
-	s := "SELECT `TABLE_NAME`, `ENGINE`, `TABLE_ROWS`, `AUTO_INCREMENT`, `TABLE_COMMENT` from " +
+	s := "SELECT `TABLE_NAME`, `ENGINE`, `AUTO_INCREMENT`, `TABLE_COMMENT` from " +
 		"`INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? AND (`ENGINE`='MyISAM' OR `ENGINE` = 'InnoDB' OR `ENGINE` = 'TokuDB')"
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
@@ -425,15 +425,17 @@ func (db *mysql) GetTables(ctx context.Context) ([]*schemas.Table, error) {
 	tables := make([]*schemas.Table, 0)
 	for rows.Next() {
 		table := schemas.NewEmptyTable()
-		var name, engine, tableRows, comment string
-		var autoIncr *string
-		err = rows.Scan(&name, &engine, &tableRows, &autoIncr, &comment)
+		var name, engine string
+		var autoIncr, comment *string
+		err = rows.Scan(&name, &engine, &autoIncr, &comment)
 		if err != nil {
 			return nil, err
 		}
 
 		table.Name = name
-		table.Comment = comment
+		if comment != nil {
+			table.Comment = *comment
+		}
 		table.StoreEngine = engine
 		tables = append(tables, table)
 	}
