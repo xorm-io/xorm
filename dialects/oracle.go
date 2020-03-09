@@ -558,7 +558,7 @@ func (db *oracle) IsReserved(name string) bool {
 
 func (db *oracle) DropTableSQL(tableName, autoincrCol string) ([]string, bool) {
 	var sqls = []string{
-		fmt.Sprintf("DROP TABLE `%s`", tableName),
+		fmt.Sprintf("DROP TABLE %s", db.quoter.Quote(tableName)),
 	}
 	if autoincrCol != "" {
 		sqls = append(sqls, fmt.Sprintf("DROP SEQUENCE %s", seqName(tableName)))
