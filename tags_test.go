@@ -6,6 +6,7 @@ package xorm
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -1294,4 +1295,35 @@ func TestVersion4(t *testing.T) {
 	for _, v := range vers {
 		assert.EqualValues(t, v.Ver, 1)
 	}
+}
+
+func TestIndexes(t *testing.T) {
+	assert.NoError(t, prepareEngine())
+
+	type TestIndexesStruct struct {
+		Id    int64
+		Name  string `xorm:"index unique(s)"`
+		Email string `xorm:"index unique(s)"`
+	}
+
+	assertSync(t, new(TestIndexesStruct))
+
+	tables, err := testEngine.DBMetas()
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(tables))
+	assert.EqualValues(t, 3, len(tables[0].Columns()))
+	slice1 := []string{
+		testEngine.GetColumnMapper().Obj2Table("Id"),
+		testEngine.GetColumnMapper().Obj2Table("Name"),
+		testEngine.GetColumnMapper().Obj2Table("Email"),
+	}
+	slice2 := []string{
+		tables[0].Columns()[0].Name,
+		tables[0].Columns()[1].Name,
+		tables[0].Columns()[2].Name,
+	}
+	sort.Strings(slice1)
+	sort.Strings(slice2)
+	assert.EqualValues(t, slice1, slice2)
+	assert.EqualValues(t, 3, len(tables[0].Indexes))
 }

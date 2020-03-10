@@ -335,14 +335,15 @@ func (db *mssql) GetColumns(ctx context.Context, tableName string) ([]string, ma
 	s := `select a.name as name, b.name as ctype,a.max_length,a.precision,a.scale,a.is_nullable as nullable,
 		  "default_is_null" = (CASE WHEN c.text is null THEN 1 ELSE 0 END),
 	      replace(replace(isnull(c.text,''),'(',''),')','') as vdefault,
-		  ISNULL(i.is_primary_key, 0), a.is_identity as is_identity
+		  ISNULL(p.is_primary_key, 0), a.is_identity as is_identity
           from sys.columns a 
 		  left join sys.types b on a.user_type_id=b.user_type_id
           left join sys.syscomments c on a.default_object_id=c.id
-		  LEFT OUTER JOIN 
-    sys.index_columns ic ON ic.object_id = a.object_id AND ic.column_id = a.column_id
-		  LEFT OUTER JOIN 
-    sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+		  LEFT OUTER JOIN (SELECT i.object_id, ic.column_id, i.is_primary_key
+			FROM sys.indexes i
+		  LEFT JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+			WHERE i.is_primary_key = 1
+		) as p on p.object_id = a.object_id AND p.column_id = a.column_id
           where a.object_id=object_id('` + tableName + `')`
 
 	rows, err := db.DB().QueryContext(ctx, s, args...)
