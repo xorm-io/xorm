@@ -44,6 +44,9 @@ func (statement *Statement) Value2Interface(col *schemas.Column, fieldValue refl
 		if col.SQLType.IsBlob() {
 			return data, nil
 		}
+		if nil == data {
+			return nil, nil
+		}
 		return string(data), nil
 	}
 

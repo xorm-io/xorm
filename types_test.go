@@ -119,10 +119,17 @@ type ConvConfig struct {
 }
 
 func (s *ConvConfig) FromDB(data []byte) error {
+	if data == nil {
+		s = nil
+		return nil
+	}
 	return json.DefaultJSONHandler.Unmarshal(data, s)
 }
 
 func (s *ConvConfig) ToDB() ([]byte, error) {
+	if s == nil {
+		return nil, nil
+	}
 	return json.DefaultJSONHandler.Marshal(s)
 }
 
@@ -184,6 +191,30 @@ func TestConversion(t *testing.T) {
 	assert.EqualValues(t, 2, len(c1.Slice))
 	assert.EqualValues(t, *c.Slice[0], *c1.Slice[0])
 	assert.EqualValues(t, *c.Slice[1], *c1.Slice[1])
+
+	cnt, err := testEngine.Where("1=1").Delete(new(ConvStruct))
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	c.Cfg2 = nil
+
+	_, err = testEngine.Insert(c)
+	assert.NoError(t, err)
+
+	c2 := new(ConvStruct)
+	has, err = testEngine.Get(c2)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, "prefix---tttt", string(c2.Conv))
+	assert.NotNil(t, c2.Conv2)
+	assert.EqualValues(t, "prefix---"+s, *c2.Conv2)
+	assert.EqualValues(t, c.Cfg1, c2.Cfg1)
+	assert.Nil(t, c2.Cfg2)
+	assert.NotNil(t, c2.Cfg3)
+	assert.EqualValues(t, *c.Cfg3.(*ConvConfig), *c2.Cfg3.(*ConvConfig))
+	assert.EqualValues(t, 2, len(c2.Slice))
+	assert.EqualValues(t, *c.Slice[0], *c2.Slice[0])
+	assert.EqualValues(t, *c.Slice[1], *c2.Slice[1])
 }
 
 type MyInt int
