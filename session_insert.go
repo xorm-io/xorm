@@ -137,106 +137,58 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 		}
 		// --
 
-		if i == 0 {
-			for _, col := range table.Columns() {
-				ptrFieldValue, err := col.ValueOfV(&vv)
+		for _, col := range table.Columns() {
+			ptrFieldValue, err := col.ValueOfV(&vv)
+			if err != nil {
+				return 0, err
+			}
+			fieldValue := *ptrFieldValue
+			if col.IsAutoIncrement && utils.IsZero(fieldValue.Interface()) {
+				continue
+			}
+			if col.MapType == schemas.ONLYFROMDB {
+				continue
+			}
+			if col.IsDeleted {
+				continue
+			}
+			if session.statement.OmitColumnMap.Contain(col.Name) {
+				continue
+			}
+			if len(session.statement.ColumnMap) > 0 && !session.statement.ColumnMap.Contain(col.Name) {
+				continue
+			}
+			if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
+				val, t := session.engine.nowTime(col)
+				args = append(args, val)
+
+				var colName = col.Name
+				session.afterClosures = append(session.afterClosures, func(bean interface{}) {
+					col := table.GetColumn(colName)
+					setColumnTime(bean, col, t)
+				})
+			} else if col.IsVersion && session.statement.CheckVersion {
+				args = append(args, 1)
+				var colName = col.Name
+				session.afterClosures = append(session.afterClosures, func(bean interface{}) {
+					col := table.GetColumn(colName)
+					setColumnInt(bean, col, 1)
+				})
+			} else {
+				arg, err := session.statement.Value2Interface(col, fieldValue)
 				if err != nil {
 					return 0, err
 				}
-				fieldValue := *ptrFieldValue
-				if col.IsAutoIncrement && utils.IsZero(fieldValue.Interface()) {
-					continue
-				}
-				if col.MapType == schemas.ONLYFROMDB {
-					continue
-				}
-				if col.IsDeleted {
-					continue
-				}
-				if session.statement.OmitColumnMap.Contain(col.Name) {
-					continue
-				}
-				if len(session.statement.ColumnMap) > 0 && !session.statement.ColumnMap.Contain(col.Name) {
-					continue
-				}
-				if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
-					val, t := session.engine.nowTime(col)
-					args = append(args, val)
+				args = append(args, arg)
+			}
 
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean interface{}) {
-						col := table.GetColumn(colName)
-						setColumnTime(bean, col, t)
-					})
-				} else if col.IsVersion && session.statement.CheckVersion {
-					args = append(args, 1)
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean interface{}) {
-						col := table.GetColumn(colName)
-						setColumnInt(bean, col, 1)
-					})
-				} else {
-					arg, err := session.statement.Value2Interface(col, fieldValue)
-					if err != nil {
-						return 0, err
-					}
-					args = append(args, arg)
-				}
-
+			if i == 0 {
 				colNames = append(colNames, col.Name)
 				cols = append(cols, col)
-				colPlaces = append(colPlaces, "?")
 			}
-		} else {
-			for _, col := range cols {
-				ptrFieldValue, err := col.ValueOfV(&vv)
-				if err != nil {
-					return 0, err
-				}
-				fieldValue := *ptrFieldValue
-
-				if col.IsAutoIncrement && utils.IsZero(fieldValue.Interface()) {
-					continue
-				}
-				if col.MapType == schemas.ONLYFROMDB {
-					continue
-				}
-				if col.IsDeleted {
-					continue
-				}
-				if session.statement.OmitColumnMap.Contain(col.Name) {
-					continue
-				}
-				if len(session.statement.ColumnMap) > 0 && !session.statement.ColumnMap.Contain(col.Name) {
-					continue
-				}
-				if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
-					val, t := session.engine.nowTime(col)
-					args = append(args, val)
-
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean interface{}) {
-						col := table.GetColumn(colName)
-						setColumnTime(bean, col, t)
-					})
-				} else if col.IsVersion && session.statement.CheckVersion {
-					args = append(args, 1)
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean interface{}) {
-						col := table.GetColumn(colName)
-						setColumnInt(bean, col, 1)
-					})
-				} else {
-					arg, err := session.statement.Value2Interface(col, fieldValue)
-					if err != nil {
-						return 0, err
-					}
-					args = append(args, arg)
-				}
-
-				colPlaces = append(colPlaces, "?")
-			}
+			colPlaces = append(colPlaces, "?")
 		}
+
 		colMultiPlaces = append(colMultiPlaces, strings.Join(colPlaces, ", "))
 	}
 	cleanupProcessorsClosures(&session.beforeClosures)
