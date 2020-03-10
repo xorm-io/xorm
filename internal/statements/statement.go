@@ -838,7 +838,7 @@ func (statement *Statement) buildConds2(table *schemas.Table, bean interface{},
 				continue
 			} else if valNul, ok := fieldValue.Interface().(driver.Valuer); ok {
 				val, _ = valNul.Value()
-				if val == nil {
+				if val == nil && !requiredField {
 					continue
 				}
 			} else {

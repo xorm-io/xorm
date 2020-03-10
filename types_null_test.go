@@ -22,6 +22,7 @@ type NullType struct {
 	Age          sql.NullInt64
 	Height       sql.NullFloat64
 	IsMan        sql.NullBool `xorm:"null"`
+	Nil          driver.Valuer
 	CustomStruct CustomStruct `xorm:"varchar(64) null"`
 }
 
@@ -72,42 +73,42 @@ func TestNullStructInsert(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 	assertSync(t, new(NullType))
 
-	if true {
-		item := new(NullType)
-		_, err := testEngine.Insert(item)
-		assert.NoError(t, err)
-		assert.EqualValues(t, 1, item.Id)
-	}
+	item1 := new(NullType)
+	_, err := testEngine.Insert(item1)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, item1.Id)
 
-	if true {
+	item := NullType{
+		Name:   sql.NullString{String: "haolei", Valid: true},
+		Age:    sql.NullInt64{Int64: 34, Valid: true},
+		Height: sql.NullFloat64{Float64: 1.72, Valid: true},
+		IsMan:  sql.NullBool{Bool: true, Valid: true},
+		Nil:    nil,
+	}
+	_, err = testEngine.Insert(&item)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 2, item.Id)
+
+	items := []NullType{}
+	for i := 0; i < 5; i++ {
 		item := NullType{
-			Name:   sql.NullString{String: "haolei", Valid: true},
-			Age:    sql.NullInt64{Int64: 34, Valid: true},
-			Height: sql.NullFloat64{Float64: 1.72, Valid: true},
-			IsMan:  sql.NullBool{Bool: true, Valid: true},
+			Name:         sql.NullString{String: "haolei_" + fmt.Sprint(i+1), Valid: true},
+			Age:          sql.NullInt64{Int64: 30 + int64(i), Valid: true},
+			Height:       sql.NullFloat64{Float64: 1.5 + 1.1*float64(i), Valid: true},
+			IsMan:        sql.NullBool{Bool: true, Valid: true},
+			CustomStruct: CustomStruct{i, i + 1, i + 2},
+			Nil:          nil,
 		}
-		_, err := testEngine.Insert(&item)
-		assert.NoError(t, err)
-		assert.EqualValues(t, 2, item.Id)
+		items = append(items, item)
 	}
 
-	if true {
-		items := []NullType{}
-		for i := 0; i < 5; i++ {
-			item := NullType{
-				Name:         sql.NullString{String: "haolei_" + fmt.Sprint(i+1), Valid: true},
-				Age:          sql.NullInt64{Int64: 30 + int64(i), Valid: true},
-				Height:       sql.NullFloat64{Float64: 1.5 + 1.1*float64(i), Valid: true},
-				IsMan:        sql.NullBool{Bool: true, Valid: true},
-				CustomStruct: CustomStruct{i, i + 1, i + 2},
-			}
+	_, err = testEngine.Insert(&items)
+	assert.NoError(t, err)
 
-			items = append(items, item)
-		}
-
-		_, err := testEngine.Insert(&items)
-		assert.NoError(t, err)
-	}
+	items = make([]NullType, 0, 7)
+	err = testEngine.Find(&items)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 7, len(items))
 }
 
 func TestNullStructUpdate(t *testing.T) {
