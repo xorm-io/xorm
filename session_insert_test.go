@@ -433,6 +433,37 @@ func TestInsertMulti2(t *testing.T) {
 	assert.EqualValues(t, len(users2), cnt)
 }
 
+func TestInsertMulti2Interface(t *testing.T) {
+	assert.NoError(t, prepareEngine())
+
+	assertSync(t, new(Userinfo))
+
+	users := []interface{}{
+		Userinfo{Username: "xlw", Departname: "dev", Alias: "lunny2", Created: time.Now()},
+		Userinfo{Username: "xlw2", Departname: "dev", Alias: "lunny3", Created: time.Now()},
+		Userinfo{Username: "xlw11", Departname: "dev", Alias: "lunny2", Created: time.Now()},
+		Userinfo{Username: "xlw22", Departname: "dev", Alias: "lunny3", Created: time.Now()},
+	}
+
+	cnt, err := testEngine.Insert(&users)
+	if err != nil {
+		t.Error(err)
+		panic(err)
+	}
+	assert.EqualValues(t, len(users), cnt)
+
+	users2 := []interface{}{
+		&Userinfo{Username: "1xlw", Departname: "dev", Alias: "lunny2", Created: time.Now()},
+		&Userinfo{Username: "1xlw2", Departname: "dev", Alias: "lunny3", Created: time.Now()},
+		&Userinfo{Username: "1xlw11", Departname: "dev", Alias: "lunny2", Created: time.Now()},
+		&Userinfo{Username: "1xlw22", Departname: "dev", Alias: "lunny3", Created: time.Now()},
+	}
+
+	cnt, err = testEngine.Insert(&users2)
+	assert.NoError(t, err)
+	assert.EqualValues(t, len(users2), cnt)
+}
+
 func TestInsertTwoTable(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
