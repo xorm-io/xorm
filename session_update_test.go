@@ -1303,3 +1303,40 @@ func TestUpdateIgnoreOnlyFromDBFields(t *testing.T) {
 	assert.NoError(t, err)
 	assertGetRecord()
 }
+
+func TestUpdateMultiplePK(t *testing.T) {
+	type TestUpdateMultiplePKStruct struct {
+		Id    string `xorm:"notnull pk" description:"唯一ID号"`
+		Name  string `xorm:"notnull pk" description:"名称"`
+		Value string `xorm:"notnull varchar(4000)" description:"值"`
+	}
+
+	assert.NoError(t, prepareEngine())
+	assertSync(t, new(TestUpdateMultiplePKStruct))
+
+	test := &TestUpdateMultiplePKStruct{
+		Id:    "ID1",
+		Name:  "Name1",
+		Value: "1",
+	}
+	_, err := testEngine.Insert(test)
+	assert.NoError(t, err)
+
+	test.Value = "2"
+	_, err = testEngine.Where("`id` = ? And `name` = ?", test.Id, test.Name).Cols("Value").Update(test)
+	assert.NoError(t, err)
+
+	test.Value = "3"
+	num, err := testEngine.Where("`id` = ? And `name` = ?", test.Id, test.Name).Update(test)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, num)
+
+	test.Value = "4"
+	_, err = testEngine.ID([]interface{}{test.Id, test.Name}).Update(test)
+	assert.NoError(t, err)
+
+	type MySlice []interface{}
+	test.Value = "5"
+	_, err = testEngine.ID(&MySlice{test.Id, test.Name}).Update(test)
+	assert.NoError(t, err)
+}
