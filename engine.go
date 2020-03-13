@@ -32,7 +32,6 @@ import (
 // Commonly, an application only need one engine
 type Engine struct {
 	cacherMgr      *caches.Manager
-	db             *core.DB
 	defaultContext context.Context
 	dialect        dialects.Dialect
 	engineGroup    *EngineGroup
