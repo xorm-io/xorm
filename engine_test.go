@@ -7,6 +7,7 @@ package xorm
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -63,4 +64,36 @@ func TestAutoTransaction(t *testing.T) {
 	has, err = engine.Exist(&TestTx{Msg: "hello"})
 	assert.NoError(t, err)
 	assert.EqualValues(t, false, has)
+}
+
+func TestDump(t *testing.T) {
+	assert.NoError(t, prepareEngine())
+
+	type TestDumpStruct struct {
+		Id   int64
+		Name string
+	}
+
+	assertSync(t, new(TestDumpStruct))
+
+	testEngine.Insert([]TestDumpStruct{
+		{Name: "1"},
+		{Name: "2\n"},
+		{Name: "3;"},
+		{Name: "4\n;\n''"},
+		{Name: "5'\n"},
+	})
+
+	fp := testEngine.Dialect().URI().DBName + ".sql"
+	os.Remove(fp)
+	assert.NoError(t, testEngine.DumpAllToFile(fp))
+
+	assert.NoError(t, prepareEngine())
+
+	sess := testEngine.NewSession()
+	defer sess.Close()
+	assert.NoError(t, sess.Begin())
+	_, err := sess.ImportFile(fp)
+	assert.NoError(t, err)
+	assert.NoError(t, sess.Commit())
 }

@@ -6,7 +6,6 @@ package xorm
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -208,14 +207,6 @@ func TestCustomTableName(t *testing.T) {
 	assert.NoError(t, testEngine.DropTables(c))
 
 	assert.NoError(t, testEngine.CreateTables(c))
-}
-
-func TestDump(t *testing.T) {
-	assert.NoError(t, prepareEngine())
-
-	fp := testEngine.Dialect().URI().DBName + ".sql"
-	os.Remove(fp)
-	assert.NoError(t, testEngine.DumpAllToFile(fp))
 }
 
 type IndexOrUnique struct {
