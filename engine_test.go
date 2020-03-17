@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"xorm.io/xorm/schemas"
 )
 
 func TestPingContext(t *testing.T) {
@@ -96,4 +97,16 @@ func TestDump(t *testing.T) {
 	_, err := sess.ImportFile(fp)
 	assert.NoError(t, err)
 	assert.NoError(t, sess.Commit())
+}
+
+func TestSetSchema(t *testing.T) {
+	assert.NoError(t, prepareEngine())
+
+	if testEngine.Dialect().URI().DBType == schemas.POSTGRES {
+		oldSchema := testEngine.Dialect().URI().Schema
+		testEngine.SetSchema("my_schema")
+		assert.EqualValues(t, "my_schema", testEngine.Dialect().URI().Schema)
+		testEngine.SetSchema(oldSchema)
+		assert.EqualValues(t, oldSchema, testEngine.Dialect().URI().Schema)
+	}
 }
