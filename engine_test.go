@@ -97,6 +97,12 @@ func TestDump(t *testing.T) {
 	_, err := sess.ImportFile(fp)
 	assert.NoError(t, err)
 	assert.NoError(t, sess.Commit())
+
+	for _, tp := range []schemas.DBType{schemas.SQLITE, schemas.MYSQL, schemas.POSTGRES, schemas.MSSQL} {
+		t.Run(fmt.Sprintf("dump_%v", tp), func(t *testing.T) {
+			assert.NoError(t, testEngine.DumpAllToFile(fp, tp))
+		})
+	}
 }
 
 func TestSetSchema(t *testing.T) {
