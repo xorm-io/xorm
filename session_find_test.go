@@ -525,10 +525,17 @@ func TestFindAndCountOneFunc(t *testing.T) {
 
 	results = make([]FindAndCountStruct, 0, 1)
 	cnt, err = testEngine.Where("msg = ?", true).Desc("id").
-		Limit(1).FindAndCount(&results)
+		Limit(1).Cols("content").FindAndCount(&results)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(results))
 	assert.EqualValues(t, 1, cnt)
+
+	ids := make([]int64, 0, 2)
+	tableName := testEngine.GetTableMapper().Obj2Table("FindAndCountStruct")
+	cnt, err = testEngine.Table(tableName).Limit(1).Cols("id").FindAndCount(&ids)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(ids))
+	assert.EqualValues(t, 2, cnt)
 }
 
 type FindMapDevice struct {
