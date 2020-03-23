@@ -493,6 +493,12 @@ func TestFindAndCountOneFunc(t *testing.T) {
 	assert.EqualValues(t, 2, cnt)
 
 	var results = make([]FindAndCountStruct, 0, 2)
+	cnt, err = testEngine.Limit(1).FindAndCount(&results)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(results))
+	assert.EqualValues(t, 2, cnt)
+
+	results = make([]FindAndCountStruct, 0, 2)
 	cnt, err = testEngine.FindAndCount(&results)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 2, len(results))
