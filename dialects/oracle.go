@@ -842,7 +842,7 @@ func (p *oci8Driver) Parse(driverName, dataSourceName string) (*URI, error) {
 			db.DBName = match
 		}
 	}
-	if db.DBName == "" {
+	if db.DBName == "" && len(matches) != 0 {
 		return nil, errors.New("dbname is empty")
 	}
 	return db, nil
