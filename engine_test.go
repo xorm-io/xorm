@@ -85,7 +85,7 @@ func TestDump(t *testing.T) {
 		{Name: "5'\n"},
 	})
 
-	fp := testEngine.Dialect().URI().DBName + ".sql"
+	fp := fmt.Sprintf("%v.sql", testEngine.Dialect().URI().DBType)
 	os.Remove(fp)
 	assert.NoError(t, testEngine.DumpAllToFile(fp))
 
@@ -99,8 +99,9 @@ func TestDump(t *testing.T) {
 	assert.NoError(t, sess.Commit())
 
 	for _, tp := range []schemas.DBType{schemas.SQLITE, schemas.MYSQL, schemas.POSTGRES, schemas.MSSQL} {
-		t.Run(fmt.Sprintf("dump_%v", tp), func(t *testing.T) {
-			assert.NoError(t, testEngine.DumpAllToFile(fp, tp))
+		name := fmt.Sprintf("dump_%v.sql", tp)
+		t.Run(name, func(t *testing.T) {
+			assert.NoError(t, testEngine.DumpAllToFile(name, tp))
 		})
 	}
 }
