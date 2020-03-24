@@ -553,6 +553,70 @@ func TestFindAndCountOneFuncWithDeleted(t *testing.T) {
 	assert.EqualValues(t, 0, cnt)
 }
 
+func TestFindAndCount2(t *testing.T) {
+	// User
+	type TestFindAndCountUser struct {
+		Id   int64  `xorm:"bigint(11) pk autoincr"`
+		Name string `xorm:"'name'"`
+	}
+
+	// Hotel
+	type TestFindAndCountHotel struct {
+		Id       int64                 `xorm:"bigint(11) pk autoincr"`
+		Name     string                `xorm:"'name'"`
+		Code     string                `xorm:"'code'"`
+		Region   string                `xorm:"'region'"`
+		CreateBy *TestFindAndCountUser `xorm:"'create_by'"`
+	}
+
+	assert.NoError(t, prepareEngine())
+	assertSync(t, new(TestFindAndCountUser), new(TestFindAndCountHotel))
+
+	var u = TestFindAndCountUser{
+		Name: "myname",
+	}
+	cnt, err := testEngine.Insert(&u)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	var hotel = TestFindAndCountHotel{
+		Name:     "myhotel",
+		Code:     "111",
+		Region:   "222",
+		CreateBy: &u,
+	}
+	cnt, err = testEngine.Insert(&hotel)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	hotels := make([]*TestFindAndCountHotel, 0)
+	cnt, err = testEngine.
+		Alias("t").
+		Limit(10, 0).
+		FindAndCount(&hotels)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	hotels = make([]*TestFindAndCountHotel, 0)
+	cnt, err = testEngine.
+		Table(new(TestFindAndCountHotel)).
+		Alias("t").
+		Limit(10, 0).
+		FindAndCount(&hotels)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	hotels = make([]*TestFindAndCountHotel, 0)
+	cnt, err = testEngine.
+		Table(new(TestFindAndCountHotel)).
+		Alias("t").
+		Where("t.region like '6501%'").
+		Limit(10, 0).
+		FindAndCount(&hotels)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 0, cnt)
+}
+
 type FindMapDevice struct {
 	Deviceid string `xorm:"pk"`
 	Status   int
