@@ -538,6 +538,21 @@ func TestFindAndCountOneFunc(t *testing.T) {
 	assert.EqualValues(t, 2, cnt)
 }
 
+func TestFindAndCountOneFuncWithDeleted(t *testing.T) {
+	type CommentWithDeleted struct {
+		Id        int   `xorm:"pk autoincr"`
+		DeletedAt int64 `xorm:"deleted notnull default(0) index"`
+	}
+
+	assert.NoError(t, prepareEngine())
+	assertSync(t, new(CommentWithDeleted))
+
+	var comments []CommentWithDeleted
+	cnt, err := testEngine.FindAndCount(&comments)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 0, cnt)
+}
+
 type FindMapDevice struct {
 	Deviceid string `xorm:"pk"`
 	Status   int

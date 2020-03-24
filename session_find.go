@@ -61,7 +61,8 @@ func (session *Session) FindAndCount(rowsSlicePtr interface{}, condiBean ...inte
 		session.statement.OrderStr = ""
 	}
 
-	return session.Count(reflect.New(sliceElementType).Interface())
+	// session has stored the conditions so we use `unscoped` to avoid duplicated condition.
+	return session.Unscoped().Count(reflect.New(sliceElementType).Interface())
 }
 
 func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{}) error {
