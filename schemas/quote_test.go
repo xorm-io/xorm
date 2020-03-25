@@ -32,6 +32,12 @@ func TestAlwaysQuoteTo(t *testing.T) {
 			{`["myschema].[mytable"]`, `"myschema.mytable"`},
 			{"[message_user] AS [sender]", "`message_user` AS `sender`"},
 			{"[myschema].[mytable] AS [table]", "myschema.mytable AS table"},
+			{" [mytable]", " mytable"},
+			{"  [mytable]", "  mytable"},
+			{"[mytable] ", "mytable "},
+			{"[mytable]  ", "mytable  "},
+			{" [mytable] ", " mytable "},
+			{"  [mytable]  ", "  mytable  "},
 		}
 	)
 
