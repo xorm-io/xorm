@@ -32,8 +32,9 @@ type URI struct {
 
 // SetSchema set schema
 func (uri *URI) SetSchema(schema string) {
+	// hack me
 	if uri.DBType == schemas.POSTGRES {
-		uri.Schema = schema
+		uri.Schema = strings.TrimSpace(schema)
 	}
 }
 
@@ -43,7 +44,6 @@ type Dialect interface {
 	URI() *URI
 	SQLType(*schemas.Column) string
 	FormatBytes(b []byte) string
-	DefaultSchema() string
 
 	IsReserved(string) bool
 	Quoter() schemas.Quoter
@@ -81,10 +81,6 @@ type Base struct {
 
 func (b *Base) Quoter() schemas.Quoter {
 	return b.quoter
-}
-
-func (b *Base) DefaultSchema() string {
-	return ""
 }
 
 func (b *Base) Init(dialect Dialect, uri *URI) error {
