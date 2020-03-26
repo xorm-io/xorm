@@ -293,8 +293,8 @@ func (db *mysql) IsTableExist(queryer core.Queryer, ctx context.Context, tableNa
 
 func (db *mysql) AddColumnSQL(tableName string, col *schemas.Column) string {
 	quoter := db.dialect.Quoter()
-	sql := fmt.Sprintf("ALTER TABLE %v ADD %v", quoter.Quote(tableName),
-		db.String(col))
+	s, _ := ColumnString(db, col, true)
+	sql := fmt.Sprintf("ALTER TABLE %v ADD %v", quoter.Quote(tableName), s)
 	if len(col.Comment) > 0 {
 		sql += " COMMENT '" + col.Comment + "'"
 	}
@@ -525,11 +525,8 @@ func (db *mysql) CreateTableSQL(table *schemas.Table, tableName string) ([]strin
 
 		for _, colName := range table.ColumnsSeq() {
 			col := table.GetColumn(colName)
-			if col.IsPrimaryKey && len(pkList) == 1 {
-				sql += db.String(col)
-			} else {
-				sql += db.StringNoPk(col)
-			}
+			s, _ := ColumnString(db, col, col.IsPrimaryKey && len(pkList) == 1)
+			sql += s
 			sql = strings.TrimSpace(sql)
 			if len(col.Comment) > 0 {
 				sql += " COMMENT '" + col.Comment + "'"
