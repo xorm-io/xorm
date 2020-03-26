@@ -232,9 +232,7 @@ func (engine *Engine) Dialect() dialects.Dialect {
 
 // NewSession New a session
 func (engine *Engine) NewSession() *Session {
-	session := &Session{engine: engine}
-	session.Init()
-	return session
+	return newSession(engine)
 }
 
 // Close the engine

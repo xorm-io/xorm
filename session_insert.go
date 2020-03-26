@@ -112,13 +112,14 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 		return 0, ErrTableNotFound
 	}
 
-	table := session.statement.RefTable
-	size := sliceValue.Len()
-
-	var colNames []string
-	var colMultiPlaces []string
-	var args []interface{}
-	var cols []*schemas.Column
+	var (
+		table          = session.statement.RefTable
+		size           = sliceValue.Len()
+		colNames       []string
+		colMultiPlaces []string
+		args           []interface{}
+		cols           []*schemas.Column
+	)
 
 	for i := 0; i < size; i++ {
 		v := sliceValue.Index(i)
@@ -265,12 +266,11 @@ func (session *Session) InsertMulti(rowsSlicePtr interface{}) (int64, error) {
 
 	sliceValue := reflect.Indirect(reflect.ValueOf(rowsSlicePtr))
 	if sliceValue.Kind() != reflect.Slice {
-		return 0, ErrParamsType
-
+		return 0, ErrPtrSliceType
 	}
 
 	if sliceValue.Len() <= 0 {
-		return 0, nil
+		return 0, ErrNoElementsOnSlice
 	}
 
 	return session.innerInsertMulti(rowsSlicePtr)
@@ -483,7 +483,7 @@ func (session *Session) cacheInsert(table string) error {
 	if cacher == nil {
 		return nil
 	}
-	session.engine.logger.Debugf("[cache] clear sql: %v", table)
+	session.engine.logger.Debugf("[cache] clear SQL: %v", table)
 	cacher.ClearIds(table)
 	return nil
 }
