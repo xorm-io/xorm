@@ -44,14 +44,17 @@ type Engine struct {
 	DatabaseTZ *time.Location // The timezone of the database
 }
 
+// SetCacher sets cacher for the table
 func (engine *Engine) SetCacher(tableName string, cacher caches.Cacher) {
 	engine.cacherMgr.SetCacher(tableName, cacher)
 }
 
+// GetCacher returns the cachher of the special table
 func (engine *Engine) GetCacher(tableName string) caches.Cacher {
 	return engine.cacherMgr.GetCacher(tableName)
 }
 
+// SetQuotePolicy sets the special quote policy
 func (engine *Engine) SetQuotePolicy(quotePolicy dialects.QuotePolicy) {
 	engine.dialect.SetQuotePolicy(quotePolicy)
 }

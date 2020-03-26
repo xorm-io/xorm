@@ -336,9 +336,9 @@ func TestInsertCreated(t *testing.T) {
 	assert.EqualValues(t, ci6.Created.Unix(), di6.Created.Unix())
 }
 
-type JsonTime time.Time
+type JSONTime time.Time
 
-func (j JsonTime) format() string {
+func (j JSONTime) format() string {
 	t := time.Time(j)
 	if t.IsZero() {
 		return ""
@@ -347,11 +347,11 @@ func (j JsonTime) format() string {
 	return t.Format("2006-01-02")
 }
 
-func (j JsonTime) MarshalText() ([]byte, error) {
+func (j JSONTime) MarshalText() ([]byte, error) {
 	return []byte(j.format()), nil
 }
 
-func (j JsonTime) MarshalJSON() ([]byte, error) {
+func (j JSONTime) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + j.format() + `"`), nil
 }
 
@@ -359,40 +359,40 @@ func TestDefaultTime3(t *testing.T) {
 	type PrepareTask struct {
 		Id int `xorm:"not null pk autoincr INT(11)" json:"id"`
 		// ...
-		StartTime JsonTime `xorm:"not null default '2006-01-02 15:04:05' TIMESTAMP index" json:"start_time"`
-		EndTime   JsonTime `xorm:"not null default '2006-01-02 15:04:05' TIMESTAMP" json:"end_time"`
+		StartTime JSONTime `xorm:"not null default '2006-01-02 15:04:05' TIMESTAMP index" json:"start_time"`
+		EndTime   JSONTime `xorm:"not null default '2006-01-02 15:04:05' TIMESTAMP" json:"end_time"`
 		Cuser     string   `xorm:"not null default '' VARCHAR(64) index" json:"cuser"`
 		Muser     string   `xorm:"not null default '' VARCHAR(64)" json:"muser"`
-		Ctime     JsonTime `xorm:"not null default CURRENT_TIMESTAMP TIMESTAMP created" json:"ctime"`
-		Mtime     JsonTime `xorm:"not null default CURRENT_TIMESTAMP TIMESTAMP updated" json:"mtime"`
+		Ctime     JSONTime `xorm:"not null default CURRENT_TIMESTAMP TIMESTAMP created" json:"ctime"`
+		Mtime     JSONTime `xorm:"not null default CURRENT_TIMESTAMP TIMESTAMP updated" json:"mtime"`
 	}
 
 	assert.NoError(t, prepareEngine())
 	assertSync(t, new(PrepareTask))
 
 	prepareTask := &PrepareTask{
-		StartTime: JsonTime(time.Now()),
+		StartTime: JSONTime(time.Now()),
 		Cuser:     "userId",
 		Muser:     "userId",
 	}
-	cnt, err := testEngine.Omit("end_time").InsertOne(prepareTask)
+	cnt, err := testEngine.Omit("end_time").Insert(prepareTask)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, cnt)
 }
 
-type MyJsonTime struct {
+type MyJSONTime struct {
 	Id      int64    `json:"id"`
-	Created JsonTime `xorm:"created" json:"created_at"`
+	Created JSONTime `xorm:"created" json:"created_at"`
 }
 
 func TestCreatedJsonTime(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
-	di5 := new(MyJsonTime)
+	di5 := new(MyJSONTime)
 	err := testEngine.Sync2(di5)
 	assert.NoError(t, err)
 
-	ci5 := &MyJsonTime{}
+	ci5 := &MyJSONTime{}
 	_, err = testEngine.Insert(ci5)
 	assert.NoError(t, err)
 
@@ -401,7 +401,7 @@ func TestCreatedJsonTime(t *testing.T) {
 	assert.True(t, has)
 	assert.EqualValues(t, time.Time(ci5.Created).Unix(), time.Time(di5.Created).Unix())
 
-	var dis = make([]MyJsonTime, 0)
+	var dis = make([]MyJSONTime, 0)
 	err = testEngine.Find(&dis)
 	assert.NoError(t, err)
 }

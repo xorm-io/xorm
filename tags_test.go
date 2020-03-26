@@ -686,7 +686,7 @@ func TestCreatedUpdated(t *testing.T) {
 
 	assert.True(t, has)
 
-	c2.Value -= 1
+	c2.Value--
 	_, err = testEngine.ID(c2.Id).Update(c2)
 	assert.NoError(t, err)
 }
@@ -714,7 +714,7 @@ func TestCreatedUpdatedInt64(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, has)
 
-	c2.Value -= 1
+	c2.Value--
 	_, err = testEngine.ID(c2.Id).Update(c2)
 	assert.NoError(t, err)
 }

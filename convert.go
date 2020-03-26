@@ -25,11 +25,10 @@ func strconvErr(err error) error {
 func cloneBytes(b []byte) []byte {
 	if b == nil {
 		return nil
-	} else {
-		c := make([]byte, len(b))
-		copy(c, b)
-		return c
 	}
+	c := make([]byte, len(b))
+	copy(c, b)
+	return c
 }
 
 func asString(src interface{}) string {

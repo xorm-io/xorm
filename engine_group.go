@@ -181,6 +181,7 @@ func (eg *EngineGroup) SetPolicy(policy GroupPolicy) *EngineGroup {
 	return eg
 }
 
+// SetQuotePolicy sets the special quote policy
 func (eg *EngineGroup) SetQuotePolicy(quotePolicy dialects.QuotePolicy) {
 	eg.Engine.SetQuotePolicy(quotePolicy)
 	for i := 0; i < len(eg.slaves); i++ {

@@ -302,10 +302,10 @@ type Status struct {
 
 var (
 	_          convert.Conversion = &Status{}
-	Registered Status             = Status{"Registered", "white"}
-	Approved   Status             = Status{"Approved", "green"}
-	Removed    Status             = Status{"Removed", "red"}
-	Statuses   map[string]Status  = map[string]Status{
+	Registered                    = Status{"Registered", "white"}
+	Approved                      = Status{"Approved", "green"}
+	Removed                       = Status{"Removed", "red"}
+	Statuses                      = map[string]Status{
 		Registered.Name: Registered,
 		Approved.Name:   Approved,
 		Removed.Name:    Removed,
@@ -316,9 +316,8 @@ func (s *Status) FromDB(bytes []byte) error {
 	if r, ok := Statuses[string(bytes)]; ok {
 		*s = r
 		return nil
-	} else {
-		return errors.New("no this data")
 	}
+	return errors.New("no this data")
 }
 
 func (s *Status) ToDB() ([]byte, error) {

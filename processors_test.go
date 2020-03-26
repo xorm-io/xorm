@@ -485,7 +485,7 @@ func TestProcessorsTx(t *testing.T) {
 		t.Error(errors.New("AfterInsertedViaExt is set"))
 	}
 
-	insertedId := p2.Id
+	insertedID := p2.Id
 	// --
 
 	// test update processors with tx rollback
@@ -513,7 +513,7 @@ func TestProcessorsTx(t *testing.T) {
 
 	p = p2 // reset
 
-	_, err = session.ID(insertedId).Before(b4UpdateFunc).After(afterUpdateFunc).Update(p)
+	_, err = session.ID(insertedID).Before(b4UpdateFunc).After(afterUpdateFunc).Update(p)
 	assert.NoError(t, err)
 
 	if p.B4UpdateFlag == 0 {
@@ -548,7 +548,7 @@ func TestProcessorsTx(t *testing.T) {
 	session.Close()
 
 	p2 = &ProcessorsStruct{}
-	_, err = testEngine.ID(insertedId).Get(p2)
+	_, err = testEngine.ID(insertedID).Get(p2)
 	assert.NoError(t, err)
 
 	if p2.B4UpdateFlag != 0 {
@@ -572,7 +572,7 @@ func TestProcessorsTx(t *testing.T) {
 	err = session.Begin()
 	assert.NoError(t, err)
 
-	p = &ProcessorsStruct{Id: insertedId}
+	p = &ProcessorsStruct{Id: insertedID}
 
 	_, err = session.Update(p)
 	assert.NoError(t, err)
@@ -611,7 +611,7 @@ func TestProcessorsTx(t *testing.T) {
 
 	p = &ProcessorsStruct{}
 
-	_, err = session.ID(insertedId).Before(b4UpdateFunc).After(afterUpdateFunc).Update(p)
+	_, err = session.ID(insertedID).Before(b4UpdateFunc).After(afterUpdateFunc).Update(p)
 	assert.NoError(t, err)
 
 	if p.B4UpdateFlag == 0 {
@@ -645,7 +645,7 @@ func TestProcessorsTx(t *testing.T) {
 
 	session.Close()
 	p2 = &ProcessorsStruct{}
-	_, err = testEngine.ID(insertedId).Get(p2)
+	_, err = testEngine.ID(insertedID).Get(p2)
 	assert.NoError(t, err)
 
 	if p.B4UpdateFlag == 0 {
@@ -687,7 +687,7 @@ func TestProcessorsTx(t *testing.T) {
 
 	p = &ProcessorsStruct{} // reset
 
-	_, err = session.ID(insertedId).Before(b4DeleteFunc).After(afterDeleteFunc).Delete(p)
+	_, err = session.ID(insertedID).Before(b4DeleteFunc).After(afterDeleteFunc).Delete(p)
 	assert.NoError(t, err)
 
 	if p.B4DeleteFlag == 0 {
@@ -721,7 +721,7 @@ func TestProcessorsTx(t *testing.T) {
 	session.Close()
 
 	p2 = &ProcessorsStruct{}
-	_, err = testEngine.ID(insertedId).Get(p2)
+	_, err = testEngine.ID(insertedID).Get(p2)
 	assert.NoError(t, err)
 
 	if p2.B4DeleteFlag != 0 {
@@ -747,7 +747,7 @@ func TestProcessorsTx(t *testing.T) {
 
 	p = &ProcessorsStruct{}
 
-	_, err = session.ID(insertedId).Before(b4DeleteFunc).After(afterDeleteFunc).Delete(p)
+	_, err = session.ID(insertedID).Before(b4DeleteFunc).After(afterDeleteFunc).Delete(p)
 	assert.NoError(t, err)
 
 	if p.B4DeleteFlag == 0 {
@@ -788,7 +788,7 @@ func TestProcessorsTx(t *testing.T) {
 	err = session.Begin()
 	assert.NoError(t, err)
 
-	p = &ProcessorsStruct{Id: insertedId}
+	p = &ProcessorsStruct{Id: insertedID}
 	_, err = session.Delete(p)
 	assert.NoError(t, err)
 

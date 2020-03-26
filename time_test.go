@@ -360,27 +360,27 @@ func TestTimeUserDeletedDiffLoc(t *testing.T) {
 	fmt.Println("user3", user3.DeletedAt, user4.DeletedAt)
 }
 
-type JsonDate time.Time
+type JSONDate time.Time
 
-func (j JsonDate) MarshalJSON() ([]byte, error) {
+func (j JSONDate) MarshalJSON() ([]byte, error) {
 	if time.Time(j).IsZero() {
 		return []byte(`""`), nil
 	}
 	return []byte(`"` + time.Time(j).Format("2006-01-02 15:04:05") + `"`), nil
 }
 
-func (j *JsonDate) UnmarshalJSON(value []byte) error {
+func (j *JSONDate) UnmarshalJSON(value []byte) error {
 	var v = strings.TrimSpace(strings.Trim(string(value), "\""))
 
 	t, err := time.ParseInLocation("2006-01-02 15:04:05", v, time.Local)
 	if err != nil {
 		return err
 	}
-	*j = JsonDate(t)
+	*j = JSONDate(t)
 	return nil
 }
 
-func (j *JsonDate) Unix() int64 {
+func (j *JSONDate) Unix() int64 {
 	return (*time.Time)(j).Unix()
 }
 
@@ -389,9 +389,9 @@ func TestCustomTimeUserDeleted(t *testing.T) {
 
 	type UserDeleted3 struct {
 		Id        string
-		CreatedAt JsonDate `xorm:"created"`
-		UpdatedAt JsonDate `xorm:"updated"`
-		DeletedAt JsonDate `xorm:"deleted"`
+		CreatedAt JSONDate `xorm:"created"`
+		UpdatedAt JSONDate `xorm:"updated"`
+		DeletedAt JSONDate `xorm:"deleted"`
 	}
 
 	assertSync(t, new(UserDeleted3))
@@ -442,9 +442,9 @@ func TestCustomTimeUserDeletedDiffLoc(t *testing.T) {
 
 	type UserDeleted4 struct {
 		Id        string
-		CreatedAt JsonDate `xorm:"created"`
-		UpdatedAt JsonDate `xorm:"updated"`
-		DeletedAt JsonDate `xorm:"deleted"`
+		CreatedAt JSONDate `xorm:"created"`
+		UpdatedAt JSONDate `xorm:"updated"`
+		DeletedAt JSONDate `xorm:"deleted"`
 	}
 
 	assertSync(t, new(UserDeleted4))
