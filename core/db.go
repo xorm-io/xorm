@@ -118,7 +118,7 @@ func (db *DB) NeedLogSQL(ctx context.Context) bool {
 		return false
 	}
 
-	v := ctx.Value("__xorm_show_sql")
+	v := ctx.Value(log.SessionShowSQLKey)
 	if showSQL, ok := v.(bool); ok {
 		return showSQL
 	}

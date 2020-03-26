@@ -51,6 +51,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		driverName:     driverName,
 		dataSourceName: dataSourceName,
 		db:             db,
+		logSessionID:   false,
 	}
 
 	if dialect.URI().DBType == schemas.SQLITE {

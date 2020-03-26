@@ -42,6 +42,13 @@ type Engine struct {
 
 	TZLocation *time.Location // The timezone of the application
 	DatabaseTZ *time.Location // The timezone of the database
+
+	logSessionID bool // create session id
+}
+
+// EnableSessionID if enable session id
+func (engine *Engine) EnableSessionID(enable bool) {
+	engine.logSessionID = enable
 }
 
 // SetCacher sets cacher for the table

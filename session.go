@@ -6,10 +6,14 @@ package xorm
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"hash/crc32"
+	"io"
 	"reflect"
 	"strings"
 	"time"
@@ -19,6 +23,7 @@ import (
 	"xorm.io/xorm/core"
 	"xorm.io/xorm/internal/json"
 	"xorm.io/xorm/internal/statements"
+	"xorm.io/xorm/log"
 	"xorm.io/xorm/schemas"
 )
 
@@ -92,6 +97,17 @@ func (session *Session) Clone() *Session {
 	return &sess
 }
 
+func newSessionID() string {
+	hash := sha256.New()
+	_, err := io.CopyN(hash, rand.Reader, 50)
+	if err != nil {
+		return "????????????????????"
+	}
+	md := hash.Sum(nil)
+	mdStr := hex.EncodeToString(md)
+	return mdStr[0:20]
+}
+
 // Init reset the session as the init status.
 func (session *Session) Init() {
 	session.statement = statements.NewStatement(
@@ -119,7 +135,11 @@ func (session *Session) Init() {
 	session.lastSQL = ""
 	session.lastSQLArgs = []interface{}{}
 
-	session.ctx = session.engine.defaultContext
+	if session.engine.logSessionID {
+		session.ctx = context.WithValue(session.engine.defaultContext, log.SessionIDKey, newSessionID())
+	} else {
+		session.ctx = session.engine.defaultContext
+	}
 }
 
 // Close release the connection from pool
@@ -264,12 +284,12 @@ func (session *Session) Cascade(trueOrFalse ...bool) *Session {
 }
 
 // MustLogSQL means record SQL or not and don't follow engine's setting
-func (session *Session) MustLogSQL(log ...bool) *Session {
+func (session *Session) MustLogSQL(logs ...bool) *Session {
 	var showSQL = true
-	if len(log) > 0 {
-		showSQL = log[0]
+	if len(logs) > 0 {
+		showSQL = logs[0]
 	}
-	session.ctx = context.WithValue(session.ctx, "__xorm_show_sql", showSQL)
+	session.ctx = context.WithValue(session.ctx, log.SessionShowSQLKey, showSQL)
 	return session
 }
 
