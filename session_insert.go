@@ -309,7 +309,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		return 0, err
 	}
 
-	sqlStr, args, err := session.statement.GenInsertSQL(colNames, args)
+	buf, err := session.statement.GenInsertSQL(colNames, args)
 	if err != nil {
 		return 0, err
 	}
@@ -342,51 +342,22 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		cleanupProcessorsClosures(&session.afterClosures) // cleanup after used
 	}
 
+	var dialect = session.statement.Dialect()
+
 	// for postgres, many of them didn't implement lastInsertId, so we should
 	// implemented it ourself.
-	if session.engine.dialect.URI().DBType == schemas.ORACLE && len(table.AutoIncrement) > 0 {
-		_, err := session.exec(sqlStr, args...)
-		if err != nil {
-			return 0, err
-		}
-
-		defer handleAfterInsertProcessorFunc(bean)
-
-		session.cacheInsert(tableName)
-
-		if table.Version != "" && session.statement.CheckVersion {
-			verValue, err := table.VersionColumn().ValueOf(bean)
-			if err != nil {
-				session.engine.logger.Errorf("%v", err)
-			} else if verValue.IsValid() && verValue.CanSet() {
-				session.incrVersionFieldValue(verValue)
-			}
-		}
-
+	if len(table.AutoIncrement) > 0 && (dialect.URI().DBType == schemas.POSTGRES ||
+		dialect.URI().DBType == schemas.MSSQL ||
+		dialect.URI().DBType == schemas.ORACLE) {
 		var id int64
-		err = session.queryRow(fmt.Sprintf("select seq_%s.currval from dual", tableName)).Scan(&id)
-		if err != nil {
-			return 1, err
-		}
-		if id == 0 {
-			return 1, errors.New("insert no error but not returned id")
-		}
-
-		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
-		if err != nil {
-			session.engine.logger.Errorf("%v", err)
+		if dialect.URI().DBType == schemas.ORACLE {
+			if _, err := buf.WriteString(" INTO :var_name"); err != nil {
+				return 0, err
+			}
+			buf.Append(&id)
 		}
 
-		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
-			return 1, nil
-		}
-
-		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
-
-		return 1, nil
-	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.URI().DBType == schemas.POSTGRES ||
-		session.engine.dialect.URI().DBType == schemas.MSSQL) {
-		res, err := session.queryBytes(sqlStr, args...)
+		res, err := session.queryBytes(buf.String(), buf.Args()...)
 
 		if err != nil {
 			return 0, err
@@ -404,14 +375,16 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 			}
 		}
 
-		if len(res) < 1 {
-			return 0, errors.New("insert successfully but not returned id")
-		}
+		if dialect.URI().DBType != schemas.ORACLE {
+			if len(res) < 1 {
+				return 0, errors.New("insert successfully but not returned id")
+			}
 
-		idByte := res[0][table.AutoIncrement]
-		id, err := strconv.ParseInt(string(idByte), 10, 64)
-		if err != nil || id <= 0 {
-			return 1, err
+			idByte := res[0][table.AutoIncrement]
+			id, err = strconv.ParseInt(string(idByte), 10, 64)
+			if err != nil || id <= 0 {
+				return 1, err
+			}
 		}
 
 		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
@@ -428,7 +401,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		return 1, nil
 	}
 
-	res, err := session.exec(sqlStr, args...)
+	res, err := session.exec(buf.String(), buf.Args()...)
 	if err != nil {
 		return 0, err
 	}
