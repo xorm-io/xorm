@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestTransaction(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	counter := func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestTransaction(t *testing.T) {
 }
 
 func TestCombineTransaction(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	counter := func() {
@@ -81,7 +81,7 @@ func TestCombineTransaction(t *testing.T) {
 }
 
 func TestCombineTransactionSameMapper(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	oldMapper := testEngine.GetColumnMapper()
 	testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
@@ -124,7 +124,7 @@ func TestCombineTransactionSameMapper(t *testing.T) {
 }
 
 func TestMultipleTransaction(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type MultipleTransaction struct {
 		Id   int64

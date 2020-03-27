@@ -67,6 +67,8 @@ Drivers for Go's sql package which currently support database/sql includes:
 
 * Create Engine
 
+Firstly, we should new an engine for a database.
+
 ```Go
 engine, err := xorm.NewEngine(driverName, dataSourceName)
 ```

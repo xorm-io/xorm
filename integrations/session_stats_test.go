@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ func TestSum(t *testing.T) {
 		Float float32
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assert.NoError(t, testEngine.Sync2(new(SumStruct)))
 
 	var (
@@ -82,7 +82,7 @@ func (s SumStructWithTableName) TableName() string {
 }
 
 func TestSumWithTableName(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assert.NoError(t, testEngine.Sync2(new(SumStructWithTableName)))
 
 	var (
@@ -132,7 +132,7 @@ func TestSumWithTableName(t *testing.T) {
 }
 
 func TestSumCustomColumn(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type SumStruct2 struct {
 		Int   int
@@ -160,7 +160,7 @@ func TestSumCustomColumn(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserinfoCount struct {
 		Departname string
@@ -196,7 +196,7 @@ func TestCount(t *testing.T) {
 }
 
 func TestSQLCount(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserinfoCount2 struct {
 		Id         int64
@@ -218,7 +218,7 @@ func TestSQLCount(t *testing.T) {
 }
 
 func TestCountWithOthers(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type CountWithOthers struct {
 		Id   int64
@@ -252,7 +252,7 @@ func (CountWithTableName) TableName() string {
 }
 
 func TestWithTableName(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assertSync(t, new(CountWithTableName))
 
@@ -276,7 +276,7 @@ func TestWithTableName(t *testing.T) {
 }
 
 func TestCountWithSelectCols(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assertSync(t, new(CountWithTableName))
 

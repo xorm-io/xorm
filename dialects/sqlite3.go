@@ -144,7 +144,11 @@ var (
 		"WITHOUT":           true,
 	}
 
-	sqlite3Quoter = schemas.Quoter{'`', '`', schemas.AlwaysReserve}
+	sqlite3Quoter = schemas.Quoter{
+		Prefix:     '`',
+		Suffix:     '`',
+		IsReserved: schemas.AlwaysReserve,
+	}
 )
 
 type sqlite3 struct {

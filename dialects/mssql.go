@@ -205,7 +205,11 @@ var (
 		"PROC":                           true,
 	}
 
-	mssqlQuoter = schemas.Quoter{'[', ']', schemas.AlwaysReserve}
+	mssqlQuoter = schemas.Quoter{
+		Prefix:     '[',
+		Suffix:     ']',
+		IsReserved: schemas.AlwaysReserve,
+	}
 )
 
 type mssql struct {

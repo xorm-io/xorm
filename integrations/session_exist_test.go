@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 )
 
 func TestExistStruct(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type RecordExist struct {
 		Id   int64
@@ -78,7 +78,7 @@ func TestExistStruct(t *testing.T) {
 }
 
 func TestExistStructForJoin(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type Number struct {
 		Id  int64
@@ -190,7 +190,7 @@ func TestExistContext(t *testing.T) {
 		Name string
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(ContextQueryStruct))
 
 	_, err := testEngine.Insert(&ContextQueryStruct{Name: "1"})

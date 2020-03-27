@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 )
 
 func TestIterate(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserIterate struct {
 		Id    int64
@@ -39,7 +39,7 @@ func TestIterate(t *testing.T) {
 }
 
 func TestBufferIterate(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserBufferIterate struct {
 		Id    int64

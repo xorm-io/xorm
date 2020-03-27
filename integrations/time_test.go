@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ func formatTime(t time.Time) string {
 }
 
 func TestTimeUserTime(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TimeUser struct {
 		Id       string
@@ -50,7 +50,7 @@ func TestTimeUserTime(t *testing.T) {
 }
 
 func TestTimeUserTimeDiffLoc(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	assert.NoError(t, err)
 	testEngine.SetTZLocation(loc)
@@ -86,7 +86,7 @@ func TestTimeUserTimeDiffLoc(t *testing.T) {
 }
 
 func TestTimeUserCreated(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserCreated struct {
 		Id        string
@@ -115,7 +115,7 @@ func TestTimeUserCreated(t *testing.T) {
 }
 
 func TestTimeUserCreatedDiffLoc(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	assert.NoError(t, err)
 	testEngine.SetTZLocation(loc)
@@ -150,7 +150,7 @@ func TestTimeUserCreatedDiffLoc(t *testing.T) {
 }
 
 func TestTimeUserUpdated(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserUpdated struct {
 		Id        string
@@ -201,7 +201,7 @@ func TestTimeUserUpdated(t *testing.T) {
 }
 
 func TestTimeUserUpdatedDiffLoc(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	assert.NoError(t, err)
 	testEngine.SetTZLocation(loc)
@@ -258,7 +258,7 @@ func TestTimeUserUpdatedDiffLoc(t *testing.T) {
 }
 
 func TestTimeUserDeleted(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserDeleted struct {
 		Id           string
@@ -308,7 +308,7 @@ func TestTimeUserDeleted(t *testing.T) {
 }
 
 func TestTimeUserDeletedDiffLoc(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	assert.NoError(t, err)
 	testEngine.SetTZLocation(loc)
@@ -385,7 +385,7 @@ func (j *JSONDate) Unix() int64 {
 }
 
 func TestCustomTimeUserDeleted(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserDeleted3 struct {
 		Id        string
@@ -432,7 +432,7 @@ func TestCustomTimeUserDeleted(t *testing.T) {
 }
 
 func TestCustomTimeUserDeletedDiffLoc(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	assert.NoError(t, err)
 	testEngine.SetTZLocation(loc)
@@ -485,7 +485,7 @@ func TestCustomTimeUserDeletedDiffLoc(t *testing.T) {
 }
 
 func TestDeletedInt64(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type DeletedInt64Struct struct {
 		Id      int64

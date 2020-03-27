@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryString(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type GetVar2 struct {
 		Id      int64  `xorm:"autoincr pk"`
@@ -48,7 +48,7 @@ func TestQueryString(t *testing.T) {
 }
 
 func TestQueryString2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type GetVar3 struct {
 		Id  int64 `xorm:"autoincr pk"`
@@ -108,7 +108,7 @@ func toFloat64(i interface{}) float64 {
 }
 
 func TestQueryInterface(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type GetVarInterface struct {
 		Id      int64  `xorm:"autoincr pk"`
@@ -139,7 +139,7 @@ func TestQueryInterface(t *testing.T) {
 }
 
 func TestQueryNoParams(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type QueryNoParams struct {
 		Id      int64  `xorm:"autoincr pk"`
@@ -188,7 +188,7 @@ func TestQueryNoParams(t *testing.T) {
 }
 
 func TestQueryStringNoParam(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type GetVar4 struct {
 		Id  int64 `xorm:"autoincr pk"`
@@ -225,7 +225,7 @@ func TestQueryStringNoParam(t *testing.T) {
 }
 
 func TestQuerySliceStringNoParam(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type GetVar6 struct {
 		Id  int64 `xorm:"autoincr pk"`
@@ -262,7 +262,7 @@ func TestQuerySliceStringNoParam(t *testing.T) {
 }
 
 func TestQueryInterfaceNoParam(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type GetVar5 struct {
 		Id  int64 `xorm:"autoincr pk"`
@@ -291,7 +291,7 @@ func TestQueryInterfaceNoParam(t *testing.T) {
 }
 
 func TestQueryWithBuilder(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type QueryWithBuilder struct {
 		Id      int64  `xorm:"autoincr pk"`
@@ -336,7 +336,7 @@ func TestQueryWithBuilder(t *testing.T) {
 }
 
 func TestJoinWithSubQuery(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type JoinWithSubQuery1 struct {
 		Id       int64  `xorm:"autoincr pk"`

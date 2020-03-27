@@ -162,7 +162,11 @@ var (
 		"ZEROFILL":     true,
 	}
 
-	mysqlQuoter = schemas.Quoter{'`', '`', schemas.AlwaysReserve}
+	mysqlQuoter = schemas.Quoter{
+		Prefix:     '`',
+		Suffix:     '`',
+		IsReserved: schemas.AlwaysReserve,
+	}
 )
 
 type mysql struct {

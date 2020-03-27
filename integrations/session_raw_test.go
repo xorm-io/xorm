@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestExecAndQuery(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserinfoQuery struct {
 		Uid  int

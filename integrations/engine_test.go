@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"context"
@@ -11,25 +11,38 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"xorm.io/xorm"
 	"xorm.io/xorm/schemas"
+
+	_ "github.com/denisenkom/go-mssqldb"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/stretchr/testify/assert"
+	_ "github.com/ziutek/mymysql/godrv"
 )
 
+func TestPing(t *testing.T) {
+	if err := testEngine.Ping(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestPingContext(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	ctx, canceled := context.WithTimeout(context.Background(), time.Nanosecond)
 	defer canceled()
 
 	time.Sleep(time.Nanosecond)
 
-	err := testEngine.(*Engine).PingContext(ctx)
+	err := testEngine.(*xorm.Engine).PingContext(ctx)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "context deadline exceeded")
 }
 
 func TestAutoTransaction(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TestTx struct {
 		Id      int64     `xorm:"autoincr pk"`
@@ -39,10 +52,10 @@ func TestAutoTransaction(t *testing.T) {
 
 	assert.NoError(t, testEngine.Sync2(new(TestTx)))
 
-	engine := testEngine.(*Engine)
+	engine := testEngine.(*xorm.Engine)
 
 	// will success
-	engine.Transaction(func(session *Session) (interface{}, error) {
+	engine.Transaction(func(session *xorm.Session) (interface{}, error) {
 		_, err := session.Insert(TestTx{Msg: "hi"})
 		assert.NoError(t, err)
 
@@ -54,7 +67,7 @@ func TestAutoTransaction(t *testing.T) {
 	assert.EqualValues(t, true, has)
 
 	// will rollback
-	_, err = engine.Transaction(func(session *Session) (interface{}, error) {
+	_, err = engine.Transaction(func(session *xorm.Session) (interface{}, error) {
 		_, err := session.Insert(TestTx{Msg: "hello"})
 		assert.NoError(t, err)
 
@@ -67,8 +80,17 @@ func TestAutoTransaction(t *testing.T) {
 	assert.EqualValues(t, false, has)
 }
 
+func assertSync(t *testing.T, beans ...interface{}) {
+	for _, bean := range beans {
+		t.Run(testEngine.TableName(bean, true), func(t *testing.T) {
+			assert.NoError(t, testEngine.DropTables(bean))
+			assert.NoError(t, testEngine.Sync2(bean))
+		})
+	}
+}
+
 func TestDump(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TestDumpStruct struct {
 		Id   int64
@@ -89,7 +111,7 @@ func TestDump(t *testing.T) {
 	os.Remove(fp)
 	assert.NoError(t, testEngine.DumpAllToFile(fp))
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	sess := testEngine.NewSession()
 	defer sess.Close()
@@ -107,7 +129,7 @@ func TestDump(t *testing.T) {
 }
 
 func TestSetSchema(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	if testEngine.Dialect().URI().DBType == schemas.POSTGRES {
 		oldSchema := testEngine.Dialect().URI().Schema

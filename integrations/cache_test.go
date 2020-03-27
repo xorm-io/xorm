@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"testing"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestCacheFind(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type MailBox struct {
 		Id       int64 `xorm:"pk"`
@@ -89,7 +89,7 @@ func TestCacheFind(t *testing.T) {
 }
 
 func TestCacheFind2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type MailBox2 struct {
 		Id       uint64 `xorm:"pk"`
@@ -140,7 +140,7 @@ func TestCacheFind2(t *testing.T) {
 }
 
 func TestCacheGet(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type MailBox3 struct {
 		Id       uint64

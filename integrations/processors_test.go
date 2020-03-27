@@ -2,18 +2,20 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"errors"
 	"fmt"
 	"testing"
 
+	"xorm.io/xorm"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBefore_Get(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type BeforeTable struct {
 		Id   int64
@@ -40,7 +42,7 @@ func TestBefore_Get(t *testing.T) {
 }
 
 func TestBefore_Find(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type BeforeTable2 struct {
 		Id   int64
@@ -101,7 +103,7 @@ func (p *ProcessorsStruct) BeforeDelete() {
 	p.B4DeleteFlag = 1
 }
 
-func (p *ProcessorsStruct) BeforeSet(col string, cell Cell) {
+func (p *ProcessorsStruct) BeforeSet(col string, cell xorm.Cell) {
 	p.BeforeSetFlag = p.BeforeSetFlag + 1
 }
 
@@ -117,12 +119,12 @@ func (p *ProcessorsStruct) AfterDelete() {
 	p.AfterDeletedFlag = 1
 }
 
-func (p *ProcessorsStruct) AfterSet(col string, cell Cell) {
+func (p *ProcessorsStruct) AfterSet(col string, cell xorm.Cell) {
 	p.AfterSetFlag = p.AfterSetFlag + 1
 }
 
 func TestProcessors(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&ProcessorsStruct{})
 	assert.NoError(t, err)
@@ -356,7 +358,7 @@ func TestProcessors(t *testing.T) {
 }
 
 func TestProcessorsTx(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&ProcessorsStruct{})
 	assert.NoError(t, err)
@@ -830,19 +832,19 @@ type AfterLoadStructB struct {
 	Err     error            `xorm:"-"`
 }
 
-func (s *AfterLoadStructB) AfterLoad(session *Session) {
+func (s *AfterLoadStructB) AfterLoad(session *xorm.Session) {
 	has, err := session.ID(s.AId).NoAutoCondition().Get(&s.A)
 	if err != nil {
 		s.Err = err
 		return
 	}
 	if !has {
-		s.Err = ErrNotExist
+		s.Err = xorm.ErrNotExist
 	}
 }
 
 func TestAfterLoadProcessor(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assertSync(t, new(AfterLoadStructA), new(AfterLoadStructB))
 
@@ -893,7 +895,7 @@ func (a *AfterInsertStruct) AfterInsert() {
 }
 
 func TestAfterInsert(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assertSync(t, new(AfterInsertStruct))
 

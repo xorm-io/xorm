@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestBuilder(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	const (
 		OpEqual int = iota
@@ -102,7 +102,7 @@ func TestBuilder(t *testing.T) {
 }
 
 func TestIn(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assert.NoError(t, testEngine.Sync2(new(Userinfo)))
 
 	cnt, err := testEngine.Insert([]Userinfo{
@@ -195,7 +195,7 @@ func TestIn(t *testing.T) {
 }
 
 func TestFindAndCount(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type FindAndCount struct {
 		Id   int64

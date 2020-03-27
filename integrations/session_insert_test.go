@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"fmt"
@@ -10,11 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"xorm.io/xorm"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInsertOne(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type Test struct {
 		Id      int64     `xorm:"autoincr pk"`
@@ -31,7 +33,7 @@ func TestInsertOne(t *testing.T) {
 
 func TestInsertMulti(t *testing.T) {
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	type TestMulti struct {
 		Id   int64  `xorm:"int(11) pk"`
 		Name string `xorm:"varchar(255)"`
@@ -106,7 +108,7 @@ func callbackLooper(datas interface{}, step int, actionFunc func(interface{}) er
 }
 
 func TestInsertOneIfPkIsPoint(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TestPoint struct {
 		Id      *int64     `xorm:"autoincr pk notnull 'id'"`
@@ -122,7 +124,7 @@ func TestInsertOneIfPkIsPoint(t *testing.T) {
 }
 
 func TestInsertOneIfPkIsPointRename(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	type ID *int64
 	type TestPoint2 struct {
 		Id      ID         `xorm:"autoincr pk notnull 'id'"`
@@ -138,7 +140,7 @@ func TestInsertOneIfPkIsPointRename(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	user := Userinfo{0, "xiaolunwen", "dev", "lunny", time.Now(),
@@ -156,7 +158,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestInsertAutoIncr(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	// auto increment insert
@@ -177,7 +179,7 @@ type DefaultInsert struct {
 }
 
 func TestInsertDefault(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	di := new(DefaultInsert)
 	err := testEngine.Sync2(di)
@@ -203,7 +205,7 @@ type DefaultInsert2 struct {
 }
 
 func TestInsertDefault2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	di := new(DefaultInsert2)
 	err := testEngine.Sync2(di)
@@ -254,7 +256,7 @@ type CreatedInsert6 struct {
 }
 
 func TestInsertCreated(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	di := new(CreatedInsert)
 	err := testEngine.Sync2(di)
@@ -367,7 +369,7 @@ func TestDefaultTime3(t *testing.T) {
 		Mtime     JSONTime `xorm:"not null default CURRENT_TIMESTAMP TIMESTAMP updated" json:"mtime"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(PrepareTask))
 
 	prepareTask := &PrepareTask{
@@ -386,7 +388,7 @@ type MyJSONTime struct {
 }
 
 func TestCreatedJsonTime(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	di5 := new(MyJSONTime)
 	err := testEngine.Sync2(di5)
@@ -407,7 +409,7 @@ func TestCreatedJsonTime(t *testing.T) {
 }
 
 func TestInsertMulti2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assertSync(t, new(Userinfo))
 
@@ -434,7 +436,7 @@ func TestInsertMulti2(t *testing.T) {
 }
 
 func TestInsertMulti2Interface(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assertSync(t, new(Userinfo))
 
@@ -465,7 +467,7 @@ func TestInsertMulti2Interface(t *testing.T) {
 }
 
 func TestInsertTwoTable(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assertSync(t, new(Userinfo), new(Userdetail))
 
@@ -480,7 +482,7 @@ func TestInsertTwoTable(t *testing.T) {
 }
 
 func TestInsertCreatedInt64(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TestCreatedInt64 struct {
 		Id      int64  `xorm:"autoincr pk"`
@@ -512,7 +514,7 @@ func (MyUserinfo) TableName() string {
 }
 
 func TestInsertMulti3(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	testEngine.ShowSQL(true)
 	assertSync(t, new(MyUserinfo))
@@ -556,7 +558,7 @@ func (MyUserinfo2) TableName() string {
 }
 
 func TestInsertMulti4(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	testEngine.ShowSQL(false)
 	assertSync(t, new(MyUserinfo2))
@@ -602,7 +604,7 @@ func TestAnonymousStruct(t *testing.T) {
 		} `json:"ext" xorm:"'EXT' json notnull"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(PlainFoo))
 
 	_, err := testEngine.Insert(&PlainFoo{
@@ -631,7 +633,7 @@ func TestInsertMap(t *testing.T) {
 		Name   string
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(InsertMap))
 
 	cnt, err := testEngine.Table(new(InsertMap)).Insert(map[string]interface{}{
@@ -716,7 +718,7 @@ func TestInsertWhere(t *testing.T) {
 		IsTrue bool
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(InsertWhere))
 
 	var i = InsertWhere{
@@ -811,7 +813,7 @@ func TestInsertWhere(t *testing.T) {
 }
 
 func TestInsertExpr2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type InsertExprsRelease struct {
 		Id         int64
@@ -877,7 +879,7 @@ func (NightlyRate) TableName() string {
 }
 
 func TestMultipleInsertTableName(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	tableName := `prd_nightly_rate_16`
 	assert.NoError(t, testEngine.Table(tableName).Sync2(new(NightlyRate)))
@@ -908,7 +910,7 @@ func TestMultipleInsertTableName(t *testing.T) {
 }
 
 func TestInsertMultiWithOmit(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TestMultiOmit struct {
 		Id      int64  `xorm:"int(11) pk"`
@@ -951,7 +953,7 @@ func TestInsertMultiWithOmit(t *testing.T) {
 }
 
 func TestInsertTwice(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type InsertStructA struct {
 		FieldA int
@@ -977,7 +979,7 @@ func TestInsertTwice(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = ssn.Insert(sliceA)
-	assert.EqualValues(t, ErrNoElementsOnSlice, err)
+	assert.EqualValues(t, xorm.ErrNoElementsOnSlice, err)
 
 	_, err = ssn.Insert(sliceB)
 	assert.NoError(t, err)

@@ -767,7 +767,11 @@ var (
 		"ZONE":                             true,
 	}
 
-	postgresQuoter = schemas.Quoter{'"', '"', schemas.AlwaysReserve}
+	postgresQuoter = schemas.Quoter{
+		Prefix:     '"',
+		Suffix:     '"',
+		IsReserved: schemas.AlwaysReserve,
+	}
 )
 
 var (

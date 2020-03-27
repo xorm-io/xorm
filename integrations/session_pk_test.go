@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"sort"
@@ -66,7 +66,7 @@ type MyStringPK struct {
 }
 
 func TestIntId(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&IntId{})
 	assert.NoError(t, err)
@@ -99,7 +99,7 @@ func TestIntId(t *testing.T) {
 }
 
 func TestInt16Id(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&Int16Id{})
 	assert.NoError(t, err)
@@ -132,7 +132,7 @@ func TestInt16Id(t *testing.T) {
 }
 
 func TestInt32Id(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&Int32Id{})
 	assert.NoError(t, err)
@@ -165,7 +165,7 @@ func TestInt32Id(t *testing.T) {
 }
 
 func TestUintId(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&UintId{})
 	assert.NoError(t, err)
@@ -206,7 +206,7 @@ func TestUintId(t *testing.T) {
 }
 
 func TestUint16Id(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&Uint16Id{})
 	assert.NoError(t, err)
@@ -240,7 +240,7 @@ func TestUint16Id(t *testing.T) {
 }
 
 func TestUint32Id(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&Uint32Id{})
 	assert.NoError(t, err)
@@ -274,7 +274,7 @@ func TestUint32Id(t *testing.T) {
 }
 
 func TestUint64Id(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&Uint64Id{})
 	assert.NoError(t, err)
@@ -312,7 +312,7 @@ func TestUint64Id(t *testing.T) {
 }
 
 func TestStringPK(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&StringPK{})
 	assert.NoError(t, err)
@@ -352,7 +352,7 @@ type CompositeKey struct {
 }
 
 func TestCompositeKey(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&CompositeKey{})
 	assert.NoError(t, err)
@@ -407,7 +407,7 @@ func TestCompositeKey(t *testing.T) {
 }
 
 func TestCompositeKey2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type User struct {
 		UserId   string `xorm:"varchar(19) not null pk"`
@@ -459,7 +459,7 @@ type UserPK2 struct {
 }
 
 func TestCompositeKey3(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&UserPK2{})
 
@@ -497,7 +497,7 @@ func TestCompositeKey3(t *testing.T) {
 }
 
 func TestMyIntId(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&MyIntPK{})
 	assert.NoError(t, err)
@@ -535,7 +535,7 @@ func TestMyIntId(t *testing.T) {
 }
 
 func TestMyStringId(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&MyStringPK{})
 	assert.NoError(t, err)
@@ -576,7 +576,7 @@ func TestSingleAutoIncrColumn(t *testing.T) {
 		Id int64 `xorm:"pk autoincr"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Account))
 
 	_, err := testEngine.Insert(&Account{})
@@ -591,7 +591,7 @@ func TestCompositePK(t *testing.T) {
 		Updated time.Time `xorm:"updated"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	tables1, err := testEngine.DBMetas()
 	assert.NoError(t, err)
@@ -626,7 +626,7 @@ func TestNoPKIdQueryUpdate(t *testing.T) {
 		Username string
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(NoPKTable))
 
 	cnt, err := testEngine.Insert(&NoPKTable{

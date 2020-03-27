@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"fmt"
@@ -11,12 +11,13 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"xorm.io/xorm"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/names"
 )
 
 func TestUpdateMap(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UpdateTable struct {
 		Id   int64
@@ -46,7 +47,7 @@ func TestUpdateLimit(t *testing.T) {
 		return
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UpdateTable2 struct {
 		Id   int64
@@ -88,7 +89,7 @@ type ForUpdate struct {
 	Name string
 }
 
-func setupForUpdate(engine EngineInterface) error {
+func setupForUpdate(engine xorm.EngineInterface) error {
 	v := new(ForUpdate)
 	err := testEngine.DropTables(v)
 	if err != nil {
@@ -218,7 +219,7 @@ func TestWithIn(t *testing.T) {
 		Test bool   `xorm:"Test"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assert.NoError(t, testEngine.Sync(new(temp3)))
 
 	testEngine.Insert(&[]temp3{
@@ -270,7 +271,7 @@ type Article struct {
 }
 
 func TestUpdateMap2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(UpdateMustCols))
 
 	_, err := testEngine.Table("update_must_cols").Where("id =?", 1).Update(map[string]interface{}{
@@ -280,7 +281,7 @@ func TestUpdateMap2(t *testing.T) {
 }
 
 func TestUpdate1(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	_, err := testEngine.Insert(&Userinfo{
@@ -410,7 +411,7 @@ func TestUpdate1(t *testing.T) {
 }
 
 func TestUpdateIncrDecr(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	col1 := &UpdateIncr{
 		Name: "test",
@@ -473,7 +474,7 @@ type UpdatedUpdate5 struct {
 }
 
 func TestUpdateUpdated(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	di := new(UpdatedUpdate)
 	err := testEngine.Sync2(di)
@@ -568,7 +569,7 @@ func TestUpdateUpdated(t *testing.T) {
 }
 
 func TestUpdateSameMapper(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	oldMapper := testEngine.GetTableMapper()
 	testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
@@ -695,7 +696,7 @@ func TestUpdateSameMapper(t *testing.T) {
 }
 
 func TestUseBool(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	cnt1, err := testEngine.Count(&Userinfo{})
@@ -725,7 +726,7 @@ func TestUseBool(t *testing.T) {
 }
 
 func TestBool(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	_, err := testEngine.UseBool().Update(&Userinfo{IsMan: true})
@@ -748,7 +749,7 @@ func TestBool(t *testing.T) {
 }
 
 func TestNoUpdate(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type NoUpdate struct {
 		Id      int64
@@ -769,7 +770,7 @@ func TestNoUpdate(t *testing.T) {
 }
 
 func TestNewUpdate(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TbUserInfo struct {
 		Id       int64       `xorm:"pk autoincr unique BIGINT" json:"id"`
@@ -799,7 +800,7 @@ func TestNewUpdate(t *testing.T) {
 }
 
 func TestUpdateUpdate(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type PublicKeyUpdate struct {
 		Id          int64
@@ -816,7 +817,7 @@ func TestUpdateUpdate(t *testing.T) {
 }
 
 func TestCreatedUpdated2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type CreatedUpdatedStruct struct {
 		Id       int64
@@ -860,7 +861,7 @@ func TestCreatedUpdated2(t *testing.T) {
 }
 
 func TestDeletedUpdate(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type DeletedUpdatedStruct struct {
 		Id        int64
@@ -908,7 +909,7 @@ func TestDeletedUpdate(t *testing.T) {
 }
 
 func TestUpdateMapCondition(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UpdateMapCondition struct {
 		Id     int64
@@ -939,7 +940,7 @@ func TestUpdateMapCondition(t *testing.T) {
 }
 
 func TestUpdateMapContent(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UpdateMapContent struct {
 		Id     int64
@@ -1014,7 +1015,7 @@ func TestUpdateCondiBean(t *testing.T) {
 		Name string
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(NeedUpdateBean))
 
 	cnt, err := testEngine.Insert(&NeedUpdateBean{
@@ -1064,7 +1065,7 @@ func TestWhereCondErrorWhenUpdate(t *testing.T) {
 		RequestToken   string
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(AuthRequestError))
 
 	_, err := testEngine.Cols("challenge_token", "request_token", "challenge_agent", "status").
@@ -1073,11 +1074,11 @@ func TestWhereCondErrorWhenUpdate(t *testing.T) {
 			ChallengeToken: "2",
 		})
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrConditionType, err)
+	assert.EqualValues(t, xorm.ErrConditionType, err)
 }
 
 func TestUpdateDeleted(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UpdateDeletedStruct struct {
 		Id        int64
@@ -1118,7 +1119,7 @@ func TestUpdateDeleted(t *testing.T) {
 }
 
 func TestUpdateExprs(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UpdateExprs struct {
 		Id        int64
@@ -1149,7 +1150,7 @@ func TestUpdateExprs(t *testing.T) {
 }
 
 func TestUpdateAlias(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UpdateAlias struct {
 		Id        int64
@@ -1180,7 +1181,7 @@ func TestUpdateAlias(t *testing.T) {
 }
 
 func TestUpdateExprs2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UpdateExprsRelease struct {
 		Id         int64
@@ -1225,7 +1226,7 @@ func TestUpdateExprs2(t *testing.T) {
 }
 
 func TestUpdateMap3(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UpdateMapUser struct {
 		Id   uint64 `xorm:"PK autoincr"`
@@ -1283,7 +1284,7 @@ func TestUpdateIgnoreOnlyFromDBFields(t *testing.T) {
 		return &record
 
 	}
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(TestOnlyFromDBField))
 
 	_, err := testEngine.Insert(&TestOnlyFromDBField{
@@ -1311,7 +1312,7 @@ func TestUpdateMultiplePK(t *testing.T) {
 		Value string `xorm:"notnull varchar(4000)" description:"值"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(TestUpdateMultiplePKStruct))
 
 	test := &TestUpdateMultiplePKStruct{

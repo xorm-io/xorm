@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ import (
 )
 
 func TestSetExpr(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserExprIssue struct {
 		Id    int64
@@ -64,7 +64,7 @@ func TestSetExpr(t *testing.T) {
 }
 
 func TestCols(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type ColsTable struct {
 		Id   int64
@@ -96,7 +96,7 @@ func TestCols(t *testing.T) {
 }
 
 func TestMustCol(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type CustomerUpdate struct {
 		Id        int64  `form:"id" json:"id"`

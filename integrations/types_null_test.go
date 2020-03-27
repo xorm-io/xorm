@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"database/sql"
@@ -58,19 +58,19 @@ func (m CustomStruct) Value() (driver.Value, error) {
 }
 
 func TestCreateNullStructTable(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	err := testEngine.CreateTables(new(NullType))
 	assert.NoError(t, err)
 }
 
 func TestDropNullStructTable(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	err := testEngine.DropTables(new(NullType))
 	assert.NoError(t, err)
 }
 
 func TestNullStructInsert(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(NullType))
 
 	item1 := new(NullType)
@@ -112,7 +112,7 @@ func TestNullStructInsert(t *testing.T) {
 }
 
 func TestNullStructUpdate(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(NullType))
 
 	_, err := testEngine.Insert([]NullType{
@@ -185,7 +185,7 @@ func TestNullStructUpdate(t *testing.T) {
 }
 
 func TestNullStructFind(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(NullType))
 
 	_, err := testEngine.Insert([]NullType{
@@ -250,7 +250,7 @@ func TestNullStructFind(t *testing.T) {
 }
 
 func TestNullStructIterate(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(NullType))
 
 	if true {
@@ -265,7 +265,7 @@ func TestNullStructIterate(t *testing.T) {
 }
 
 func TestNullStructCount(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(NullType))
 
 	if true {
@@ -276,7 +276,7 @@ func TestNullStructCount(t *testing.T) {
 }
 
 func TestNullStructRows(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(NullType))
 
 	item := new(NullType)
@@ -291,7 +291,7 @@ func TestNullStructRows(t *testing.T) {
 }
 
 func TestNullStructDelete(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(NullType))
 
 	item := new(NullType)

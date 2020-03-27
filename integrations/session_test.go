@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestClose(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	sess1 := testEngine.NewSession()
 	sess1.Close()
@@ -31,7 +31,7 @@ func TestNullFloatStruct(t *testing.T) {
 		Amount MyNullFloat64
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assert.NoError(t, testEngine.Sync2(new(MyNullFloatStruct)))
 
 	_, err := testEngine.Insert(&MyNullFloatStruct{
@@ -45,7 +45,7 @@ func TestNullFloatStruct(t *testing.T) {
 }
 
 func TestMustLogSQL(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	testEngine.ShowSQL(false)
 	defer testEngine.ShowSQL(true)
 

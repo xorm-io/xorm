@@ -1,8 +1,8 @@
-// Copyright 2018 The Xorm Authors. All rights reserved.
+// Copyright 2017 The Xorm Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"database/sql"
@@ -12,11 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/denisenkom/go-mssqldb"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
-	_ "github.com/ziutek/mymysql/godrv"
+	"xorm.io/xorm"
 	"xorm.io/xorm/caches"
 	"xorm.io/xorm/dialects"
 	"xorm.io/xorm/log"
@@ -25,7 +21,7 @@ import (
 )
 
 var (
-	testEngine EngineInterface
+	testEngine xorm.EngineInterface
 	dbType     string
 	connString string
 
@@ -102,9 +98,9 @@ func createEngine(dbType, connStr string) error {
 				*ignoreSelectUpdate = true
 			}
 
-			testEngine, err = NewEngine(dbType, connStr)
+			testEngine, err = xorm.NewEngine(dbType, connStr)
 		} else {
-			testEngine, err = NewEngineGroup(dbType, strings.Split(connStr, *splitter))
+			testEngine, err = xorm.NewEngineGroup(dbType, strings.Split(connStr, *splitter))
 			if dbType != "mysql" && dbType != "mymysql" {
 				*ignoreSelectUpdate = true
 			}
@@ -160,11 +156,11 @@ func createEngine(dbType, connStr string) error {
 	return nil
 }
 
-func prepareEngine() error {
+func PrepareEngine() error {
 	return createEngine(dbType, connString)
 }
 
-func TestMain(m *testing.M) {
+func MainTest(m *testing.M) {
 	flag.Parse()
 
 	dbType = *db
@@ -192,7 +188,7 @@ func TestMain(m *testing.M) {
 		testEngine = nil
 		fmt.Println("testing", dbType, connString)
 
-		if err := prepareEngine(); err != nil {
+		if err := PrepareEngine(); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 			return
@@ -205,10 +201,4 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(res)
-}
-
-func TestPing(t *testing.T) {
-	if err := testEngine.Ping(); err != nil {
-		t.Fatal(err)
-	}
 }

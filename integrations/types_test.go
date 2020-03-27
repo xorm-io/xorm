@@ -2,13 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"errors"
 	"fmt"
 	"testing"
 
+	"xorm.io/xorm"
 	"xorm.io/xorm/convert"
 	"xorm.io/xorm/internal/json"
 	"xorm.io/xorm/schemas"
@@ -17,7 +18,7 @@ import (
 )
 
 func TestArrayField(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type ArrayStruct struct {
 		Id   int64
@@ -80,7 +81,7 @@ func TestArrayField(t *testing.T) {
 }
 
 func TestGetBytes(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type Varbinary struct {
 		Data []byte `xorm:"VARBINARY(250)"`
@@ -152,14 +153,14 @@ type ConvStruct struct {
 	Slice SliceType
 }
 
-func (c *ConvStruct) BeforeSet(name string, cell Cell) {
+func (c *ConvStruct) BeforeSet(name string, cell xorm.Cell) {
 	if name == "cfg3" || name == "Cfg3" {
 		c.Cfg3 = new(ConvConfig)
 	}
 }
 
 func TestConversion(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	c := new(ConvStruct)
 	assert.NoError(t, testEngine.DropTables(c))
@@ -243,7 +244,7 @@ type MyStruct struct {
 }
 
 func TestCustomType1(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&MyStruct{})
 	assert.NoError(t, err)
@@ -331,7 +332,7 @@ type UserCus struct {
 }
 
 func TestCustomType2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	var uc UserCus
 	err := testEngine.CreateTables(&uc)

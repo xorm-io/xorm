@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"fmt"
@@ -60,7 +60,7 @@ type UserAndDetail struct {
 }
 
 func TestExtends(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&tempUser2{})
 	assert.NoError(t, err)
@@ -211,7 +211,7 @@ type MessageExtend4 struct {
 }
 
 func TestExtends2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&Message{}, &MessageUser{}, &MessageType{})
 	assert.NoError(t, err)
@@ -272,7 +272,7 @@ func TestExtends2(t *testing.T) {
 }
 
 func TestExtends3(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&Message{}, &MessageUser{}, &MessageType{})
 	assert.NoError(t, err)
@@ -337,7 +337,7 @@ func TestExtends3(t *testing.T) {
 }
 
 func TestExtends4(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(&Message{}, &MessageUser{}, &MessageType{})
 	assert.NoError(t, err)
@@ -410,7 +410,7 @@ type Book struct {
 }
 
 func TestExtends5(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	err := testEngine.DropTables(&Book{}, &Size{})
 	assert.NoError(t, err)
 
@@ -508,7 +508,7 @@ func TestExtends5(t *testing.T) {
 }
 
 func TestCacheTag(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type CacheDomain struct {
 		Id   int64 `xorm:"pk cache"`
@@ -520,7 +520,7 @@ func TestCacheTag(t *testing.T) {
 }
 
 func TestNoCacheTag(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type NoCacheDomain struct {
 		Id   int64 `xorm:"pk nocache"`
@@ -536,7 +536,7 @@ type IDGonicMapper struct {
 }
 
 func TestGonicMapperID(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	oldMapper := testEngine.GetColumnMapper()
 	testEngine.UnMapType(utils.ReflectValue(new(IDGonicMapper)).Type())
@@ -573,7 +573,7 @@ type IDSameMapper struct {
 }
 
 func TestSameMapperID(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	oldMapper := testEngine.GetColumnMapper()
 	testEngine.UnMapType(utils.ReflectValue(new(IDSameMapper)).Type())
@@ -612,7 +612,7 @@ type UserCU struct {
 }
 
 func TestCreatedAndUpdated(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	u := new(UserCU)
 	err := testEngine.DropTables(u)
@@ -645,7 +645,7 @@ type StrangeName struct {
 }
 
 func TestStrangeName(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(new(StrangeName))
 	assert.NoError(t, err)
@@ -662,7 +662,7 @@ func TestStrangeName(t *testing.T) {
 }
 
 func TestCreatedUpdated(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type CreatedUpdated struct {
 		Id       int64
@@ -692,7 +692,7 @@ func TestCreatedUpdated(t *testing.T) {
 }
 
 func TestCreatedUpdatedInt64(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type CreatedUpdatedInt64 struct {
 		Id       int64
@@ -726,7 +726,7 @@ type Lowercase struct {
 }
 
 func TestLowerCase(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.Sync2(&Lowercase{})
 	assert.NoError(t, err)
@@ -743,7 +743,7 @@ func TestLowerCase(t *testing.T) {
 }
 
 func TestAutoIncrTag(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TestAutoIncr1 struct {
 		Id int64
@@ -799,7 +799,7 @@ func TestAutoIncrTag(t *testing.T) {
 }
 
 func TestTagComment(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	// FIXME: only support mysql
 	if testEngine.Dialect().URI().DBType != schemas.MYSQL {
 		return
@@ -833,7 +833,7 @@ func TestTagComment(t *testing.T) {
 }
 
 func TestTagDefault(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type DefaultStruct struct {
 		Id   int64
@@ -877,7 +877,7 @@ func TestTagDefault(t *testing.T) {
 }
 
 func TestTagDefault2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type DefaultStruct2 struct {
 		Id   int64
@@ -906,7 +906,7 @@ func TestTagDefault2(t *testing.T) {
 }
 
 func TestTagDefault3(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type DefaultStruct3 struct {
 		Id   int64
@@ -935,7 +935,7 @@ func TestTagDefault3(t *testing.T) {
 }
 
 func TestTagDefault4(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type DefaultStruct4 struct {
 		Id      int64
@@ -967,7 +967,7 @@ func TestTagDefault4(t *testing.T) {
 }
 
 func TestTagDefault5(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type DefaultStruct5 struct {
 		Id      int64
@@ -1003,7 +1003,7 @@ func TestTagDefault5(t *testing.T) {
 }
 
 func TestTagDefault6(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type DefaultStruct6 struct {
 		Id    int64
@@ -1037,7 +1037,7 @@ func TestTagDefault6(t *testing.T) {
 }
 
 func TestTagsDirection(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type OnlyFromDBStruct struct {
 		Id   int64
@@ -1099,7 +1099,7 @@ func TestTagsDirection(t *testing.T) {
 }
 
 func TestTagTime(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TagUTCStruct struct {
 		Id      int64
@@ -1133,7 +1133,7 @@ func TestTagTime(t *testing.T) {
 }
 
 func TestTagAutoIncr(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TagAutoIncr struct {
 		Id   int64
@@ -1158,7 +1158,7 @@ func TestTagAutoIncr(t *testing.T) {
 }
 
 func TestTagPrimarykey(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	type TagPrimaryKey struct {
 		Id   int64  `xorm:"pk"`
 		Name string `xorm:"VARCHAR(20) pk"`
@@ -1189,7 +1189,7 @@ type VersionS struct {
 }
 
 func TestVersion1(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(new(VersionS))
 	assert.NoError(t, err)
@@ -1220,7 +1220,7 @@ func TestVersion1(t *testing.T) {
 }
 
 func TestVersion2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(new(VersionS))
 	assert.NoError(t, err)
@@ -1247,7 +1247,7 @@ type VersionUintS struct {
 }
 
 func TestVersion3(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(new(VersionUintS))
 	assert.NoError(t, err)
@@ -1278,7 +1278,7 @@ func TestVersion3(t *testing.T) {
 }
 
 func TestVersion4(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables(new(VersionUintS))
 	assert.NoError(t, err)
@@ -1298,7 +1298,7 @@ func TestVersion4(t *testing.T) {
 }
 
 func TestIndexes(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type TestIndexesStruct struct {
 		Id    int64

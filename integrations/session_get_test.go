@@ -2,21 +2,73 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"xorm.io/xorm/contexts"
 	"xorm.io/xorm/schemas"
+
+	"github.com/stretchr/testify/assert"
 )
 
+func convertInt(v interface{}) (int64, error) {
+	switch v.(type) {
+	case int:
+		return int64(v.(int)), nil
+	case int8:
+		return int64(v.(int8)), nil
+	case int16:
+		return int64(v.(int16)), nil
+	case int32:
+		return int64(v.(int32)), nil
+	case int64:
+		return v.(int64), nil
+	case []byte:
+		i, err := strconv.ParseInt(string(v.([]byte)), 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		return i, nil
+	case string:
+		i, err := strconv.ParseInt(v.(string), 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		return i, nil
+	}
+	return 0, fmt.Errorf("unsupported type: %v", v)
+}
+
+func convertFloat(v interface{}) (float64, error) {
+	switch v.(type) {
+	case float32:
+		return float64(v.(float32)), nil
+	case float64:
+		return v.(float64), nil
+	case string:
+		i, err := strconv.ParseFloat(v.(string), 64)
+		if err != nil {
+			return 0, err
+		}
+		return i, nil
+	case []byte:
+		i, err := strconv.ParseFloat(string(v.([]byte)), 64)
+		if err != nil {
+			return 0, err
+		}
+		return i, nil
+	}
+	return 0, fmt.Errorf("unsupported type: %v", v)
+}
+
 func TestGetVar(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type GetVar struct {
 		Id      int64  `xorm:"autoincr pk"`
@@ -221,7 +273,7 @@ func TestGetVar(t *testing.T) {
 }
 
 func TestGetStruct(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserinfoGet struct {
 		Uid   int `xorm:"pk autoincr"`
@@ -276,7 +328,7 @@ func TestGetStruct(t *testing.T) {
 }
 
 func TestGetSlice(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserinfoSlice struct {
 		Uid   int `xorm:"pk autoincr"`
@@ -292,7 +344,7 @@ func TestGetSlice(t *testing.T) {
 }
 
 func TestGetError(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type GetError struct {
 		Uid   int `xorm:"pk autoincr"`
@@ -312,7 +364,7 @@ func TestGetError(t *testing.T) {
 }
 
 func TestJSONString(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type JsonString struct {
 		Id      int64
@@ -345,7 +397,7 @@ func TestJSONString(t *testing.T) {
 }
 
 func TestGetActionMapping(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type ActionMapping struct {
 		ActionId    string `xorm:"pk"`
@@ -382,7 +434,7 @@ func TestGetStructId(t *testing.T) {
 		Id int64
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(TestGetStruct))
 
 	_, err := testEngine.Insert(&TestGetStruct{})
@@ -409,7 +461,7 @@ func TestContextGet(t *testing.T) {
 		Name string
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(ContextGetStruct))
 
 	_, err := testEngine.Insert(&ContextGetStruct{Name: "1"})
@@ -447,7 +499,7 @@ func TestContextGet2(t *testing.T) {
 		Name string
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(ContextGetStruct2))
 
 	_, err := testEngine.Insert(&ContextGetStruct2{Name: "1"})
@@ -486,7 +538,7 @@ func (MyGetCustomTableImpletation) TableName() string {
 }
 
 func TestGetCustomTableInterface(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assert.NoError(t, testEngine.Table(getCustomTableName).Sync2(new(MyGetCustomTableImpletation)))
 
 	exist, err := testEngine.IsTableExist(getCustomTableName)
@@ -511,7 +563,7 @@ func TestGetNullVar(t *testing.T) {
 		Age  int
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(TestGetNullVarStruct))
 
 	affected, err := testEngine.Exec("insert into " + testEngine.TableName(new(TestGetNullVarStruct), true) + " (name,age) values (null,null)")
@@ -596,7 +648,7 @@ func TestCustomTypes(t *testing.T) {
 		Age  MyInt
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(TestCustomizeStruct))
 
 	var s = TestCustomizeStruct{
@@ -627,7 +679,7 @@ func TestGetViaMapCond(t *testing.T) {
 		Index    int
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(GetViaMapCond))
 
 	var (

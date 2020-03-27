@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"testing"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestDelete(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserinfoDelete struct {
 		Uid   int64 `xorm:"id pk not null autoincr"`
@@ -71,7 +71,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleted(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type Deleted struct {
 		Id        int64 `xorm:"pk"`
@@ -158,7 +158,7 @@ func TestDeleted(t *testing.T) {
 }
 
 func TestCacheDelete(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	oldCacher := testEngine.GetDefaultCacher()
 	cacher := caches.NewLRUCacher(caches.NewMemoryStore(), 1000)
@@ -190,7 +190,7 @@ func TestCacheDelete(t *testing.T) {
 }
 
 func TestUnscopeDelete(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UnscopeDeleteStruct struct {
 		Id        int64

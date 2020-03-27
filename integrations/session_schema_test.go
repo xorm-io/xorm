@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 )
 
 func TestStoreEngine(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assert.NoError(t, testEngine.DropTables("user_store_engine"))
 
@@ -26,7 +26,7 @@ func TestStoreEngine(t *testing.T) {
 }
 
 func TestCreateTable(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assert.NoError(t, testEngine.DropTables("user_user"))
 
@@ -39,7 +39,7 @@ func TestCreateTable(t *testing.T) {
 }
 
 func TestCreateMultiTables(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	session := testEngine.NewSession()
 	defer session.Close()
@@ -94,7 +94,7 @@ func (s *SyncTable3) TableName() string {
 }
 
 func TestSyncTable(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assert.NoError(t, testEngine.Sync2(new(SyncTable1)))
 
@@ -119,7 +119,7 @@ func TestSyncTable(t *testing.T) {
 }
 
 func TestSyncTable2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assert.NoError(t, testEngine.Table("sync_tablex").Sync2(new(SyncTable1)))
 
@@ -144,7 +144,7 @@ func TestSyncTable2(t *testing.T) {
 }
 
 func TestIsTableExist(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	exist, err := testEngine.IsTableExist(new(CustomTableName))
 	assert.NoError(t, err)
@@ -158,7 +158,7 @@ func TestIsTableExist(t *testing.T) {
 }
 
 func TestIsTableEmpty(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type NumericEmpty struct {
 		Numeric float64 `xorm:"numeric(26,2)"`
@@ -201,7 +201,7 @@ func (c *CustomTableName) TableName() string {
 }
 
 func TestCustomTableName(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	c := new(CustomTableName)
 	assert.NoError(t, testEngine.DropTables(c))
@@ -220,7 +220,7 @@ type IndexOrUnique struct {
 }
 
 func TestIndexAndUnique(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assert.NoError(t, testEngine.CreateTables(&IndexOrUnique{}))
 
@@ -236,7 +236,7 @@ func TestIndexAndUnique(t *testing.T) {
 }
 
 func TestMetaInfo(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assert.NoError(t, testEngine.Sync2(new(CustomTableName), new(IndexOrUnique)))
 
 	tables, err := testEngine.DBMetas()
@@ -248,7 +248,7 @@ func TestMetaInfo(t *testing.T) {
 }
 
 func TestCharst(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	err := testEngine.DropTables("user_charset")
 	assert.NoError(t, err)
@@ -264,7 +264,7 @@ func TestSync2_1(t *testing.T) {
 		Id_delete          int8  `xorm:"null int default 1"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assert.NoError(t, testEngine.DropTables("wx_test"))
 	assert.NoError(t, testEngine.Sync2(new(WxTest)))
@@ -281,7 +281,7 @@ func TestUnique_1(t *testing.T) {
 		UpdatedAt time.Time `xorm:"updated"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assert.NoError(t, testEngine.DropTables("user_unique"))
 	assert.NoError(t, testEngine.Sync2(new(UserUnique)))
@@ -297,7 +297,7 @@ func TestSync2_2(t *testing.T) {
 		UserId int64 `xorm:"index"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	var tableNames = make(map[string]bool)
 	for i := 0; i < 10; i++ {
@@ -326,7 +326,7 @@ func TestSync2_Default(t *testing.T) {
 		Name     string `xorm:"default('my_name')"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(TestSync2Default))
 	assert.NoError(t, testEngine.Sync2(new(TestSync2Default)))
 }

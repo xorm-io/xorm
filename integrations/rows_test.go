@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 )
 
 func TestRows(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserRows struct {
 		Id    int64
@@ -85,7 +85,7 @@ func TestRows(t *testing.T) {
 }
 
 func TestRowsMyTableName(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type UserRowsMyTable struct {
 		Id    int64
@@ -140,7 +140,7 @@ func (UserRowsSpecTable) TableName() string {
 }
 
 func TestRowsSpecTableName(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assert.NoError(t, testEngine.Sync2(new(UserRowsSpecTable)))
 
 	cnt, err := testEngine.Insert(&UserRowsSpecTable{

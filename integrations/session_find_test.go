@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xorm
+package integrations
 
 import (
 	"testing"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestJoinLimit(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	type Salary struct {
 		Id  int64
@@ -62,17 +62,8 @@ func TestJoinLimit(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func assertSync(t *testing.T, beans ...interface{}) {
-	for _, bean := range beans {
-		t.Run(testEngine.TableName(bean, true), func(t *testing.T) {
-			assert.NoError(t, testEngine.DropTables(bean))
-			assert.NoError(t, testEngine.Sync2(bean))
-		})
-	}
-}
-
 func TestWhere(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 
 	assertSync(t, new(Userinfo))
 
@@ -85,7 +76,7 @@ func TestWhere(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	users := make([]Userinfo, 0)
@@ -100,7 +91,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestFind2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	users := make([]*Userinfo, 0)
 
 	assertSync(t, new(Userinfo))
@@ -125,7 +116,7 @@ func (TeamUser) TableName() string {
 
 func TestFind3(t *testing.T) {
 	var teamUser = new(TeamUser)
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	err := testEngine.Sync2(new(Team), teamUser)
 	assert.NoError(t, err)
 
@@ -179,7 +170,7 @@ func TestFind3(t *testing.T) {
 }
 
 func TestFindMap(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	cnt, err := testEngine.Insert(&Userinfo{
@@ -208,7 +199,7 @@ func TestFindMap(t *testing.T) {
 }
 
 func TestFindMap2(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	users := make(map[int64]*Userinfo)
@@ -217,7 +208,7 @@ func TestFindMap2(t *testing.T) {
 }
 
 func TestDistinct(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	_, err := testEngine.Insert(&Userinfo{
@@ -242,7 +233,7 @@ func TestDistinct(t *testing.T) {
 }
 
 func TestOrder(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	users := make([]Userinfo, 0)
@@ -255,7 +246,7 @@ func TestOrder(t *testing.T) {
 }
 
 func TestGroupBy(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	users := make([]Userinfo, 0)
@@ -264,7 +255,7 @@ func TestGroupBy(t *testing.T) {
 }
 
 func TestHaving(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	users := make([]Userinfo, 0)
@@ -273,7 +264,7 @@ func TestHaving(t *testing.T) {
 }
 
 func TestOrderSameMapper(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
 
 	mapper := testEngine.GetTableMapper()
@@ -296,7 +287,7 @@ func TestOrderSameMapper(t *testing.T) {
 }
 
 func TestHavingSameMapper(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	testEngine.UnMapType(utils.ReflectValue(new(Userinfo)).Type())
 
 	mapper := testEngine.GetTableMapper()
@@ -313,7 +304,7 @@ func TestHavingSameMapper(t *testing.T) {
 }
 
 func TestFindInts(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	userinfo := testEngine.GetTableMapper().Obj2Table("Userinfo")
@@ -340,7 +331,7 @@ func TestFindInts(t *testing.T) {
 }
 
 func TestFindStrings(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 	userinfo := testEngine.GetTableMapper().Obj2Table("Userinfo")
 	username := testEngine.GetColumnMapper().Obj2Table("Username")
@@ -350,7 +341,7 @@ func TestFindStrings(t *testing.T) {
 }
 
 func TestFindMyString(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 	userinfo := testEngine.GetTableMapper().Obj2Table("Userinfo")
 	username := testEngine.GetColumnMapper().Obj2Table("Username")
@@ -361,7 +352,7 @@ func TestFindMyString(t *testing.T) {
 }
 
 func TestFindInterface(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	userinfo := testEngine.GetTableMapper().Obj2Table("Userinfo")
@@ -372,7 +363,7 @@ func TestFindInterface(t *testing.T) {
 }
 
 func TestFindSliceBytes(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	userinfo := testEngine.GetTableMapper().Obj2Table("Userinfo")
@@ -382,7 +373,7 @@ func TestFindSliceBytes(t *testing.T) {
 }
 
 func TestFindSlicePtrString(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	userinfo := testEngine.GetTableMapper().Obj2Table("Userinfo")
@@ -392,7 +383,7 @@ func TestFindSlicePtrString(t *testing.T) {
 }
 
 func TestFindMapBytes(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	userinfo := testEngine.GetTableMapper().Obj2Table("Userinfo")
@@ -402,7 +393,7 @@ func TestFindMapBytes(t *testing.T) {
 }
 
 func TestFindMapPtrString(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Userinfo))
 
 	userinfo := testEngine.GetTableMapper().Obj2Table("Userinfo")
@@ -417,7 +408,7 @@ func TestFindBit(t *testing.T) {
 		Msg bool `xorm:"bit"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(FindBitStruct))
 
 	cnt, err := testEngine.Insert([]FindBitStruct{
@@ -445,7 +436,7 @@ func TestFindMark(t *testing.T) {
 		MarkA string `xorm:"VARCHAR(1)"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(Mark))
 
 	cnt, err := testEngine.Insert([]Mark{
@@ -476,7 +467,7 @@ func TestFindAndCountOneFunc(t *testing.T) {
 		Msg     bool `xorm:"bit"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(FindAndCountStruct))
 
 	cnt, err := testEngine.Insert([]FindAndCountStruct{
@@ -544,7 +535,7 @@ func TestFindAndCountOneFuncWithDeleted(t *testing.T) {
 		DeletedAt int64 `xorm:"deleted notnull default(0) index"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(CommentWithDeleted))
 
 	var comments []CommentWithDeleted
@@ -569,7 +560,7 @@ func TestFindAndCount2(t *testing.T) {
 		CreateBy *TestFindAndCountUser `xorm:"'create_by'"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(TestFindAndCountUser), new(TestFindAndCountHotel))
 
 	var u = TestFindAndCountUser{
@@ -627,7 +618,7 @@ func (device *FindMapDevice) TableName() string {
 }
 
 func TestFindMapStringId(t *testing.T) {
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(FindMapDevice))
 
 	cnt, err := testEngine.Insert(&FindMapDevice{
@@ -698,7 +689,7 @@ func TestFindExtends(t *testing.T) {
 		FindExtendsB `xorm:"extends"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(FindExtendsA))
 
 	cnt, err := testEngine.Insert(&FindExtendsA{
@@ -733,7 +724,7 @@ func TestFindExtends3(t *testing.T) {
 		FindExtendsBB `xorm:"extends"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(FindExtendsAA))
 
 	cnt, err := testEngine.Insert(&FindExtendsAA{
@@ -769,7 +760,7 @@ func TestFindCacheLimit(t *testing.T) {
 		Created time.Time `xorm:"created"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(InviteCode))
 
 	cnt, err := testEngine.Insert(&InviteCode{
@@ -814,7 +805,7 @@ func TestFindJoin(t *testing.T) {
 		Id int64
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(SceneItem), new(DeviceUserPrivrels), new(Order))
 
 	var scenes []SceneItem
@@ -844,7 +835,7 @@ func TestJoinFindLimit(t *testing.T) {
 		Name string
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(JoinFindLimit1), new(JoinFindLimit2))
 
 	var finds []JoinFindLimit1
@@ -876,7 +867,7 @@ func TestMoreExtends(t *testing.T) {
 		Users            MoreExtendsUsers `xorm:"extends" json:"users"`
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(MoreExtendsUsers), new(MoreExtendsBooks))
 
 	var books []MoreExtendsBooksExtend
@@ -904,7 +895,7 @@ func TestDistinctAndCols(t *testing.T) {
 		Name string
 	}
 
-	assert.NoError(t, prepareEngine())
+	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(DistinctAndCols))
 
 	cnt, err := testEngine.Insert(&DistinctAndCols{
