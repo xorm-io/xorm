@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 
-	"xorm.io/builder"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
 )
@@ -623,73 +622,10 @@ func (session *Session) insertMap(columns []string, args []interface{}) (int64, 
 		return 0, ErrTableNotFound
 	}
 
-	exprs := session.statement.ExprColumns
-	w := builder.NewWriter()
-	// if insert where
-	if session.statement.Conds().IsValid() {
-		if _, err := w.WriteString(fmt.Sprintf("INSERT INTO %s (", session.engine.Quote(tableName))); err != nil {
-			return 0, err
-		}
-
-		if err := session.engine.dialect.Quoter().JoinWrite(w.Builder, append(columns, exprs.ColNames...), ","); err != nil {
-			return 0, err
-		}
-
-		if _, err := w.WriteString(") SELECT "); err != nil {
-			return 0, err
-		}
-
-		if err := session.statement.WriteArgs(w, args); err != nil {
-			return 0, err
-		}
-
-		if len(exprs.Args) > 0 {
-			if _, err := w.WriteString(","); err != nil {
-				return 0, err
-			}
-			if err := exprs.WriteArgs(w); err != nil {
-				return 0, err
-			}
-		}
-
-		if _, err := w.WriteString(fmt.Sprintf(" FROM %s WHERE ", session.engine.Quote(tableName))); err != nil {
-			return 0, err
-		}
-
-		if err := session.statement.Conds().WriteTo(w); err != nil {
-			return 0, err
-		}
-	} else {
-		qm := strings.Repeat("?,", len(columns))
-		qm = qm[:len(qm)-1]
-
-		if _, err := w.WriteString(fmt.Sprintf("INSERT INTO %s (", session.engine.Quote(tableName))); err != nil {
-			return 0, err
-		}
-
-		if err := session.engine.dialect.Quoter().JoinWrite(w.Builder, append(columns, exprs.ColNames...), ","); err != nil {
-			return 0, err
-		}
-		if _, err := w.WriteString(fmt.Sprintf(") VALUES (%s", qm)); err != nil {
-			return 0, err
-		}
-
-		w.Append(args...)
-		if len(exprs.Args) > 0 {
-			if _, err := w.WriteString(","); err != nil {
-				return 0, err
-			}
-			if err := exprs.WriteArgs(w); err != nil {
-				return 0, err
-			}
-		}
-		if _, err := w.WriteString(")"); err != nil {
-			return 0, err
-		}
+	sql, args, err := session.statement.GenInsertMapSQL(columns, args)
+	if err != nil {
+		return 0, err
 	}
-
-	sql := w.String()
-	args = w.Args()
 
 	if err := session.cacheInsert(tableName); err != nil {
 		return 0, err
