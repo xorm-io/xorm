@@ -233,7 +233,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 			for _, closure := range session.afterClosures {
 				closure(elemValue)
 			}
-			if processor, ok := interface{}(elemValue).(AfterInsertProcessor); ok {
+			if processor, ok := elemValue.(AfterInsertProcessor); ok {
 				processor.AfterInsert()
 			}
 		} else {
@@ -246,7 +246,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 					session.afterInsertBeans[elemValue] = &afterClosures
 				}
 			} else {
-				if _, ok := interface{}(elemValue).(AfterInsertProcessor); ok {
+				if _, ok := elemValue.(AfterInsertProcessor); ok {
 					session.afterInsertBeans[elemValue] = nil
 				}
 			}

@@ -328,12 +328,6 @@ func (session *Session) DB() *core.DB {
 	return session.db()
 }
 
-func cleanupProcessorsClosures(slices *[]func(interface{})) {
-	if len(*slices) > 0 {
-		*slices = make([]func(interface{}), 0)
-	}
-}
-
 func (session *Session) canCache() bool {
 	if session.statement.RefTable == nil ||
 		session.statement.JoinStr != "" ||
@@ -425,56 +419,17 @@ func (session *Session) row2Slice(rows *core.Rows, fields []string, bean interfa
 		return nil, err
 	}
 
-	if b, hasBeforeSet := bean.(BeforeSetProcessor); hasBeforeSet {
-		for ii, key := range fields {
-			b.BeforeSet(key, Cell(scanResults[ii].(*interface{})))
-		}
-	}
+	executeBeforeSet(bean, fields, scanResults)
+
 	return scanResults, nil
 }
 
 func (session *Session) slice2Bean(scanResults []interface{}, fields []string, bean interface{}, dataStruct *reflect.Value, table *schemas.Table) (schemas.PK, error) {
 	defer func() {
-		if b, hasAfterSet := bean.(AfterSetProcessor); hasAfterSet {
-			for ii, key := range fields {
-				b.AfterSet(key, Cell(scanResults[ii].(*interface{})))
-			}
-		}
+		executeAfterSet(bean, fields, scanResults)
 	}()
 
-	// handle afterClosures
-	for _, closure := range session.afterClosures {
-		session.afterProcessors = append(session.afterProcessors, executedProcessor{
-			fun: func(sess *Session, bean interface{}) error {
-				closure(bean)
-				return nil
-			},
-			session: session,
-			bean:    bean,
-		})
-	}
-
-	if a, has := bean.(AfterLoadProcessor); has {
-		session.afterProcessors = append(session.afterProcessors, executedProcessor{
-			fun: func(sess *Session, bean interface{}) error {
-				a.AfterLoad()
-				return nil
-			},
-			session: session,
-			bean:    bean,
-		})
-	}
-
-	if a, has := bean.(AfterLoadSessionProcessor); has {
-		session.afterProcessors = append(session.afterProcessors, executedProcessor{
-			fun: func(sess *Session, bean interface{}) error {
-				a.AfterLoad(sess)
-				return nil
-			},
-			session: session,
-			bean:    bean,
-		})
-	}
+	buildAfterProcessors(session, bean)
 
 	var tempMap = make(map[string]int)
 	var pk schemas.PK
