@@ -118,6 +118,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 		colMultiPlaces []string
 		args           []interface{}
 		cols           []*schemas.Column
+		insertCnt      int
 	)
 
 	for i := 0; i < size; i++ {
@@ -155,7 +156,8 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 						colNames = append(colNames, col.Name)
 						cols = append(cols, col)
 					}
-					colPlaces = append(colPlaces, "seq_"+tableName+".nextval")
+					colPlaces = append(colPlaces, fmt.Sprintf("seq_"+tableName+".nextval + %d", insertCnt))
+					insertCnt++
 				}
 				continue
 			}
