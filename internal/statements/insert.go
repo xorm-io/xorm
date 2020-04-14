@@ -41,7 +41,9 @@ func (statement *Statement) GenInsertSQL(colNames []string, args []interface{}) 
 		return nil, err
 	}
 
-	if len(colNames) <= 0 {
+	var hasInsertColumns = len(colNames) > 0
+
+	if !hasInsertColumns && statement.dialect.URI().DBType != schemas.ORACLE {
 		if statement.dialect.URI().DBType == schemas.MYSQL {
 			if _, err := buf.WriteString(" VALUES ()"); err != nil {
 				return nil, err
@@ -118,8 +120,10 @@ func (statement *Statement) GenInsertSQL(colNames []string, args []interface{}) 
 
 			// Insert tablename (id) Values(seq_tablename.nextval)
 			if len(table.AutoIncrement) > 0 && statement.dialect.URI().DBType == schemas.ORACLE {
-				if _, err := buf.WriteString(","); err != nil {
-					return nil, err
+				if hasInsertColumns {
+					if _, err := buf.WriteString(","); err != nil {
+						return nil, err
+					}
 				}
 				if _, err := buf.WriteString("seq_" + tableName + ".nextval"); err != nil {
 					return nil, err

@@ -50,8 +50,9 @@ Drivers for Go's sql package which currently support database/sql includes:
 * MsSql
   - [github.com/denisenkom/go-mssqldb](https://github.com/denisenkom/go-mssqldb)
 
-* Oracle
-  - [github.com/mattn/go-oci8](https://github.com/mattn/go-oci8) (experiment)
+* Oracle (experiment)
+  - [github.com/mattn/go-oci8](https://github.com/mattn/go-oci8)
+  - [github.com/godror/godror](https://github.com/godror/godror)
 
 ## Installation
 

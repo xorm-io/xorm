@@ -360,10 +360,12 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		}
 
 		res, err := session.queryBytes(buf.String(), buf.Args()...)
-
 		if err != nil {
 			return 0, err
 		}
+
+		fmt.Println("=====", id)
+
 		defer handleAfterInsertProcessorFunc(bean)
 
 		session.cacheInsert(tableName)
