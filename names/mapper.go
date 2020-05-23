@@ -103,27 +103,28 @@ func (mapper SnakeMapper) Obj2Table(name string) string {
 }
 
 func titleCasedName(name string) string {
-	newstr := make([]rune, 0)
+	newstr := make([]byte, 0, len(name))
 	upNextChar := true
 
 	name = strings.ToLower(name)
 
-	for _, chr := range name {
+	for i := 0; i < len(name); i++ {
+		c := name[i]
 		switch {
 		case upNextChar:
 			upNextChar = false
-			if 'a' <= chr && chr <= 'z' {
-				chr -= ('a' - 'A')
+			if 'a' <= c && c <= 'z' {
+				c -= 'a' - 'A'
 			}
-		case chr == '_':
+		case c == '_':
 			upNextChar = true
 			continue
 		}
 
-		newstr = append(newstr, chr)
+		newstr = append(newstr, c)
 	}
 
-	return string(newstr)
+	return b2s(newstr)
 }
 
 func (mapper SnakeMapper) Table2Obj(name string) string {

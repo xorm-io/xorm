@@ -58,3 +58,13 @@ func BenchmarkSnakeCasedName(b *testing.B) {
 		_ = snakeCasedName(s)
 	}
 }
+
+func BenchmarkTitleCasedName(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	s := strings.Repeat("foo_bar", 32)
+	for i := 0; i < b.N; i++ {
+		_ = titleCasedName(s)
+	}
+}
