@@ -3,6 +3,20 @@
 This changelog goes through all the changes that have been made in each release
 without substantial changes to our git log.
 
+## [1.0.2](https://gitea.com/xorm/xorm/pulls?q=&type=all&state=closed&milestone=1261) - 2020-06-16
+
+* FEATURES
+  * Add Hook (#1644)
+* BUGFIXES
+  * Fix bug when ID used but no reference table given (#1709)
+  * Fix find and count bug (#1651)
+* ENHANCEMENTS
+  * chore: improve snakeCasedName performance (#1688)
+  * Fix find with another struct (#1666)
+  * fix GetColumns missing ordinal position (#1660)
+* MISC
+  * chore: improve titleCasedName performance (#1691)
+
 ## [1.0.1](https://gitea.com/xorm/xorm/pulls?q=&type=all&state=closed&milestone=1253) - 2020-03-25
 
 * BUGFIXES
