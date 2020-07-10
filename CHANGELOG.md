@@ -3,6 +3,14 @@
 This changelog goes through all the changes that have been made in each release
 without substantial changes to our git log.
 
+## [1.0.3](https://gitea.com/xorm/xorm/pulls?q=&type=all&state=closed&milestone=1281) - 2020-07-10
+
+* BUGFIXES
+  * Fix dump of sqlite (#1639)
+* ENHANCEMENTS
+  * Fix index name parsing in SQLite dialect (#1737)
+  * add hooks for Commit and Rollback (#1733)
+
 ## [1.0.2](https://gitea.com/xorm/xorm/pulls?q=&type=all&state=closed&milestone=1261) - 2020-06-16
 
 * FEATURES
