@@ -10,6 +10,7 @@ steps:
   commands:
     - make vet
     - make test
+    - make fmt-check
   when:
     event:
     - push
