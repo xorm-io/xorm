@@ -7,6 +7,7 @@ import (
 
 // Queryer represents an interface to query a SQL to get data from database
 type Queryer interface {
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *Row
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*Rows, error)
 }
 

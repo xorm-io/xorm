@@ -131,8 +131,33 @@ func (session *Session) DropTable(beanOrTableName interface{}) error {
 }
 
 func (session *Session) dropTable(beanOrTableName interface{}) error {
-	tableName := session.engine.TableName(beanOrTableName)
-	sqlStr, checkIfExist := session.engine.dialect.DropTableSQL(session.engine.TableName(tableName, true))
+	var tableName, autoIncrementCol string
+	switch beanOrTableName.(type) {
+	case *schemas.Table:
+		table := beanOrTableName.(*schemas.Table)
+		tableName = table.Name
+		if table.AutoIncrColumn() != nil {
+			autoIncrementCol = table.AutoIncrColumn().Name
+		}
+	case string:
+		tableName = beanOrTableName.(string)
+	default:
+		v := utils.ReflectValue(beanOrTableName)
+		table, err := session.engine.tagParser.ParseWithCache(v)
+		if err != nil {
+			return err
+		}
+		if session.statement.AltTableName != "" {
+			tableName = session.statement.AltTableName
+		} else {
+			tableName = table.Name
+		}
+		if table.AutoIncrColumn() != nil {
+			autoIncrementCol = table.AutoIncrColumn().Name
+		}
+	}
+
+	sqlStrs, checkIfExist := session.engine.dialect.DropTableSQL(tableName, autoIncrementCol)
 	if !checkIfExist {
 		exist, err := session.engine.dialect.IsTableExist(session.getQueryer(), session.ctx, tableName)
 		if err != nil {
@@ -142,8 +167,11 @@ func (session *Session) dropTable(beanOrTableName interface{}) error {
 	}
 
 	if checkIfExist {
-		_, err := session.exec(sqlStr)
-		return err
+		for _, sqlStr := range sqlStrs {
+			if _, err := session.exec(sqlStr); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

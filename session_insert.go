@@ -119,6 +119,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 		colMultiPlaces []string
 		args           []interface{}
 		cols           []*schemas.Column
+		insertCnt      int
 	)
 
 	for i := 0; i < size; i++ {
@@ -151,6 +152,14 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 			}
 			fieldValue := *ptrFieldValue
 			if col.IsAutoIncrement && utils.IsZero(fieldValue.Interface()) {
+				if session.engine.dialect.URI().DBType == schemas.ORACLE {
+					if i == 0 {
+						colNames = append(colNames, col.Name)
+						cols = append(cols, col)
+					}
+					colPlaces = append(colPlaces, fmt.Sprintf("seq_"+tableName+".nextval + %d", insertCnt))
+					insertCnt++
+				}
 				continue
 			}
 			if col.MapType == schemas.ONLYFROMDB {
@@ -280,7 +289,9 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 	if err := session.statement.SetRefBean(bean); err != nil {
 		return 0, err
 	}
-	if len(session.statement.TableName()) <= 0 {
+
+	var tableName = session.statement.TableName()
+	if tableName == "" {
 		return 0, ErrTableNotFound
 	}
 
@@ -294,7 +305,6 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		processor.BeforeInsert()
 	}
 
-	var tableName = session.statement.TableName()
 	table := session.statement.RefTable
 
 	colNames, args, err := session.genInsertColumns(bean)
@@ -302,7 +312,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		return 0, err
 	}
 
-	sqlStr, args, err := session.statement.GenInsertSQL(colNames, args)
+	buf, err := session.statement.GenInsertSQL(colNames, args)
 	if err != nil {
 		return 0, err
 	}
@@ -335,13 +345,27 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		cleanupProcessorsClosures(&session.afterClosures) // cleanup after used
 	}
 
+	var dialect = session.statement.Dialect()
+
 	// for postgres, many of them didn't implement lastInsertId, so we should
 	// implemented it ourself.
-	if session.engine.dialect.URI().DBType == schemas.ORACLE && len(table.AutoIncrement) > 0 {
-		res, err := session.queryBytes("select seq_atable.currval from dual", args...)
+	if len(table.AutoIncrement) > 0 && (dialect.URI().DBType == schemas.POSTGRES ||
+		dialect.URI().DBType == schemas.MSSQL ||
+		dialect.URI().DBType == schemas.ORACLE) {
+		var id int64
+		if dialect.URI().DBType == schemas.ORACLE {
+			if _, err := buf.WriteString(" INTO :var_name"); err != nil {
+				return 0, err
+			}
+			buf.Append(&id)
+		}
+
+		res, err := session.queryBytes(buf.String(), buf.Args()...)
 		if err != nil {
 			return 0, err
 		}
+
+		fmt.Println("=====", id)
 
 		defer handleAfterInsertProcessorFunc(bean)
 
@@ -356,56 +380,16 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 			}
 		}
 
-		if len(res) < 1 {
-			return 0, errors.New("insert no error but not returned id")
-		}
-
-		idByte := res[0][table.AutoIncrement]
-		id, err := strconv.ParseInt(string(idByte), 10, 64)
-		if err != nil || id <= 0 {
-			return 1, err
-		}
-
-		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
-		if err != nil {
-			session.engine.logger.Errorf("%v", err)
-		}
-
-		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
-			return 1, nil
-		}
-
-		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
-
-		return 1, nil
-	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.URI().DBType == schemas.POSTGRES ||
-		session.engine.dialect.URI().DBType == schemas.MSSQL) {
-		res, err := session.queryBytes(sqlStr, args...)
-
-		if err != nil {
-			return 0, err
-		}
-		defer handleAfterInsertProcessorFunc(bean)
-
-		session.cacheInsert(tableName)
-
-		if table.Version != "" && session.statement.CheckVersion {
-			verValue, err := table.VersionColumn().ValueOf(bean)
-			if err != nil {
-				session.engine.logger.Errorf("%v", err)
-			} else if verValue.IsValid() && verValue.CanSet() {
-				session.incrVersionFieldValue(verValue)
+		if dialect.URI().DBType != schemas.ORACLE {
+			if len(res) < 1 {
+				return 0, errors.New("insert successfully but not returned id")
 			}
-		}
 
-		if len(res) < 1 {
-			return 0, errors.New("insert successfully but not returned id")
-		}
-
-		idByte := res[0][table.AutoIncrement]
-		id, err := strconv.ParseInt(string(idByte), 10, 64)
-		if err != nil || id <= 0 {
-			return 1, err
+			idByte := res[0][table.AutoIncrement]
+			id, err = strconv.ParseInt(string(idByte), 10, 64)
+			if err != nil || id <= 0 {
+				return 1, err
+			}
 		}
 
 		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
@@ -422,7 +406,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		return 1, nil
 	}
 
-	res, err := session.exec(sqlStr, args...)
+	res, err := session.exec(buf.String(), buf.Args()...)
 	if err != nil {
 		return 0, err
 	}
@@ -537,10 +521,14 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 			}
 		}
 
-		if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime /*&& isZero(fieldValue.Interface())*/ {
+		if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
 			// if time is non-empty, then set to auto time
 			val, t := session.engine.nowTime(col)
-			args = append(args, val)
+			if session.engine.dialect.URI().DBType == schemas.ORACLE {
+				args = append(args, t)
+			} else {
+				args = append(args, val)
+			}
 
 			var colName = col.Name
 			session.afterClosures = append(session.afterClosures, func(bean interface{}) {

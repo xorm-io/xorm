@@ -311,10 +311,10 @@ func (db *mssql) AutoIncrStr() string {
 	return "IDENTITY"
 }
 
-func (db *mssql) DropTableSQL(tableName string) (string, bool) {
-	return fmt.Sprintf("IF EXISTS (SELECT * FROM sysobjects WHERE id = "+
+func (db *mssql) DropTableSQL(tableName, autoincrCol string) ([]string, bool) {
+	return []string{fmt.Sprintf("IF EXISTS (SELECT * FROM sysobjects WHERE id = "+
 		"object_id(N'%s') and OBJECTPROPERTY(id, N'IsUserTable') = 1) "+
-		"DROP TABLE \"%s\"", tableName, tableName), true
+		"DROP TABLE \"%s\"", tableName, tableName)}, true
 }
 
 func (db *mssql) IndexCheckSQL(tableName, idxName string) (string, []interface{}) {

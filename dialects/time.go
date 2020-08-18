@@ -17,7 +17,11 @@ func FormatTime(dialect Dialect, sqlTypeName string, t time.Time) (v interface{}
 		s := t.Format("2006-01-02 15:04:05") // time.RFC3339
 		v = s[11:19]
 	case schemas.Date:
-		v = t.Format("2006-01-02")
+		if dialect.URI().DBType == schemas.ORACLE {
+			v = t
+		} else {
+			v = t.Format("2006-01-02")
+		}
 	case schemas.DateTime, schemas.TimeStamp, schemas.Varchar: // !DarthPestilane! format time when sqlTypeName is schemas.Varchar.
 		v = t.Format("2006-01-02 15:04:05")
 	case schemas.TimeStampz:

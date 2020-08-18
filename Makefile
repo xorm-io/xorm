@@ -27,6 +27,12 @@ TEST_MYSQL_DBNAME ?= xorm_test
 TEST_MYSQL_USERNAME ?= root
 TEST_MYSQL_PASSWORD ?=
 
+TEST_ORACLE_HOST ?= oracle:1521
+TEST_ORACLE_SCHEMA ?=
+TEST_ORACLE_DBNAME ?= xe
+TEST_ORACLE_USERNAME ?= system
+TEST_ORACLE_PASSWORD ?= oracle
+
 TEST_PGSQL_HOST ?= pgsql:5432
 TEST_PGSQL_SCHEMA ?=
 TEST_PGSQL_DBNAME ?= xorm_test
@@ -124,6 +130,23 @@ misspell-check:
 	fi
 	misspell -error -i unknwon,destory $(GOFILES)
 
+.PHONY: install-instant-client
+install-instant-client:
+ifeq ("$(PKG_CONFIG_PATH)", )
+	wget https://download.oracle.com/otn_software/linux/instantclient/19600/instantclient-basic-linux.x64-19.6.0.0.0dbru.zip
+	unzip instantclient-basic-linux.x64-19.6.0.0.0dbru.zip -d /usr/local/instantclient
+	echo "prefixdir=/usr/local/instantclient
+libdir=${prefixdir}
+includedir=${prefixdir}/sdk/include
+
+Name: OCI
+Description: Oracle database driver
+Version: 11.2
+Libs: -L${libdir} -lclntsh
+Cflags: -I${includedir}" > /usr/local/instantclient/oci8.pc
+export PKG_CONFIG_PATH=/usr/local/instantclient/oci8.pc
+endif
+
 .PHONY: test
 test: go-check
 	$(GO) test $(PACKAGES)
@@ -175,6 +198,33 @@ test-mysql\#%: go-check
 	$(GO) test $(INTEGRATION_PACKAGES) -v -race -run $* -db=mysql -cache=$(TEST_CACHE_ENABLE) -quote=$(TEST_QUOTE_POLICY) \
 	-conn_str="$(TEST_MYSQL_USERNAME):$(TEST_MYSQL_PASSWORD)@tcp($(TEST_MYSQL_HOST))/$(TEST_MYSQL_DBNAME)?charset=$(TEST_MYSQL_CHARSET)" \
 	-coverprofile=mysql.$(TEST_QUOTE_POLICY).$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
+
+.PHONY: test-oracle
+test-oracle: test-godror
+
+.PNONY: test-oci8
+test-oci8: go-check install-instant-client
+	$(GO) test $(INTEGRATION_PACKAGES) -v -race -tags=oracle -db=oci8 -schema='$(TEST_ORACLE_SCHEMA)' -cache=$(TEST_CACHE_ENABLE) \
+	-conn_str="$(TEST_ORACLE_USERNAME):$(TEST_ORACLE_PASSWORD)@$(TEST_ORACLE_HOST)/$(TEST_ORACLE_DBNAME)" \
+	-coverprofile=oracle.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
+
+.PHONY: test-oci8\#%
+test-oci8\#%: go-check install-instant-client
+	$(GO) test $(INTEGRATION_PACKAGES) -v -race -run $* -tags=oracle -db=oci8 -schema='$(TEST_PGSQL_SCHEMA)' -cache=$(TEST_CACHE_ENABLE) \
+	-conn_str="postgres://$(TEST_PGSQL_USERNAME):$(TEST_PGSQL_PASSWORD)@$(TEST_PGSQL_HOST)/$(TEST_PGSQL_DBNAME)" \
+	-coverprofile=oracle.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
+
+.PHONY: test-godror
+test-godror: go-check install-instant-client
+	$(GO) test $(INTEGRATION_PACKAGES) -v -race -tags=oracle -db=godror -schema='$(TEST_ORACLE_SCHEMA)' -cache=$(TEST_CACHE_ENABLE) \
+	-conn_str="oracle://$(TEST_ORACLE_USERNAME):$(TEST_ORACLE_PASSWORD)@$(TEST_ORACLE_HOST)/$(TEST_ORACLE_DBNAME)" \
+	-coverprofile=oracle.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
+
+.PHONY: test-godror\#%
+test-godror\#%: go-check install-instant-client
+	$(GO) test $(INTEGRATION_PACKAGES) -v -race -run $* -tags=oracle -db=godror -schema='$(TEST_ORACLE_SCHEMA)' -cache=$(TEST_CACHE_ENABLE) \
+	-conn_str="oracle://$(TEST_ORACLE_USERNAME):$(TEST_ORACLE_PASSWORD)@$(TEST_ORACLE_HOST)/$(TEST_ORACLE_DBNAME)" \
+	-coverprofile=oracle.$(TEST_CACHE_ENABLE).coverage.out -covermode=atomic
 
 .PNONY: test-postgres
 test-postgres: go-check

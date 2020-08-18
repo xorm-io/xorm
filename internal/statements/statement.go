@@ -90,6 +90,10 @@ func NewStatement(dialect dialects.Dialect, tagParser *tags.Parser, defaultTimeZ
 	return statement
 }
 
+func (statement *Statement) Dialect() dialects.Dialect {
+	return statement.dialect
+}
+
 func (statement *Statement) SetTableName(tableName string) {
 	statement.tableName = tableName
 }
