@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
@@ -549,11 +550,18 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 		} else if col.IsVersion && session.statement.CheckVersion {
 			args = append(args, 1)
 		} else {
-			arg, err := session.statement.Value2Interface(col, fieldValue)
-			if err != nil {
-				return colNames, args, err
+			fieldType := fieldValue.Type()
+			if fieldType.ConvertibleTo(schemas.TimeType) && session.engine.dialect.URI().DBType == schemas.ORACLE {
+				t := fieldValue.Convert(schemas.TimeType).Interface().(time.Time)
+				_, t = session.engine.convertTime(col, t)
+				args = append(args, t)
+			} else {
+				arg, err := session.statement.Value2Interface(col, fieldValue)
+				if err != nil {
+					return colNames, args, err
+				}
+				args = append(args, arg)
 			}
-			args = append(args, arg)
 		}
 
 		colNames = append(colNames, col.Name)

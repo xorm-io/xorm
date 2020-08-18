@@ -1272,3 +1272,12 @@ func (engine *Engine) Transaction(f func(*Session) (interface{}, error)) (interf
 
 	return result, nil
 }
+
+// convertTime convert time
+func (engine *Engine) convertTime(col *schemas.Column, t time.Time) (interface{}, time.Time) {
+	var tz = engine.DatabaseTZ
+	if !col.DisableTimeZone && col.TimeZone != nil {
+		tz = col.TimeZone
+	}
+	return dialects.FormatTime(engine.dialect, col.SQLType.Name, t.In(tz)), t.In(engine.TZLocation)
+}
