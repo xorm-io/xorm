@@ -3,6 +3,17 @@
 This changelog goes through all the changes that have been made in each release
 without substantial changes to our git log.
 
+## [1.0.4](https://gitea.com/xorm/xorm/pulls?q=&type=all&state=closed&milestone=1286) - 2020-09-02
+
+* FEATURES
+  * Add params for mssql to allow redefine varchar as nvarchar or char as nchar (#1741)
+* BUGFIXES
+  * Fix mysql dialect error from invalid db identifier in orderby clause (#1743) (#1751)
+* ENHANCEMENTS
+  * Support get dataSourceName on ContextHook for  monitor which DB executed SQL (#1740)
+* MISC
+  * Correct default detection in MariaDB >= 10.2.7 (#1778)
+
 ## [1.0.3](https://gitea.com/xorm/xorm/pulls?q=&type=all&state=closed&milestone=1281) - 2020-07-10
 
 * BUGFIXES
