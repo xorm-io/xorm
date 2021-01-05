@@ -15,6 +15,7 @@ import (
 	"xorm.io/xorm/internal/statements"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/names"
+	"xorm.io/xorm/schemas"
 )
 
 func TestUpdateMap(t *testing.T) {
@@ -48,6 +49,19 @@ func TestUpdateMap(t *testing.T) {
 	assert.Error(t, err)
 	assert.True(t, statements.IsIDConditionWithNoTableErr(err))
 	assert.EqualValues(t, 0, cnt)
+
+	cnt, err = testEngine.Table("update_table").Update(map[string]interface{}{
+		"name": "test2",
+		"age":  36,
+	}, &UpdateTable{
+		Id: tb.Id,
+	})
+	assert.NoError(t, err)
+	if testEngine.Dialect().URI().DBType == schemas.SQLITE {
+		assert.EqualValues(t, 1, cnt)
+	} else {
+		assert.EqualValues(t, 0, cnt)
+	}
 }
 
 func TestUpdateLimit(t *testing.T) {

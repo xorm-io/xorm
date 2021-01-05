@@ -399,6 +399,10 @@ func TestSync2_Default(t *testing.T) {
 }
 
 func TestModifyColum(t *testing.T) {
+	// Since SQLITE don't support modify column SQL, currrently just ignore
+	if testEngine.Dialect().URI().DBType == schemas.SQLITE {
+		return
+	}
 	type TestModifyColumn struct {
 		Id       int64
 		UserId   int64  `xorm:"default(1)"`
