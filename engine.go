@@ -359,13 +359,16 @@ func (engine *Engine) loadTableInfo(table *schemas.Table) error {
 	var seq int
 	for _, index := range indexes {
 		for _, name := range index.Cols {
-			parts := strings.Split(name, " ")
+			parts := strings.Split(strings.TrimSpace(name), " ")
 			if len(parts) > 1 {
 				if parts[1] == "DESC" {
 					seq = 1
+				} else if parts[1] == "ASC" {
+					seq = 0
 				}
 			}
-			if col := table.GetColumn(parts[0]); col != nil {
+			var colName = strings.Trim(parts[0], `"`)
+			if col := table.GetColumn(colName); col != nil {
 				col.Indexes[index.Name] = index.Type
 			} else {
 				return fmt.Errorf("Unknown col %s seq %d, in index %v of table %v, columns %v", name, seq, index.Name, table.Name, table.ColumnsSeq())
