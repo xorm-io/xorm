@@ -962,3 +962,26 @@ func TestDistinctAndCols(t *testing.T) {
 	assert.EqualValues(t, 1, len(names))
 	assert.EqualValues(t, "test", names[0])
 }
+
+func TestDateTimeInt64(t *testing.T) {
+	type DateTimeInt64 struct {
+		Id        int64
+		TimeStamp int64 `xorm:"datetime"`
+	}
+
+	assert.NoError(t, PrepareEngine())
+	assertSync(t, new(DateTimeInt64))
+
+	ts := time.Now().Unix()
+	cnt, err := testEngine.Insert(&DateTimeInt64{
+		TimeStamp: ts,
+	})
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	var dts []DateTimeInt64
+	err = testEngine.Find(&dts)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(dts))
+	assert.EqualValues(t, ts, dts[0].TimeStamp)
+}
