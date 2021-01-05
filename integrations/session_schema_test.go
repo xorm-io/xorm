@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"xorm.io/xorm/schemas"
 )
 
 func TestStoreEngine(t *testing.T) {
@@ -395,4 +396,27 @@ func TestSync2_Default(t *testing.T) {
 	assert.NoError(t, PrepareEngine())
 	assertSync(t, new(TestSync2Default))
 	assert.NoError(t, testEngine.Sync2(new(TestSync2Default)))
+}
+
+func TestModifyColum(t *testing.T) {
+	type TestModifyColumn struct {
+		Id       int64
+		UserId   int64  `xorm:"default(1)"`
+		IsMember bool   `xorm:"default(true)"`
+		Name     string `xorm:"char(10)"`
+	}
+
+	assert.NoError(t, PrepareEngine())
+	assertSync(t, new(TestModifyColumn))
+
+	alterSQL := testEngine.Dialect().ModifyColumnSQL("test_modify_column", &schemas.Column{
+		Name: "name",
+		SQLType: schemas.SQLType{
+			Name: "VARCHAR",
+		},
+		Length:   16,
+		Nullable: false,
+	})
+	_, err := testEngine.Exec(alterSQL)
+	assert.NoError(t, err)
 }
