@@ -220,6 +220,8 @@ type mssql struct {
 
 func (db *mssql) Init(uri *URI) error {
 	db.quoter = mssqlQuoter
+	db.defaultChar = "CHAR"
+	db.defaultVarchar = "VARCHAR"
 	return db.Base.Init(db, uri)
 }
 
