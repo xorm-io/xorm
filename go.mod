@@ -10,5 +10,5 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/ziutek/mymysql v1.5.4
-	xorm.io/builder v0.3.7
+	xorm.io/builder v0.3.8
 )
