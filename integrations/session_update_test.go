@@ -57,10 +57,10 @@ func TestUpdateMap(t *testing.T) {
 		Id: tb.Id,
 	})
 	assert.NoError(t, err)
-	if testEngine.Dialect().URI().DBType == schemas.SQLITE {
-		assert.EqualValues(t, 1, cnt)
-	} else {
+	if testEngine.Dialect().URI().DBType == schemas.MYSQL {
 		assert.EqualValues(t, 0, cnt)
+	} else {
+		assert.EqualValues(t, 1, cnt)
 	}
 }
 
