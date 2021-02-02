@@ -105,6 +105,15 @@ func NewEngineWithParams(driverName string, dataSourceName string, params map[st
 	return engine, err
 }
 
+// NewEngineWithDB new a db manager with db. The params will be passed to db.
+func NewEngineWithDB(driverName string, dataSourceName string, db *core.DB) (*Engine, error) {
+	dialect, err := dialects.OpenDialect(driverName, dataSourceName)
+	if err != nil {
+		return nil, err
+	}
+	return newEngine(driverName, dataSourceName, dialect, db)
+}
+
 // NewEngineWithDialectAndDB new a db manager according to the parameter.
 // If you do not want to use your own dialect or db, please use NewEngine.
 // For creating dialect, you can call dialects.OpenDialect. And, for creating db,
