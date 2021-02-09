@@ -209,6 +209,11 @@ func (engine *Engine) SetColumnMapper(mapper names.Mapper) {
 	engine.tagParser.SetColumnMapper(mapper)
 }
 
+// SetTagIdentifier set the tag identifier
+func (engine *Engine) SetTagIdentifier(tagIdentifier string) {
+	engine.tagParser.SetIdentifier(tagIdentifier)
+}
+
 // Quote Use QuoteStr quote the string sql
 func (engine *Engine) Quote(value string) string {
 	value = strings.TrimSpace(value)

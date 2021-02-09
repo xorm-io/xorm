@@ -80,3 +80,26 @@ func TestUnexportField(t *testing.T) {
 		assert.NotEqual(t, "public", col.Name)
 	}
 }
+
+func TestParseWithOtherIdentifier(t *testing.T) {
+	parser := NewParser(
+		"xorm",
+		dialects.QueryDialect("mysql"),
+		names.GonicMapper{},
+		names.SnakeMapper{},
+		caches.NewManager(),
+	)
+
+	type StructWithDBTag struct {
+		FieldFoo string `db:"foo"`
+	}
+	parser.SetIdentifier("db")
+	table, err := parser.Parse(reflect.ValueOf(new(StructWithDBTag)))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "struct_with_db_tag", table.Name)
+	assert.EqualValues(t, 1, len(table.Columns()))
+
+	for _, col := range table.Columns() {
+		assert.EqualValues(t, "foo", col.Name)
+	}
+}
