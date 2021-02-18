@@ -168,6 +168,8 @@ func (engine *Engine) SetLogger(logger interface{}) {
 		realLogger = t
 	case log.Logger:
 		realLogger = log.NewLoggerAdapter(t)
+	default:
+		panic("logger should implement either log.ContextLogger or log.Logger")
 	}
 	engine.logger = realLogger
 	engine.DB().Logger = realLogger
