@@ -55,3 +55,12 @@ func OpenDialect(driverName, connstr string) (Dialect, error) {
 
 	return dialect, nil
 }
+
+
+type driverProxy struct {
+	parser func(connStr string) (*URI, error)
+}
+
+func (p *driverProxy) Parse(driverName, dataSourceName string) (*URI, error) {
+	return p.parser(dataSourceName)
+}
