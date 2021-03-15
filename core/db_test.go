@@ -15,6 +15,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 var (
@@ -27,7 +28,7 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 
 	switch *dbtype {
-	case "sqlite3":
+	case "sqlite3", "sqlite":
 		createTableSql = "CREATE TABLE IF NOT EXISTS `user` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NULL, " +
 			"`title` TEXT NULL, `age` FLOAT NULL, `alias` TEXT NULL, `nick_name` TEXT NULL, `created` datetime);"
 	case "mysql":
@@ -45,8 +46,11 @@ func TestMain(m *testing.M) {
 func testOpen() (*DB, error) {
 	switch *dbtype {
 	case "sqlite3":
-		os.Remove("./test.db")
+		os.Remove("./test_sqlite3.db")
 		return Open("sqlite3", "./test.db")
+	case "sqlite":
+		os.Remove("./test_sqlite.db")
+		return Open("sqlite", "./test.db")
 	case "mysql":
 		return Open("mysql", *dbConn)
 	default:

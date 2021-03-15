@@ -174,7 +174,13 @@ func MainTest(m *testing.M) {
 	dbType = *db
 	if *db == "sqlite3" {
 		if ptrConnStr == nil {
-			connString = "./test.db?cache=shared&mode=rwc"
+			connString = "./test_sqlite3.db?cache=shared&mode=rwc"
+		} else {
+			connString = *ptrConnStr
+		}
+	} else if *db == "sqlite" {
+		if ptrConnStr == nil {
+			connString = "./test_sqlite.db?cache=shared&mode=rwc"
 		} else {
 			connString = *ptrConnStr
 		}
