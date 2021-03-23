@@ -187,3 +187,12 @@ func TestSetSchema(t *testing.T) {
 		assert.EqualValues(t, oldSchema, testEngine.Dialect().URI().Schema)
 	}
 }
+
+func TestImport(t *testing.T) {
+	sess := testEngine.NewSession()
+	defer sess.Close()
+	assert.NoError(t, sess.Begin())
+	_, err := sess.ImportFile("./testdata/import1.sql")
+	assert.NoError(t, err)
+	assert.NoError(t, sess.Commit())
+}
