@@ -6,11 +6,13 @@ package integrations
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"testing"
 	"time"
 
+	"xorm.io/xorm"
 	"xorm.io/xorm/contexts"
 	"xorm.io/xorm/schemas"
 
@@ -748,5 +750,19 @@ func TestGetViaMapCond(t *testing.T) {
 
 	has, err := testEngine.Where(query).Get(&r)
 	assert.NoError(t, err)
+	assert.False(t, has)
+}
+
+func TestGetNil(t *testing.T) {
+	type GetNil struct {
+		Id int64
+	}
+
+	assert.NoError(t, PrepareEngine())
+	assertSync(t, new(GetNil))
+
+	var gn *GetNil
+	has, err := testEngine.Get(gn)
+	assert.True(t, errors.Is(err, xorm.ErrObjectIsNil))
 	assert.False(t, has)
 }
