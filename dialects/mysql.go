@@ -353,6 +353,8 @@ func (db *mysql) GetColumns(queryer core.Queryer, ctx context.Context, tableName
 
 		cts := strings.Split(colType, "(")
 		colName := cts[0]
+		// Remove the /* mariadb-5.3 */ suffix from coltypes
+		colName = strings.TrimSuffix(colName, "/* mariadb-5.3 */")
 		colType = strings.ToUpper(colName)
 		var len1, len2 int
 		if len(cts) == 2 {
