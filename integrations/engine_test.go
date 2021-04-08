@@ -189,6 +189,10 @@ func TestSetSchema(t *testing.T) {
 }
 
 func TestImport(t *testing.T) {
+	if testEngine.Dialect().URI().DBType != schemas.MYSQL {
+		t.SkipNow()
+		return
+	}
 	sess := testEngine.NewSession()
 	defer sess.Close()
 	assert.NoError(t, sess.Begin())
