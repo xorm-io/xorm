@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -97,6 +98,13 @@ func createEngine(dbType, connStr string) error {
 					return fmt.Errorf("db.Exec: %v", err)
 				}
 				db.Close()
+			case schemas.SQLITE, "sqlite":
+				u, err := url.Parse(connStr)
+				if err != nil {
+					return err
+				}
+				connStr = u.Path
+				*ignoreSelectUpdate = true
 			default:
 				*ignoreSelectUpdate = true
 			}
@@ -164,10 +172,12 @@ func createEngine(dbType, connStr string) error {
 	return nil
 }
 
+// PrepareEngine prepare tests ORM engine
 func PrepareEngine() error {
 	return createEngine(dbType, connString)
 }
 
+// MainTest the tests entrance
 func MainTest(m *testing.M) {
 	flag.Parse()
 

@@ -106,10 +106,7 @@ func TestInitSchema(t *testing.T) {
 		if err := tx.Sync2(&Person{}); err != nil {
 			return err
 		}
-		if err := tx.Sync2(&Pet{}); err != nil {
-			return err
-		}
-		return nil
+		return tx.Sync2(&Pet{})
 	})
 
 	err = m.Migrate()

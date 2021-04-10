@@ -110,10 +110,7 @@ func (m *Migrate) RollbackLast() error {
 		return err
 	}
 
-	if err := m.RollbackMigration(lastRunnedMigration); err != nil {
-		return err
-	}
-	return nil
+	return m.RollbackMigration(lastRunnedMigration)
 }
 
 func (m *Migrate) getLastRunnedMigration() (*Migration, error) {

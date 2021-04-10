@@ -85,7 +85,7 @@ func (session *Session) Commit() error {
 	return nil
 }
 
-// if current session is in a transaction
+// IsInTx if current session is in a transaction
 func (session *Session) IsInTx() bool {
 	return !session.isAutoCommit
 }

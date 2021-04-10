@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	// ErrObjectIsNil return error of object is nil
 	ErrObjectIsNil = errors.New("object should not be nil")
 )
 
