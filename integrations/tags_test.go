@@ -757,6 +757,8 @@ func TestAutoIncrTag(t *testing.T) {
 	assert.True(t, cols[0].IsAutoIncrement)
 	assert.True(t, cols[0].IsPrimaryKey)
 	assert.Equal(t, "id", cols[0].Name)
+	assert.True(t, cols[0].DefaultIsEmpty)
+	assert.EqualValues(t, "", cols[0].Default)
 
 	type TestAutoIncr2 struct {
 		Id int64 `xorm:"id"`
@@ -770,6 +772,8 @@ func TestAutoIncrTag(t *testing.T) {
 	assert.False(t, cols[0].IsAutoIncrement)
 	assert.False(t, cols[0].IsPrimaryKey)
 	assert.Equal(t, "id", cols[0].Name)
+	assert.True(t, cols[0].DefaultIsEmpty)
+	assert.EqualValues(t, "", cols[0].Default)
 
 	type TestAutoIncr3 struct {
 		Id int64 `xorm:"'ID'"`
@@ -783,6 +787,8 @@ func TestAutoIncrTag(t *testing.T) {
 	assert.False(t, cols[0].IsAutoIncrement)
 	assert.False(t, cols[0].IsPrimaryKey)
 	assert.Equal(t, "ID", cols[0].Name)
+	assert.True(t, cols[0].DefaultIsEmpty)
+	assert.EqualValues(t, "", cols[0].Default)
 
 	type TestAutoIncr4 struct {
 		Id int64 `xorm:"pk"`
@@ -796,6 +802,8 @@ func TestAutoIncrTag(t *testing.T) {
 	assert.False(t, cols[0].IsAutoIncrement)
 	assert.True(t, cols[0].IsPrimaryKey)
 	assert.Equal(t, "id", cols[0].Name)
+	assert.True(t, cols[0].DefaultIsEmpty)
+	assert.EqualValues(t, "", cols[0].Default)
 }
 
 func TestTagComment(t *testing.T) {
@@ -808,6 +816,16 @@ func TestTagComment(t *testing.T) {
 	type TestComment1 struct {
 		Id int64 `xorm:"comment(主键)"`
 	}
+
+	tb, err := testEngine.TableInfo(new(TestComment1))
+	assert.NoError(t, err)
+	cols := tb.Columns()
+	assert.EqualValues(t, 1, len(cols))
+	assert.False(t, cols[0].IsAutoIncrement)
+	assert.False(t, cols[0].IsPrimaryKey)
+	assert.Equal(t, "id", cols[0].Name)
+	assert.True(t, cols[0].DefaultIsEmpty)
+	assert.EqualValues(t, "", cols[0].Default)
 
 	assert.NoError(t, testEngine.Sync2(new(TestComment1)))
 
@@ -822,6 +840,16 @@ func TestTagComment(t *testing.T) {
 	type TestComment2 struct {
 		Id int64 `xorm:"comment('主键')"`
 	}
+
+	tb, err = testEngine.TableInfo(new(TestComment2))
+	assert.NoError(t, err)
+	cols = tb.Columns()
+	assert.EqualValues(t, 1, len(cols))
+	assert.False(t, cols[0].IsAutoIncrement)
+	assert.False(t, cols[0].IsPrimaryKey)
+	assert.Equal(t, "id", cols[0].Name)
+	assert.True(t, cols[0].DefaultIsEmpty)
+	assert.EqualValues(t, "", cols[0].Default)
 
 	assert.NoError(t, testEngine.Sync2(new(TestComment2)))
 
@@ -840,6 +868,28 @@ func TestTagDefault(t *testing.T) {
 		Name string
 		Age  int `xorm:"default(10)"`
 	}
+
+	tb, err := testEngine.TableInfo(new(DefaultStruct))
+	assert.NoError(t, err)
+	cols := tb.Columns()
+	assert.EqualValues(t, 3, len(cols))
+	assert.True(t, cols[0].IsAutoIncrement)
+	assert.True(t, cols[0].IsPrimaryKey)
+	assert.Equal(t, "id", cols[0].Name)
+	assert.True(t, cols[0].DefaultIsEmpty)
+	assert.EqualValues(t, "", cols[0].Default)
+
+	assert.False(t, cols[1].IsAutoIncrement)
+	assert.False(t, cols[1].IsPrimaryKey)
+	assert.Equal(t, "name", cols[1].Name)
+	assert.True(t, cols[1].DefaultIsEmpty)
+	assert.EqualValues(t, "", cols[1].Default)
+
+	assert.False(t, cols[2].IsAutoIncrement)
+	assert.False(t, cols[2].IsPrimaryKey)
+	assert.Equal(t, "age", cols[2].Name)
+	assert.False(t, cols[2].DefaultIsEmpty)
+	assert.EqualValues(t, "10", cols[2].Default)
 
 	assertSync(t, new(DefaultStruct))
 
@@ -880,9 +930,32 @@ func TestTagDefault2(t *testing.T) {
 	assert.NoError(t, PrepareEngine())
 
 	type DefaultStruct2 struct {
-		Id   int64
-		Name string
+		Id          int64
+		Name        string
+		NullDefault string `xorm:"default('NULL')"`
 	}
+
+	tb, err := testEngine.TableInfo(new(DefaultStruct2))
+	assert.NoError(t, err)
+	cols := tb.Columns()
+	assert.EqualValues(t, 3, len(cols))
+	assert.True(t, cols[0].IsAutoIncrement)
+	assert.True(t, cols[0].IsPrimaryKey)
+	assert.Equal(t, "id", cols[0].Name)
+	assert.True(t, cols[0].DefaultIsEmpty)
+	assert.EqualValues(t, "", cols[0].Default)
+
+	assert.False(t, cols[1].IsAutoIncrement)
+	assert.False(t, cols[1].IsPrimaryKey)
+	assert.Equal(t, "name", cols[1].Name)
+	assert.True(t, cols[1].DefaultIsEmpty)
+	assert.EqualValues(t, "", cols[1].Default)
+
+	assert.False(t, cols[2].IsAutoIncrement)
+	assert.False(t, cols[2].IsPrimaryKey)
+	assert.Equal(t, "null_default", cols[2].Name)
+	assert.False(t, cols[2].DefaultIsEmpty)
+	assert.EqualValues(t, "'NULL'", cols[2].Default)
 
 	assertSync(t, new(DefaultStruct2))
 
