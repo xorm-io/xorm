@@ -833,12 +833,12 @@ func (db *postgres) SQLType(c *schemas.Column) string {
 	case schemas.Bit:
 		res = schemas.Boolean
 		return res
-	case schemas.MediumInt, schemas.Int, schemas.Integer:
+	case schemas.MediumInt, schemas.Int, schemas.Integer, schemas.UnsignedInt:
 		if c.IsAutoIncrement {
 			return schemas.Serial
 		}
 		return schemas.Integer
-	case schemas.BigInt:
+	case schemas.BigInt, schemas.UnsignedBigInt:
 		if c.IsAutoIncrement {
 			return schemas.BigSerial
 		}
@@ -1050,6 +1050,10 @@ WHERE n.nspname= s.table_schema AND c.relkind = 'r'::char AND c.relname = $1%s A
 			if err != nil {
 				return nil, nil, err
 			}
+		}
+
+		if colDefault != nil && *colDefault == "unique_rowid()" { // ignore the system column added by cockroach
+			continue
 		}
 
 		col.Name = strings.Trim(colName, `" `)

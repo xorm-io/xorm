@@ -1,9 +1,9 @@
 module xorm.io/xorm
 
-go 1.11
+go 1.13
 
 require (
-	github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc
+	github.com/denisenkom/go-mssqldb v0.9.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/lib/pq v1.7.0
 	github.com/mattn/go-sqlite3 v1.14.6
