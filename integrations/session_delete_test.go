@@ -97,6 +97,7 @@ func TestDeleted(t *testing.T) {
 	// Test normal Find()
 	var records1 []Deleted
 	err = testEngine.Where("`"+testEngine.GetColumnMapper().Obj2Table("Id")+"` > 0").Find(&records1, &Deleted{})
+	assert.NoError(t, err)
 	assert.EqualValues(t, 3, len(records1))
 
 	// Test normal Get()
@@ -132,6 +133,7 @@ func TestDeleted(t *testing.T) {
 	record2 := &Deleted{}
 	has, err = testEngine.ID(2).Get(record2)
 	assert.NoError(t, err)
+	assert.True(t, has)
 	assert.True(t, record2.DeletedAt.IsZero())
 
 	// Test find all records whatever `deleted`.

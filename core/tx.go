@@ -51,10 +51,7 @@ func (tx *Tx) Commit() error {
 	}
 	err = tx.Tx.Commit()
 	hookCtx.End(ctx, nil, err)
-	if err := tx.db.afterProcess(hookCtx); err != nil {
-		return err
-	}
-	return nil
+	return tx.db.afterProcess(hookCtx)
 }
 
 // Rollback rollback the transaction
@@ -66,10 +63,7 @@ func (tx *Tx) Rollback() error {
 	}
 	err = tx.Tx.Rollback()
 	hookCtx.End(ctx, nil, err)
-	if err := tx.db.afterProcess(hookCtx); err != nil {
-		return err
-	}
-	return nil
+	return tx.db.afterProcess(hookCtx)
 }
 
 // PrepareContext prepare the query

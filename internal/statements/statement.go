@@ -90,12 +90,9 @@ func NewStatement(dialect dialects.Dialect, tagParser *tags.Parser, defaultTimeZ
 	return statement
 }
 
+// SetTableName set table name
 func (statement *Statement) SetTableName(tableName string) {
 	statement.tableName = tableName
-}
-
-func (statement *Statement) omitStr() string {
-	return statement.dialect.Quoter().Join(statement.OmitColumnMap, " ,")
 }
 
 // GenRawSQL generates correct raw sql
@@ -112,6 +109,7 @@ func (statement *Statement) GenCondSQL(condOrBuilder interface{}) (string, []int
 	return statement.ReplaceQuote(condSQL), condArgs, nil
 }
 
+// ReplaceQuote replace sql key words with quote
 func (statement *Statement) ReplaceQuote(sql string) string {
 	if sql == "" || statement.dialect.URI().DBType == schemas.MYSQL ||
 		statement.dialect.URI().DBType == schemas.SQLITE {
@@ -591,7 +589,7 @@ func (statement *Statement) Having(conditions string) *Statement {
 	return statement
 }
 
-// Unscoped always disable struct tag "deleted"
+// SetUnscoped always disable struct tag "deleted"
 func (statement *Statement) SetUnscoped() *Statement {
 	statement.unscoped = true
 	return statement
@@ -923,10 +921,7 @@ func (statement *Statement) mergeConds(bean interface{}) error {
 		statement.cond = statement.cond.And(autoCond)
 	}
 
-	if err := statement.ProcessIDParam(); err != nil {
-		return err
-	}
-	return nil
+	return statement.ProcessIDParam()
 }
 
 // GenConds generates conditions
