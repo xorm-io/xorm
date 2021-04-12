@@ -103,6 +103,7 @@ func (statement *Statement) GenRawSQL() string {
 	return statement.ReplaceQuote(statement.RawSQL)
 }
 
+// GenCondSQL generates condition SQL
 func (statement *Statement) GenCondSQL(condOrBuilder interface{}) (string, []interface{}, error) {
 	condSQL, condArgs, err := builder.ToSQL(condOrBuilder)
 	if err != nil {
@@ -119,11 +120,12 @@ func (statement *Statement) ReplaceQuote(sql string) string {
 	return statement.dialect.Quoter().Replace(sql)
 }
 
+// SetContextCache sets context cache
 func (statement *Statement) SetContextCache(ctxCache contexts.ContextCache) {
 	statement.Context = ctxCache
 }
 
-// Init reset all the statement's fields
+// Reset reset all the statement's fields
 func (statement *Statement) Reset() {
 	statement.RefTable = nil
 	statement.Start = 0
@@ -163,7 +165,7 @@ func (statement *Statement) Reset() {
 	statement.LastError = nil
 }
 
-// NoAutoCondition if you do not want convert bean's field as query condition, then use this function
+// SetNoAutoCondition if you do not want convert bean's field as query condition, then use this function
 func (statement *Statement) SetNoAutoCondition(no ...bool) *Statement {
 	statement.NoAutoCondition = true
 	if len(no) > 0 {
@@ -271,6 +273,7 @@ func (statement *Statement) NotIn(column string, args ...interface{}) *Statement
 	return statement
 }
 
+// SetRefValue set ref value
 func (statement *Statement) SetRefValue(v reflect.Value) error {
 	var err error
 	statement.RefTable, err = statement.tagParser.ParseWithCache(reflect.Indirect(v))
@@ -285,6 +288,7 @@ func rValue(bean interface{}) reflect.Value {
 	return reflect.Indirect(reflect.ValueOf(bean))
 }
 
+// SetRefBean set ref bean
 func (statement *Statement) SetRefBean(bean interface{}) error {
 	var err error
 	statement.RefTable, err = statement.tagParser.ParseWithCache(rValue(bean))
@@ -390,6 +394,7 @@ func (statement *Statement) Cols(columns ...string) *Statement {
 	return statement
 }
 
+// ColumnStr returns column string
 func (statement *Statement) ColumnStr() string {
 	return statement.dialect.Quoter().Join(statement.ColumnMap, ", ")
 }
@@ -493,11 +498,12 @@ func (statement *Statement) Asc(colNames ...string) *Statement {
 	return statement
 }
 
+// Conds returns condtions
 func (statement *Statement) Conds() builder.Cond {
 	return statement.cond
 }
 
-// Table tempororily set table name, the parameter could be a string or a pointer of struct
+// SetTable tempororily set table name, the parameter could be a string or a pointer of struct
 func (statement *Statement) SetTable(tableNameOrBean interface{}) error {
 	v := rValue(tableNameOrBean)
 	t := v.Type()
@@ -564,7 +570,7 @@ func (statement *Statement) Join(joinOP string, tablename interface{}, condition
 	return statement
 }
 
-// tbName get some table's table name
+// tbNameNoSchema get some table's table name
 func (statement *Statement) tbNameNoSchema(table *schemas.Table) string {
 	if len(statement.AltTableName) > 0 {
 		return statement.AltTableName
@@ -591,6 +597,7 @@ func (statement *Statement) SetUnscoped() *Statement {
 	return statement
 }
 
+// GetUnscoped return true if it's unscoped
 func (statement *Statement) GetUnscoped() bool {
 	return statement.unscoped
 }
@@ -636,6 +643,7 @@ func (statement *Statement) genColumnStr() string {
 	return buf.String()
 }
 
+// GenCreateTableSQL generated create table SQL
 func (statement *Statement) GenCreateTableSQL() []string {
 	statement.RefTable.StoreEngine = statement.StoreEngine
 	statement.RefTable.Charset = statement.Charset
@@ -643,6 +651,7 @@ func (statement *Statement) GenCreateTableSQL() []string {
 	return s
 }
 
+// GenIndexSQL generated create index SQL
 func (statement *Statement) GenIndexSQL() []string {
 	var sqls []string
 	tbName := statement.TableName()
@@ -659,6 +668,7 @@ func uniqueName(tableName, uqeName string) string {
 	return fmt.Sprintf("UQE_%v_%v", tableName, uqeName)
 }
 
+// GenUniqueSQL generates unique SQL
 func (statement *Statement) GenUniqueSQL() []string {
 	var sqls []string
 	tbName := statement.TableName()
@@ -671,6 +681,7 @@ func (statement *Statement) GenUniqueSQL() []string {
 	return sqls
 }
 
+// GenDelIndexSQL generate delete index SQL
 func (statement *Statement) GenDelIndexSQL() []string {
 	var sqls []string
 	tbName := statement.TableName()
@@ -896,6 +907,7 @@ func (statement *Statement) buildConds2(table *schemas.Table, bean interface{},
 	return builder.And(conds...), nil
 }
 
+// BuildConds builds condition
 func (statement *Statement) BuildConds(table *schemas.Table, bean interface{}, includeVersion bool, includeUpdated bool, includeNil bool, includeAutoIncr bool, addedTableName bool) (builder.Cond, error) {
 	return statement.buildConds2(table, bean, includeVersion, includeUpdated, includeNil, includeAutoIncr, statement.allUseBool, statement.useAllCols,
 		statement.unscoped, statement.MustColumnMap, statement.TableName(), statement.TableAlias, addedTableName)
@@ -917,6 +929,7 @@ func (statement *Statement) mergeConds(bean interface{}) error {
 	return nil
 }
 
+// GenConds generates conditions
 func (statement *Statement) GenConds(bean interface{}) (string, []interface{}, error) {
 	if err := statement.mergeConds(bean); err != nil {
 		return "", nil, err
@@ -930,6 +943,7 @@ func (statement *Statement) quoteColumnStr(columnStr string) string {
 	return statement.dialect.Quoter().Join(columns, ",")
 }
 
+// ConvertSQLOrArgs converts sql or args
 func (statement *Statement) ConvertSQLOrArgs(sqlOrArgs ...interface{}) (string, []interface{}, error) {
 	sql, args, err := convertSQLOrArgs(sqlOrArgs...)
 	if err != nil {

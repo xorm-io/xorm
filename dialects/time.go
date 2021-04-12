@@ -38,6 +38,7 @@ func FormatTime(dialect Dialect, sqlTypeName string, t time.Time) (v interface{}
 	return
 }
 
+// FormatColumnTime format column time
 func FormatColumnTime(dialect Dialect, defaultTimeZone *time.Location, col *schemas.Column, t time.Time) (v interface{}) {
 	if t.IsZero() {
 		if col.Nullable {

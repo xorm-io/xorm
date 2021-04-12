@@ -11,8 +11,10 @@ import (
 	"time"
 )
 
+// DBType represents a database type
 type DBType string
 
+// enumerates all database types
 const (
 	POSTGRES DBType = "postgres"
 	SQLITE   DBType = "sqlite3"
@@ -28,6 +30,7 @@ type SQLType struct {
 	DefaultLength2 int
 }
 
+// enumerates all columns types
 const (
 	UNKNOW_TYPE = iota
 	TEXT_TYPE
@@ -37,6 +40,7 @@ const (
 	ARRAY_TYPE
 )
 
+// IsType reutrns ture if the column type is the same as the parameter
 func (s *SQLType) IsType(st int) bool {
 	if t, ok := SqlTypes[s.Name]; ok && t == st {
 		return true
@@ -44,34 +48,42 @@ func (s *SQLType) IsType(st int) bool {
 	return false
 }
 
+// IsText returns true if column is a text type
 func (s *SQLType) IsText() bool {
 	return s.IsType(TEXT_TYPE)
 }
 
+// IsBlob returns true if column is a binary type
 func (s *SQLType) IsBlob() bool {
 	return s.IsType(BLOB_TYPE)
 }
 
+// IsTime returns true if column is a time type
 func (s *SQLType) IsTime() bool {
 	return s.IsType(TIME_TYPE)
 }
 
+// IsNumeric returns true if column is a numeric type
 func (s *SQLType) IsNumeric() bool {
 	return s.IsType(NUMERIC_TYPE)
 }
 
+// IsArray returns true if column is an array type
 func (s *SQLType) IsArray() bool {
 	return s.IsType(ARRAY_TYPE)
 }
 
+// IsJson returns true if column is an array type
 func (s *SQLType) IsJson() bool {
 	return s.Name == Json || s.Name == Jsonb
 }
 
+// IsXML returns true if column is an xml type
 func (s *SQLType) IsXML() bool {
 	return s.Name == XML
 }
 
+// enumerates all the database column types
 var (
 	Bit            = "BIT"
 	UnsignedBit    = "UNSIGNED BIT"

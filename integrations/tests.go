@@ -166,10 +166,7 @@ func createEngine(dbType, connStr string) error {
 	for _, table := range tables {
 		tableNames = append(tableNames, table.Name)
 	}
-	if err = testEngine.DropTables(tableNames...); err != nil {
-		return err
-	}
-	return nil
+	return testEngine.DropTables(tableNames...)
 }
 
 // PrepareEngine prepare tests ORM engine
