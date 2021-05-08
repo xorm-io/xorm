@@ -21,6 +21,7 @@ import (
 	"xorm.io/xorm/contexts"
 	"xorm.io/xorm/core"
 	"xorm.io/xorm/dialects"
+	"xorm.io/xorm/internal/json"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/log"
 	"xorm.io/xorm/names"
@@ -457,7 +458,19 @@ func formatColumnValue(dstDialect dialects.Dialect, d interface{}, col *schemas.
 	}
 
 	if col.SQLType.IsText() {
-		var v = fmt.Sprintf("%s", d)
+		var v string
+		switch reflect.TypeOf(d).Kind() {
+		case reflect.Struct, reflect.Array, reflect.Slice:
+			bytes, err := json.DefaultJSONHandler.Marshal(d)
+			if err != nil {
+				v = fmt.Sprintf("%s", d)
+			} else {
+				v = string(bytes)
+			}
+		default:
+			v = fmt.Sprintf("%s", d)
+		}
+
 		return "'" + strings.Replace(v, "'", "''", -1) + "'"
 	} else if col.SQLType.IsTime() {
 		if dstDialect.URI().DBType == schemas.MSSQL && col.SQLType.Name == schemas.DateTime {
