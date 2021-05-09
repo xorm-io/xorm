@@ -824,6 +824,11 @@ func (db *postgres) SetQuotePolicy(quotePolicy QuotePolicy) {
 	}
 }
 
+// FormatBytes formats bytes
+func (db *postgres) FormatBytes(bs []byte) string {
+	return fmt.Sprintf("E'\\x%x'", bs)
+}
+
 func (db *postgres) SQLType(c *schemas.Column) string {
 	var res string
 	switch t := c.SQLType.Name; t {

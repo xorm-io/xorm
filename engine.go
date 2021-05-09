@@ -460,7 +460,7 @@ func formatColumnValue(dstDialect dialects.Dialect, d interface{}, col *schemas.
 	if col.SQLType.IsText() {
 		var v string
 		switch reflect.TypeOf(d).Kind() {
-		case reflect.Struct, reflect.Array, reflect.Slice:
+		case reflect.Struct, reflect.Array, reflect.Slice, reflect.Map:
 			bytes, err := json.DefaultJSONHandler.Marshal(d)
 			if err != nil {
 				v = fmt.Sprintf("%s", d)
