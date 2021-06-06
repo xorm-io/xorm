@@ -84,6 +84,9 @@ func TestFind(t *testing.T) {
 	err := testEngine.Find(&users)
 	assert.NoError(t, err)
 
+	err = testEngine.Limit(10, 0).Find(&users)
+	assert.NoError(t, err)
+
 	users2 := make([]Userinfo, 0)
 	var tbName = testEngine.Quote(testEngine.TableName(new(Userinfo), true))
 	err = testEngine.SQL("select * from " + tbName).Find(&users2)
