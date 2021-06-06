@@ -653,6 +653,31 @@ func TestFindAndCount2(t *testing.T) {
 	assert.EqualValues(t, 0, cnt)
 }
 
+type FindAndCountWithTableName struct {
+	Id   int64
+	Name string
+}
+
+func (FindAndCountWithTableName) TableName() string {
+	return "find_and_count_with_table_name1"
+}
+
+func TestFindAndCountWithTableName(t *testing.T) {
+	assert.NoError(t, PrepareEngine())
+	assertSync(t, new(FindAndCountWithTableName))
+
+	cnt, err := testEngine.Insert(&FindAndCountWithTableName{
+		Name: "1",
+	})
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	var res []FindAndCountWithTableName
+	cnt, err = testEngine.FindAndCount(&res)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+}
+
 type FindMapDevice struct {
 	Deviceid string `xorm:"pk"`
 	Status   int
