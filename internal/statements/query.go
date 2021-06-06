@@ -181,9 +181,20 @@ func (statement *Statement) GenCountSQL(beans ...interface{}) (string, []interfa
 			selectSQL = "count(*)"
 		}
 	}
-	sqlStr, condArgs, err := statement.genSelectSQL(selectSQL, false, false)
+	var subQuerySelect string
+	if statement.GroupByStr != "" {
+		subQuerySelect = statement.GroupByStr
+	} else {
+		subQuerySelect = selectSQL
+	}
+
+	sqlStr, condArgs, err := statement.genSelectSQL(subQuerySelect, false, false)
 	if err != nil {
 		return "", nil, err
+	}
+
+	if statement.GroupByStr != "" {
+		sqlStr = fmt.Sprintf("SELECT %s FROM (%s) sub", selectSQL, sqlStr)
 	}
 
 	return sqlStr, append(statement.joinArgs, condArgs...), nil
