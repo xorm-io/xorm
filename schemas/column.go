@@ -24,7 +24,7 @@ const (
 type Column struct {
 	Name            string
 	TableName       string
-	FieldName       string // Avaiable only when parsed from a struct
+	FieldName       string // Available only when parsed from a struct
 	SQLType         SQLType
 	IsJSON          bool
 	Length          int
