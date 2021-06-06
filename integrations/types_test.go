@@ -7,6 +7,8 @@ package integrations
 import (
 	"errors"
 	"fmt"
+	"math/big"
+	"strconv"
 	"testing"
 
 	"xorm.io/xorm"
@@ -401,4 +403,50 @@ func TestUnsigned(t *testing.T) {
 	default:
 		assert.False(t, true, "Unsigned is not implemented")
 	}
+}
+
+type MyDecimal big.Int
+
+func (d *MyDecimal) FromDB(data []byte) error {
+	i, _ := strconv.ParseInt(string(data), 10, 64)
+	if d == nil {
+		d = (*MyDecimal)(big.NewInt(i))
+	} else {
+		(*big.Int)(d).SetInt64(i)
+	}
+	return nil
+}
+
+func (d *MyDecimal) ToDB() ([]byte, error) {
+	return []byte(fmt.Sprintf("%d", (*big.Int)(d).Int64())), nil
+}
+
+func (d *MyDecimal) AsBigInt() *big.Int {
+	return (*big.Int)(d)
+}
+
+func (d *MyDecimal) AsInt64() int64 {
+	return d.AsBigInt().Int64()
+}
+
+func TestDecimal(t *testing.T) {
+	type MyMoney struct {
+		Id      int64
+		Account *MyDecimal
+	}
+
+	assert.NoError(t, PrepareEngine())
+	assertSync(t, new(MyMoney))
+
+	_, err := testEngine.Insert(&MyMoney{
+		Account: (*MyDecimal)(big.NewInt(10000000000000000)),
+	})
+	assert.NoError(t, err)
+
+	var m MyMoney
+	has, err := testEngine.Get(&m)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.NotNil(t, m.Account)
+	assert.EqualValues(t, 10000000000000000, m.Account.AsInt64())
 }
