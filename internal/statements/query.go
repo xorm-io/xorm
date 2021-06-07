@@ -106,10 +106,13 @@ func (statement *Statement) GenSumSQL(bean interface{}, columns ...string) (stri
 
 // GenGetSQL generates Get SQL
 func (statement *Statement) GenGetSQL(bean interface{}) (string, []interface{}, error) {
-	v := rValue(bean)
-	isStruct := v.Kind() == reflect.Struct
-	if isStruct {
-		statement.SetRefBean(bean)
+	var isStruct bool
+	if bean != nil {
+		v := rValue(bean)
+		isStruct = v.Kind() == reflect.Struct
+		if isStruct {
+			statement.SetRefBean(bean)
+		}
 	}
 
 	var columnStr = statement.ColumnStr()
@@ -340,12 +343,25 @@ func (statement *Statement) GenExistSQL(bean ...interface{}) (string, []interfac
 	var args []interface{}
 	var joinStr string
 	var err error
-	if len(bean) == 0 {
-		tableName := statement.TableName()
-		if len(tableName) <= 0 {
-			return "", nil, ErrTableNotFound
+	var b interface{} = nil
+	if len(bean) > 0 {
+		b = bean[0]
+		beanValue := reflect.ValueOf(bean[0])
+		if beanValue.Kind() != reflect.Ptr {
+			return "", nil, errors.New("needs a pointer")
 		}
 
+		if beanValue.Elem().Kind() == reflect.Struct {
+			if err := statement.SetRefBean(bean[0]); err != nil {
+				return "", nil, err
+			}
+		}
+	}
+	tableName := statement.TableName()
+	if len(tableName) <= 0 {
+		return "", nil, ErrTableNotFound
+	}
+	if statement.RefTable == nil {
 		tableName = statement.quote(tableName)
 		if len(statement.JoinStr) > 0 {
 			joinStr = statement.JoinStr
@@ -376,22 +392,8 @@ func (statement *Statement) GenExistSQL(bean ...interface{}) (string, []interfac
 			args = []interface{}{}
 		}
 	} else {
-		beanValue := reflect.ValueOf(bean[0])
-		if beanValue.Kind() != reflect.Ptr {
-			return "", nil, errors.New("needs a pointer")
-		}
-
-		if beanValue.Elem().Kind() == reflect.Struct {
-			if err := statement.SetRefBean(bean[0]); err != nil {
-				return "", nil, err
-			}
-		}
-
-		if len(statement.TableName()) <= 0 {
-			return "", nil, ErrTableNotFound
-		}
 		statement.Limit(1)
-		sqlStr, args, err = statement.GenGetSQL(bean[0])
+		sqlStr, args, err = statement.GenGetSQL(b)
 		if err != nil {
 			return "", nil, err
 		}

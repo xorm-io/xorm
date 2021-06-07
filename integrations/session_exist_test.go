@@ -75,6 +75,10 @@ func TestExistStruct(t *testing.T) {
 	has, err = testEngine.Table("record_exist").Where("name = ?", "test2").Exist()
 	assert.NoError(t, err)
 	assert.False(t, has)
+
+	has, err = testEngine.Table(new(RecordExist)).ID(1).Cols("id").Exist()
+	assert.NoError(t, err)
+	assert.True(t, has)
 }
 
 func TestExistStructForJoin(t *testing.T) {
