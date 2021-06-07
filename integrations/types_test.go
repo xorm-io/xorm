@@ -450,3 +450,38 @@ func TestDecimal(t *testing.T) {
 	assert.NotNil(t, m.Account)
 	assert.EqualValues(t, 10000000000000000, m.Account.AsInt64())
 }
+
+type MyArray [20]byte
+
+func (d *MyArray) FromDB(data []byte) error {
+	for i, b := range data[:20] {
+		(*d)[i] = b
+	}
+	return nil
+}
+
+func (d MyArray) ToDB() ([]byte, error) {
+	return d[:], nil
+}
+
+func TestMyArray(t *testing.T) {
+	type MyArrayStruct struct {
+		Id      int64
+		Content MyArray
+	}
+
+	assert.NoError(t, PrepareEngine())
+	assertSync(t, new(MyArrayStruct))
+
+	var v = [20]byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+	_, err := testEngine.Insert(&MyArrayStruct{
+		Content: v,
+	})
+	assert.NoError(t, err)
+
+	var m MyArrayStruct
+	has, err := testEngine.Get(&m)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, v, m.Content)
+}
