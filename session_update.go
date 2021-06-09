@@ -224,35 +224,35 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 
 	// for update action to like "column = column + ?"
 	incColumns := session.statement.IncrColumns
-	for i, colName := range incColumns.ColNames {
-		colNames = append(colNames, session.engine.Quote(colName)+" = "+session.engine.Quote(colName)+" + ?")
-		args = append(args, incColumns.Args[i])
+	for _, expr := range incColumns {
+		colNames = append(colNames, session.engine.Quote(expr.ColName)+" = "+session.engine.Quote(expr.ColName)+" + ?")
+		args = append(args, expr.Arg)
 	}
 	// for update action to like "column = column - ?"
 	decColumns := session.statement.DecrColumns
-	for i, colName := range decColumns.ColNames {
-		colNames = append(colNames, session.engine.Quote(colName)+" = "+session.engine.Quote(colName)+" - ?")
-		args = append(args, decColumns.Args[i])
+	for _, expr := range decColumns {
+		colNames = append(colNames, session.engine.Quote(expr.ColName)+" = "+session.engine.Quote(expr.ColName)+" - ?")
+		args = append(args, expr.Arg)
 	}
 	// for update action to like "column = expression"
 	exprColumns := session.statement.ExprColumns
-	for i, colName := range exprColumns.ColNames {
-		switch tp := exprColumns.Args[i].(type) {
+	for _, expr := range exprColumns {
+		switch tp := expr.Arg.(type) {
 		case string:
 			if len(tp) == 0 {
 				tp = "''"
 			}
-			colNames = append(colNames, session.engine.Quote(colName)+"="+tp)
+			colNames = append(colNames, session.engine.Quote(expr.ColName)+"="+tp)
 		case *builder.Builder:
 			subQuery, subArgs, err := session.statement.GenCondSQL(tp)
 			if err != nil {
 				return 0, err
 			}
-			colNames = append(colNames, session.engine.Quote(colName)+"=("+subQuery+")")
+			colNames = append(colNames, session.engine.Quote(expr.ColName)+"=("+subQuery+")")
 			args = append(args, subArgs...)
 		default:
-			colNames = append(colNames, session.engine.Quote(colName)+"=?")
-			args = append(args, exprColumns.Args[i])
+			colNames = append(colNames, session.engine.Quote(expr.ColName)+"=?")
+			args = append(args, expr.Arg)
 		}
 	}
 
