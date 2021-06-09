@@ -986,3 +986,43 @@ func TestInsertTwice(t *testing.T) {
 
 	assert.NoError(t, ssn.Commit())
 }
+
+func TestInsertIntSlice(t *testing.T) {
+	assert.NoError(t, PrepareEngine())
+
+	type InsertIntSlice struct {
+		NameIDs []int `xorm:"json notnull"`
+	}
+
+	assert.NoError(t, testEngine.Sync2(new(InsertIntSlice)))
+
+	var v = InsertIntSlice{
+		NameIDs: []int{1, 2},
+	}
+	cnt, err := testEngine.Insert(&v)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	var v2 InsertIntSlice
+	has, err := testEngine.Get(&v2)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, v, v2)
+
+	cnt, err = testEngine.Where("1=1").Delete(new(InsertIntSlice))
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	var v3 = InsertIntSlice{
+		NameIDs: nil,
+	}
+	cnt, err = testEngine.Insert(&v3)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	var v4 InsertIntSlice
+	has, err = testEngine.Get(&v4)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, v3, v4)
+}
