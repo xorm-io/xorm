@@ -1221,7 +1221,8 @@ func (db *postgres) GetIndexes(queryer core.Queryer, ctx context.Context, tableN
 			continue
 		}
 		indexName = strings.Trim(indexName, `" `)
-		if strings.HasSuffix(indexName, "_pkey") {
+		// ignore primary index
+		if strings.HasSuffix(indexName, "_pkey") || strings.EqualFold(indexName, "primary") {
 			continue
 		}
 		if strings.HasPrefix(indexdef, "CREATE UNIQUE INDEX") {
@@ -1241,7 +1242,9 @@ func (db *postgres) GetIndexes(queryer core.Queryer, ctx context.Context, tableN
 
 		index := &schemas.Index{Name: indexName, Type: indexType, Cols: make([]string, 0)}
 		for _, colName := range colNames {
-			index.Cols = append(index.Cols, strings.TrimSpace(strings.Replace(colName, `"`, "", -1)))
+			col := strings.TrimSpace(strings.Replace(colName, `"`, "", -1))
+			fields := strings.Split(col, " ")
+			index.Cols = append(index.Cols, fields[0])
 		}
 		index.IsRegular = isRegular
 		indexes[index.Name] = index
