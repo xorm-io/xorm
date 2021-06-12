@@ -76,7 +76,6 @@ volumes:
 
 services:
 - name: mysql
-  pull: never
   image: mysql:5.7
   environment:
     MYSQL_ALLOW_EMPTY_PASSWORD: yes
@@ -116,7 +115,6 @@ volumes:
 
 services:
 - name: mysql8
-  pull: never
   image: mysql:8.0
   environment:
     MYSQL_ALLOW_EMPTY_PASSWORD: yes
@@ -156,7 +154,6 @@ volumes:
 
 services:
 - name: mariadb
-  pull: never
   image: mariadb:10.4
   environment:
     MYSQL_ALLOW_EMPTY_PASSWORD: yes
@@ -211,7 +208,6 @@ volumes:
 
 services:
 - name: pgsql
-  pull: never
   image: postgres:9.5
   environment:
     POSTGRES_DB: xorm_test
@@ -292,7 +288,6 @@ volumes:
 
 services:
 - name: tidb
-  pull: never
   image: pingcap/tidb:v3.0.3
 
 ---
@@ -328,7 +323,6 @@ volumes:
 
 services:
 - name: cockroach
-  pull: never
   image: cockroachdb/cockroach:v19.2.4
   commands:
   - /cockroach/cockroach start --insecure
@@ -348,11 +342,8 @@ trigger:
   ref:
   - refs/heads/master
   - refs/pull/*/head
-clone:
-  disable: true
 steps:
 - name: merge_coverage
-  pull: never
   image: golang:1.15
   commands:
   - make coverage
