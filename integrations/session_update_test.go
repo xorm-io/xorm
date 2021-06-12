@@ -792,7 +792,7 @@ func TestNoUpdate(t *testing.T) {
 
 	_, err = testEngine.ID(1).Update(&NoUpdate{})
 	assert.Error(t, err)
-	assert.EqualValues(t, "No content found to be updated", err.Error())
+	assert.EqualError(t, xorm.ErrNoColumnsTobeUpdated, err.Error())
 }
 
 func TestNewUpdate(t *testing.T) {
@@ -922,7 +922,7 @@ func TestDeletedUpdate(t *testing.T) {
 	assert.EqualValues(t, 1, cnt)
 
 	cnt, err = testEngine.ID(s.Id).Cols("deleted_at").Update(&DeletedUpdatedStruct{})
-	assert.EqualValues(t, "No content found to be updated", err.Error())
+	assert.EqualError(t, xorm.ErrNoColumnsTobeUpdated, err.Error())
 	assert.EqualValues(t, 0, cnt)
 
 	cnt, err = testEngine.ID(s.Id).Unscoped().Cols("deleted_at").Update(&DeletedUpdatedStruct{})

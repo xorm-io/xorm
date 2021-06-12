@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"xorm.io/xorm"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/names"
 
@@ -1019,4 +1020,29 @@ func TestDistinctAndCols(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(names))
 	assert.EqualValues(t, "test", names[0])
+}
+
+func TestUpdateFind(t *testing.T) {
+	type TestUpdateFind struct {
+		Id   int64
+		Name string
+	}
+
+	assert.NoError(t, PrepareEngine())
+	assertSync(t, new(TestUpdateFind))
+
+	session := testEngine.NewSession()
+	defer session.Close()
+
+	var tuf = TestUpdateFind{
+		Name: "test",
+	}
+	_, err := session.Insert(&tuf)
+	assert.NoError(t, err)
+	_, err = session.Where("id = ?", tuf.Id).Update(&TestUpdateFind{})
+	assert.EqualError(t, xorm.ErrNoColumnsTobeUpdated, err.Error())
+
+	var tufs []TestUpdateFind
+	err = session.Where("id = ?", tuf.Id).Find(&tufs)
+	assert.NoError(t, err)
 }

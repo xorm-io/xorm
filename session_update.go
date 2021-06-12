@@ -17,6 +17,11 @@ import (
 	"xorm.io/xorm/schemas"
 )
 
+// enumerated all errors
+var (
+	ErrNoColumnsTobeUpdated = errors.New("no columns found to be updated")
+)
+
 func (session *Session) cacheUpdate(table *schemas.Table, tableName, sqlStr string, args ...interface{}) error {
 	if table == nil ||
 		session.tx != nil {
@@ -143,6 +148,8 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	if session.isAutoClose {
 		defer session.Close()
 	}
+
+	defer session.resetStatement()
 
 	if session.statement.LastError != nil {
 		return 0, session.statement.LastError
@@ -329,7 +336,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	}
 
 	if len(colNames) <= 0 {
-		return 0, errors.New("No content found to be updated")
+		return 0, ErrNoColumnsTobeUpdated
 	}
 
 	condSQL, condArgs, err = session.statement.GenCondSQL(cond)
