@@ -176,6 +176,23 @@ func TestDumpTables(t *testing.T) {
 	}
 }
 
+func TestDumpTables2(t *testing.T) {
+	assert.NoError(t, PrepareEngine())
+
+	type TestDumpTableStruct2 struct {
+		Id      int64
+		Created time.Time `xorm:"Default CURRENT_TIMESTAMP"`
+	}
+
+	assertSync(t, new(TestDumpTableStruct2))
+
+	fp := fmt.Sprintf("./dump2-%v-table.sql", testEngine.Dialect().URI().DBType)
+	os.Remove(fp)
+	tb, err := testEngine.TableInfo(new(TestDumpTableStruct2))
+	assert.NoError(t, err)
+	assert.NoError(t, testEngine.(*xorm.Engine).DumpTablesToFile([]*schemas.Table{tb}, fp))
+}
+
 func TestSetSchema(t *testing.T) {
 	assert.NoError(t, PrepareEngine())
 
