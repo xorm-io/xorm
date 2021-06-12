@@ -7,6 +7,7 @@ package integrations
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"strconv"
 	"testing"
@@ -378,7 +379,7 @@ func TestCustomType2(t *testing.T) {
 	fmt.Println(users)
 }
 
-func TestUnsigned(t *testing.T) {
+func TestUnsignedUint64(t *testing.T) {
 	type MyUnsignedStruct struct {
 		Id uint64
 	}
@@ -403,6 +404,62 @@ func TestUnsigned(t *testing.T) {
 	default:
 		assert.False(t, true, "Unsigned is not implemented")
 	}
+
+	// Only MYSQL database supports unsigned bigint
+	if testEngine.Dialect().URI().DBType != schemas.MYSQL {
+		return
+	}
+
+	cnt, err := testEngine.Insert(&MyUnsignedStruct{
+		Id: math.MaxUint64,
+	})
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	var v MyUnsignedStruct
+	has, err := testEngine.Get(&v)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, uint64(math.MaxUint64), v.Id)
+}
+
+func TestUnsignedUint32(t *testing.T) {
+	type MyUnsignedInt32Struct struct {
+		Id uint32
+	}
+
+	assert.NoError(t, PrepareEngine())
+	assertSync(t, new(MyUnsignedInt32Struct))
+
+	tables, err := testEngine.DBMetas()
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(tables))
+	assert.EqualValues(t, 1, len(tables[0].Columns()))
+
+	switch testEngine.Dialect().URI().DBType {
+	case schemas.SQLITE:
+		assert.EqualValues(t, "INTEGER", tables[0].Columns()[0].SQLType.Name)
+	case schemas.MYSQL:
+		assert.EqualValues(t, "UNSIGNED INT", tables[0].Columns()[0].SQLType.Name)
+	case schemas.POSTGRES:
+		assert.EqualValues(t, "BIGINT", tables[0].Columns()[0].SQLType.Name)
+	case schemas.MSSQL:
+		assert.EqualValues(t, "BIGINT", tables[0].Columns()[0].SQLType.Name)
+	default:
+		assert.False(t, true, "Unsigned is not implemented")
+	}
+
+	cnt, err := testEngine.Insert(&MyUnsignedInt32Struct{
+		Id: math.MaxUint32,
+	})
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
+
+	var v MyUnsignedInt32Struct
+	has, err := testEngine.Get(&v)
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.EqualValues(t, uint64(math.MaxUint32), v.Id)
 }
 
 type MyDecimal big.Int

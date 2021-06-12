@@ -838,12 +838,12 @@ func (db *postgres) SQLType(c *schemas.Column) string {
 	case schemas.Bit:
 		res = schemas.Boolean
 		return res
-	case schemas.MediumInt, schemas.Int, schemas.Integer, schemas.UnsignedInt:
+	case schemas.MediumInt, schemas.Int, schemas.Integer:
 		if c.IsAutoIncrement {
 			return schemas.Serial
 		}
 		return schemas.Integer
-	case schemas.BigInt, schemas.UnsignedBigInt:
+	case schemas.BigInt, schemas.UnsignedBigInt, schemas.UnsignedInt:
 		if c.IsAutoIncrement {
 			return schemas.BigSerial
 		}
