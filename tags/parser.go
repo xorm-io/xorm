@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"xorm.io/xorm/caches"
 	"xorm.io/xorm/convert"
@@ -143,8 +144,18 @@ func (parser *Parser) Parse(v reflect.Value) (*schemas.Table, error) {
 	var hasCacheTag, hasNoCacheTag bool
 
 	for i := 0; i < t.NumField(); i++ {
-		tag := t.Field(i).Tag
+		var isUnexportField bool
+		for _, c := range t.Field(i).Name {
+			if unicode.IsLower(c) {
+				isUnexportField = true
+			}
+			break
+		}
+		if isUnexportField {
+			continue
+		}
 
+		tag := t.Field(i).Tag
 		ormTagStr := tag.Get(parser.identifier)
 		var col *schemas.Column
 		fieldValue := v.Field(i)
@@ -267,7 +278,7 @@ func (parser *Parser) Parse(v reflect.Value) (*schemas.Table, error) {
 					addIndex(indexName, table, col, indexType)
 				}
 			}
-		} else if fieldValue.CanSet() {
+		} else {
 			var sqlType schemas.SQLType
 			if fieldValue.CanAddr() {
 				if _, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
@@ -286,15 +297,12 @@ func (parser *Parser) Parse(v reflect.Value) (*schemas.Table, error) {
 			if fieldType.Kind() == reflect.Int64 && (strings.ToUpper(col.FieldName) == "ID" || strings.HasSuffix(strings.ToUpper(col.FieldName), ".ID")) {
 				idFieldColName = col.Name
 			}
-		} else {
-			continue
 		}
 		if col.IsAutoIncrement {
 			col.Nullable = false
 		}
 
 		table.AddColumn(col)
-
 	} // end for
 
 	if idFieldColName != "" && len(table.PrimaryKeys) == 0 {

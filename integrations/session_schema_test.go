@@ -39,6 +39,82 @@ func TestCreateTable(t *testing.T) {
 	assert.NoError(t, testEngine.Table("user_user").CreateTable(&UserinfoCreateTable{}))
 }
 
+func TestCreateTable2(t *testing.T) {
+	type BaseModelLogicalDel struct {
+		Id        string     `xorm:"varchar(46) pk"`
+		CreatedAt time.Time  `xorm:"created"`
+		UpdatedAt time.Time  `xorm:"updated"`
+		DeletedAt *time.Time `xorm:"deleted"`
+	}
+	type TestPerson struct {
+		BaseModelLogicalDel `xorm:"extends"`
+		UserId              string `xorm:"varchar(46) notnull"`
+		PersonId            string `xorm:"varchar(46) notnull"`
+		Star                bool
+		SortNo              int
+		DispName            string `xorm:"varchar(100)"`
+		FirstName           string
+		LastName            string
+		FirstNameKana       string
+		LastNameKana        string
+		BirthYear           *int
+		BirthMonth          *int
+		BirthDay            *int
+		ImageId             string `xorm:"varchar(46)"`
+		ImageDefaultId      string `xorm:"varchar(46)"`
+		UserText            string `xorm:"varchar(2000)"`
+		GenderId            *int
+		At1                 string `xorm:"varchar(10)"`
+		At1Rate             int
+		At2                 string `xorm:"varchar(10)"`
+		At2Rate             int
+		At3                 string `xorm:"varchar(10)"`
+		At3Rate             int
+		At4                 string `xorm:"varchar(10)"`
+		At4Rate             int
+		At5                 string `xorm:"varchar(10)"`
+		At5Rate             int
+		At6                 string `xorm:"varchar(10)"`
+		At6Rate             int
+	}
+
+	assert.NoError(t, PrepareEngine())
+
+	tb1, err := testEngine.TableInfo(TestPerson{})
+	assert.NoError(t, err)
+	tb2, err := testEngine.TableInfo(new(TestPerson))
+	assert.NoError(t, err)
+	cols1, cols2 := tb1.ColumnsSeq(), tb2.ColumnsSeq()
+	assert.EqualValues(t, len(cols1), len(cols2))
+	for i, col := range cols1 {
+		assert.EqualValues(t, col, cols2[i])
+	}
+
+	result, err := testEngine.IsTableExist(new(TestPerson))
+	assert.NoError(t, err)
+	if result {
+		assert.NoError(t, testEngine.DropTables(new(TestPerson)))
+	}
+
+	assert.NoError(t, testEngine.CreateTables(new(TestPerson)))
+	tables1, err := testEngine.DBMetas()
+	assert.NoError(t, err)
+	assert.Len(t, tables1, 1)
+	assert.EqualValues(t, len(cols1), len(tables1[0].Columns()))
+
+	result, err = testEngine.IsTableExist(new(TestPerson))
+	assert.NoError(t, err)
+	if result {
+		assert.NoError(t, testEngine.DropTables(new(TestPerson)))
+	}
+
+	assert.NoError(t, testEngine.CreateTables(TestPerson{}))
+	tables2, err := testEngine.DBMetas()
+	assert.NoError(t, err)
+	assert.Len(t, tables2, 1)
+	assert.EqualValues(t, len(cols1), len(tables2[0].Columns()))
+}
+
 func TestCreateMultiTables(t *testing.T) {
 	assert.NoError(t, PrepareEngine())
 
