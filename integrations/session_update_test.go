@@ -472,6 +472,11 @@ func TestUpdateIncrDecr(t *testing.T) {
 	cnt, err = testEngine.ID(col1.Id).Cols(colName).Incr(colName).Update(col1)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, cnt)
+
+	testEngine.SetColumnMapper(testEngine.GetColumnMapper())
+	cnt, err = testEngine.Cols(colName).Decr(colName, 2).ID(col1.Id).Update(new(UpdateIncr))
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, cnt)
 }
 
 type UpdatedUpdate struct {
