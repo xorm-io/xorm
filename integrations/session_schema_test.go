@@ -474,6 +474,25 @@ func TestSync2_Default(t *testing.T) {
 	assert.NoError(t, testEngine.Sync2(new(TestSync2Default)))
 }
 
+func TestSync2_Default2(t *testing.T) {
+	type TestSync2Default2 struct {
+		Id       int64
+		UserId   int64  `xorm:"default(1)"`
+		IsMember bool   `xorm:"default(true)"`
+		Name     string `xorm:"default('')"`
+	}
+
+	assert.NoError(t, PrepareEngine())
+	assertSync(t, new(TestSync2Default2))
+	assert.NoError(t, testEngine.Sync2(new(TestSync2Default2)))
+	assert.NoError(t, testEngine.Sync2(new(TestSync2Default2)))
+	assert.NoError(t, testEngine.Sync2(new(TestSync2Default2)))
+
+	assert.NoError(t, testEngine.Sync(new(TestSync2Default2)))
+	assert.NoError(t, testEngine.Sync(new(TestSync2Default2)))
+	assert.NoError(t, testEngine.Sync(new(TestSync2Default2)))
+}
+
 func TestModifyColum(t *testing.T) {
 	// Since SQLITE don't support modify column SQL, currrently just ignore
 	if testEngine.Dialect().URI().DBType == schemas.SQLITE {
