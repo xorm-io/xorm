@@ -200,3 +200,12 @@ func TestImport(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, sess.Commit())
 }
+
+func TestDBVersion(t *testing.T) {
+	assert.NoError(t, PrepareEngine())
+
+	version, err := testEngine.DBVersion()
+	assert.NoError(t, err)
+
+	fmt.Println(testEngine.Dialect().URI().DBType, "version is", version)
+}

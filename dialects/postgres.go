@@ -788,6 +788,42 @@ func (db *postgres) Init(uri *URI) error {
 	return db.Base.Init(db, uri)
 }
 
+func (db *postgres) Version(ctx context.Context, queryer core.Queryer) (*schemas.Version, error) {
+	rows, err := queryer.QueryContext(ctx, "SELECT version()")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var version string
+	if !rows.Next() {
+		return nil, errors.New("Unknow version")
+	}
+
+	if err := rows.Scan(&version); err != nil {
+		return nil, err
+	}
+
+	// Postgres: 9.5.22 on x86_64-pc-linux-gnu (Debian 9.5.22-1.pgdg90+1), compiled by gcc (Debian 6.3.0-18+deb9u1) 6.3.0 20170516, 64-bit
+	// CockroachDB CCL v19.2.4 (x86_64-unknown-linux-gnu, built
+	if strings.HasPrefix(version, "CockroachDB") {
+		versions := strings.Split(strings.TrimPrefix(version, "CockroachDB CCL "), " ")
+		return &schemas.Version{
+			Number:  strings.TrimPrefix(versions[0], "v"),
+			Edition: "CockroachDB",
+		}, nil
+	} else if strings.HasPrefix(version, "PostgreSQL") {
+		versions := strings.Split(strings.TrimPrefix(version, "PostgreSQL "), " on ")
+		return &schemas.Version{
+			Number:  versions[0],
+			Level:   versions[1],
+			Edition: "PostgreSQL",
+		}, nil
+	}
+
+	return nil, errors.New("unknow database version")
+}
+
 func (db *postgres) getSchema() string {
 	if db.uri.Schema != "" {
 		return db.uri.Schema

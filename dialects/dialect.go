@@ -44,6 +44,7 @@ type Dialect interface {
 	URI() *URI
 	SQLType(*schemas.Column) string
 	FormatBytes(b []byte) string
+	Version(ctx context.Context, queryer core.Queryer) (*schemas.Version, error)
 
 	IsReserved(string) bool
 	Quoter() schemas.Quoter

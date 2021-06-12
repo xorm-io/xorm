@@ -925,15 +925,9 @@ func (engine *Engine) Having(conditions string) *Session {
 	return session.Having(conditions)
 }
 
-// Table table struct
-type Table struct {
-	*schemas.Table
-	Name string
-}
-
-// IsValid if table is valid
-func (t *Table) IsValid() bool {
-	return t.Table != nil && len(t.Name) > 0
+// DBVersion returns the database version
+func (engine *Engine) DBVersion() (*schemas.Version, error) {
+	return engine.dialect.Version(engine.defaultContext, engine.db)
 }
 
 // TableInfo get table info according to bean's content
