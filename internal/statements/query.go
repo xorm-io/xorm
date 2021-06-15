@@ -343,7 +343,7 @@ func (statement *Statement) GenExistSQL(bean ...interface{}) (string, []interfac
 	var args []interface{}
 	var joinStr string
 	var err error
-	var b interface{} = nil
+	var b interface{}
 	if len(bean) > 0 {
 		b = bean[0]
 		beanValue := reflect.ValueOf(bean[0])

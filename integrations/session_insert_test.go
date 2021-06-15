@@ -32,7 +32,6 @@ func TestInsertOne(t *testing.T) {
 }
 
 func TestInsertMulti(t *testing.T) {
-
 	assert.NoError(t, PrepareEngine())
 	type TestMulti struct {
 		Id   int64  `xorm:"int(11) pk"`
@@ -78,7 +77,6 @@ func insertMultiDatas(step int, datas interface{}) (num int64, err error) {
 }
 
 func callbackLooper(datas interface{}, step int, actionFunc func(interface{}) error) (err error) {
-
 	sliceValue := reflect.Indirect(reflect.ValueOf(datas))
 	if sliceValue.Kind() != reflect.Slice {
 		return fmt.Errorf("not slice")

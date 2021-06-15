@@ -78,7 +78,6 @@ func TestColumnsStringGeneration(t *testing.T) {
 }
 
 func BenchmarkGetFlagForColumnWithICKey_ContainsKey(b *testing.B) {
-
 	b.StopTimer()
 
 	mapCols := make(map[string]bool)
@@ -101,9 +100,7 @@ func BenchmarkGetFlagForColumnWithICKey_ContainsKey(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-
 		for _, col := range cols {
-
 			if _, ok := getFlagForColumn(mapCols, col); !ok {
 				b.Fatal("Unexpected result")
 			}
@@ -112,7 +109,6 @@ func BenchmarkGetFlagForColumnWithICKey_ContainsKey(b *testing.B) {
 }
 
 func BenchmarkGetFlagForColumnWithICKey_EmptyMap(b *testing.B) {
-
 	b.StopTimer()
 
 	mapCols := make(map[string]bool)
@@ -131,9 +127,7 @@ func BenchmarkGetFlagForColumnWithICKey_EmptyMap(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-
 		for _, col := range cols {
-
 			if _, ok := getFlagForColumn(mapCols, col); ok {
 				b.Fatal("Unexpected result")
 			}

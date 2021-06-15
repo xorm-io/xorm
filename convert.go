@@ -416,7 +416,3 @@ func int64ToIntValue(id int64, tp reflect.Type) reflect.Value {
 	}
 	return reflect.ValueOf(v).Elem().Convert(tp)
 }
-
-func int64ToInt(id int64, tp reflect.Type) interface{} {
-	return int64ToIntValue(id, tp).Interface()
-}

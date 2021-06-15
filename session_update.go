@@ -457,7 +457,6 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 				// FIXME: if bean is a map type, it will panic because map cannot be as map key
 				session.afterUpdateBeans[bean] = &afterClosures
 			}
-
 		} else {
 			if _, ok := interface{}(bean).(AfterUpdateProcessor); ok {
 				session.afterUpdateBeans[bean] = nil

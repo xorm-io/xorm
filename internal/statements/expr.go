@@ -27,6 +27,7 @@ type Expr struct {
 	Arg     interface{}
 }
 
+// WriteArgs writes args to the writer
 func (expr *Expr) WriteArgs(w *builder.BytesWriter) error {
 	switch arg := expr.Arg.(type) {
 	case *builder.Builder:
