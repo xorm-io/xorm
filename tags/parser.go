@@ -7,7 +7,6 @@ package tags
 import (
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -23,7 +22,7 @@ import (
 
 var (
 	// ErrUnsupportedType represents an unsupported type error
-	ErrUnsupportedType = errors.New("Unsupported type")
+	ErrUnsupportedType = errors.New("unsupported type")
 )
 
 // Parser represents a parser for xorm tag
@@ -125,6 +124,145 @@ func addIndex(indexName string, table *schemas.Table, col *schemas.Column, index
 	}
 }
 
+var ErrIgnoreField = errors.New("field will be ignored")
+
+func (parser *Parser) parseFieldWithNoTag(field reflect.StructField, fieldValue reflect.Value) (*schemas.Column, error) {
+	var sqlType schemas.SQLType
+	if fieldValue.CanAddr() {
+		if _, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
+			sqlType = schemas.SQLType{Name: schemas.Text}
+		}
+	}
+	if _, ok := fieldValue.Interface().(convert.Conversion); ok {
+		sqlType = schemas.SQLType{Name: schemas.Text}
+	} else {
+		sqlType = schemas.Type2SQLType(field.Type)
+	}
+	col := schemas.NewColumn(parser.columnMapper.Obj2Table(field.Name),
+		field.Name, sqlType, sqlType.DefaultLength,
+		sqlType.DefaultLength2, true)
+
+	if field.Type.Kind() == reflect.Int64 && (strings.ToUpper(col.FieldName) == "ID" || strings.HasSuffix(strings.ToUpper(col.FieldName), ".ID")) {
+		col.IsAutoIncrement = true
+		col.IsPrimaryKey = true
+		col.Nullable = false
+	}
+	return col, nil
+}
+
+func (parser *Parser) parseFieldWithTags(table *schemas.Table, field reflect.StructField, fieldValue reflect.Value, tags []tag) (*schemas.Column, error) {
+	var col = &schemas.Column{
+		FieldName:       field.Name,
+		Nullable:        true,
+		IsPrimaryKey:    false,
+		IsAutoIncrement: false,
+		MapType:         schemas.TWOSIDES,
+		Indexes:         make(map[string]int),
+		DefaultIsEmpty:  true,
+	}
+
+	var ctx = Context{
+		table:      table,
+		col:        col,
+		fieldValue: fieldValue,
+		indexNames: make(map[string]int),
+		parser:     parser,
+	}
+
+	for j, tag := range tags {
+		if ctx.ignoreNext {
+			ctx.ignoreNext = false
+			continue
+		}
+
+		ctx.tag = tag
+		ctx.tagUname = strings.ToUpper(tag.name)
+
+		if j > 0 {
+			ctx.preTag = strings.ToUpper(tags[j-1].name)
+		}
+		if j < len(tags)-1 {
+			ctx.nextTag = tags[j+1].name
+		} else {
+			ctx.nextTag = ""
+		}
+
+		if h, ok := parser.handlers[ctx.tagUname]; ok {
+			if err := h(&ctx); err != nil {
+				return nil, err
+			}
+		} else {
+			if strings.HasPrefix(ctx.tag.name, "'") && strings.HasSuffix(ctx.tag.name, "'") {
+				col.Name = ctx.tag.name[1 : len(ctx.tag.name)-1]
+			} else {
+				col.Name = ctx.tag.name
+			}
+		}
+
+		if ctx.hasCacheTag {
+			if parser.cacherMgr.GetDefaultCacher() != nil {
+				parser.cacherMgr.SetCacher(table.Name, parser.cacherMgr.GetDefaultCacher())
+			} else {
+				parser.cacherMgr.SetCacher(table.Name, caches.NewLRUCacher2(caches.NewMemoryStore(), time.Hour, 10000))
+			}
+		}
+		if ctx.hasNoCacheTag {
+			parser.cacherMgr.SetCacher(table.Name, nil)
+		}
+	}
+
+	if col.SQLType.Name == "" {
+		col.SQLType = schemas.Type2SQLType(field.Type)
+	}
+	parser.dialect.SQLType(col)
+	if col.Length == 0 {
+		col.Length = col.SQLType.DefaultLength
+	}
+	if col.Length2 == 0 {
+		col.Length2 = col.SQLType.DefaultLength2
+	}
+	if col.Name == "" {
+		col.Name = parser.columnMapper.Obj2Table(field.Name)
+	}
+
+	if ctx.isUnique {
+		ctx.indexNames[col.Name] = schemas.UniqueType
+	} else if ctx.isIndex {
+		ctx.indexNames[col.Name] = schemas.IndexType
+	}
+
+	for indexName, indexType := range ctx.indexNames {
+		addIndex(indexName, table, col, indexType)
+	}
+
+	return col, nil
+}
+
+func (parser *Parser) parseField(table *schemas.Table, field reflect.StructField, fieldValue reflect.Value) (*schemas.Column, error) {
+	var (
+		tag       = field.Tag
+		ormTagStr = strings.TrimSpace(tag.Get(parser.identifier))
+	)
+	if ormTagStr == "-" {
+		return nil, ErrIgnoreField
+	}
+	if ormTagStr == "" {
+		return parser.parseFieldWithNoTag(field, fieldValue)
+	}
+	tags, err := splitTag(ormTagStr)
+	if err != nil {
+		return nil, err
+	}
+	return parser.parseFieldWithTags(table, field, fieldValue, tags)
+}
+
+func isNotTitle(n string) bool {
+	for _, c := range n {
+		return unicode.IsLower(c)
+	}
+	return true
+}
+
 // Parse parses a struct as a table information
 func (parser *Parser) Parse(v reflect.Value) (*schemas.Table, error) {
 	t := v.Type()
@@ -140,193 +278,25 @@ func (parser *Parser) Parse(v reflect.Value) (*schemas.Table, error) {
 	table.Type = t
 	table.Name = names.GetTableName(parser.tableMapper, v)
 
-	var idFieldColName string
-	var hasCacheTag, hasNoCacheTag bool
-
 	for i := 0; i < t.NumField(); i++ {
-		var isUnexportField bool
-		for _, c := range t.Field(i).Name {
-			if unicode.IsLower(c) {
-				isUnexportField = true
-			}
-			break
-		}
-		if isUnexportField {
+		if isNotTitle(t.Field(i).Name) {
 			continue
 		}
 
-		tag := t.Field(i).Tag
-		ormTagStr := tag.Get(parser.identifier)
-		var col *schemas.Column
-		fieldValue := v.Field(i)
-		fieldType := fieldValue.Type()
+		var (
+			field      = t.Field(i)
+			fieldValue = v.Field(i)
+		)
 
-		if ormTagStr != "" {
-			col = &schemas.Column{
-				FieldName:       t.Field(i).Name,
-				Nullable:        true,
-				IsPrimaryKey:    false,
-				IsAutoIncrement: false,
-				MapType:         schemas.TWOSIDES,
-				Indexes:         make(map[string]int),
-				DefaultIsEmpty:  true,
-			}
-			tags := splitTag(ormTagStr)
-
-			if len(tags) > 0 {
-				if tags[0] == "-" {
-					continue
-				}
-
-				var ctx = Context{
-					table:      table,
-					col:        col,
-					fieldValue: fieldValue,
-					indexNames: make(map[string]int),
-					parser:     parser,
-				}
-
-				if strings.HasPrefix(strings.ToUpper(tags[0]), "EXTENDS") {
-					pStart := strings.Index(tags[0], "(")
-					if pStart > -1 && strings.HasSuffix(tags[0], ")") {
-						var tagPrefix = strings.TrimFunc(tags[0][pStart+1:len(tags[0])-1], func(r rune) bool {
-							return r == '\'' || r == '"'
-						})
-
-						ctx.params = []string{tagPrefix}
-					}
-
-					if err := ExtendsTagHandler(&ctx); err != nil {
-						return nil, err
-					}
-					continue
-				}
-
-				for j, key := range tags {
-					if ctx.ignoreNext {
-						ctx.ignoreNext = false
-						continue
-					}
-
-					k := strings.ToUpper(key)
-					ctx.tagName = k
-					ctx.params = []string{}
-
-					pStart := strings.Index(k, "(")
-					if pStart == 0 {
-						return nil, errors.New("( could not be the first character")
-					}
-					if pStart > -1 {
-						if !strings.HasSuffix(k, ")") {
-							return nil, fmt.Errorf("field %s tag %s cannot match ) character", col.FieldName, key)
-						}
-
-						ctx.tagName = k[:pStart]
-						ctx.params = strings.Split(key[pStart+1:len(k)-1], ",")
-					}
-
-					if j > 0 {
-						ctx.preTag = strings.ToUpper(tags[j-1])
-					}
-					if j < len(tags)-1 {
-						ctx.nextTag = tags[j+1]
-					} else {
-						ctx.nextTag = ""
-					}
-
-					if h, ok := parser.handlers[ctx.tagName]; ok {
-						if err := h(&ctx); err != nil {
-							return nil, err
-						}
-					} else {
-						if strings.HasPrefix(key, "'") && strings.HasSuffix(key, "'") {
-							col.Name = key[1 : len(key)-1]
-						} else {
-							col.Name = key
-						}
-					}
-
-					if ctx.hasCacheTag {
-						hasCacheTag = true
-					}
-					if ctx.hasNoCacheTag {
-						hasNoCacheTag = true
-					}
-				}
-
-				if col.SQLType.Name == "" {
-					col.SQLType = schemas.Type2SQLType(fieldType)
-				}
-				parser.dialect.SQLType(col)
-				if col.Length == 0 {
-					col.Length = col.SQLType.DefaultLength
-				}
-				if col.Length2 == 0 {
-					col.Length2 = col.SQLType.DefaultLength2
-				}
-				if col.Name == "" {
-					col.Name = parser.columnMapper.Obj2Table(t.Field(i).Name)
-				}
-
-				if ctx.isUnique {
-					ctx.indexNames[col.Name] = schemas.UniqueType
-				} else if ctx.isIndex {
-					ctx.indexNames[col.Name] = schemas.IndexType
-				}
-
-				for indexName, indexType := range ctx.indexNames {
-					addIndex(indexName, table, col, indexType)
-				}
-			}
-		} else {
-			var sqlType schemas.SQLType
-			if fieldValue.CanAddr() {
-				if _, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
-					sqlType = schemas.SQLType{Name: schemas.Text}
-				}
-			}
-			if _, ok := fieldValue.Interface().(convert.Conversion); ok {
-				sqlType = schemas.SQLType{Name: schemas.Text}
-			} else {
-				sqlType = schemas.Type2SQLType(fieldType)
-			}
-			col = schemas.NewColumn(parser.columnMapper.Obj2Table(t.Field(i).Name),
-				t.Field(i).Name, sqlType, sqlType.DefaultLength,
-				sqlType.DefaultLength2, true)
-
-			if fieldType.Kind() == reflect.Int64 && (strings.ToUpper(col.FieldName) == "ID" || strings.HasSuffix(strings.ToUpper(col.FieldName), ".ID")) {
-				idFieldColName = col.Name
-			}
-		}
-		if col.IsAutoIncrement {
-			col.Nullable = false
+		col, err := parser.parseField(table, field, fieldValue)
+		if err == ErrIgnoreField {
+			continue
+		} else if err != nil {
+			return nil, err
 		}
 
 		table.AddColumn(col)
 	} // end for
-
-	if idFieldColName != "" && len(table.PrimaryKeys) == 0 {
-		col := table.GetColumn(idFieldColName)
-		col.IsPrimaryKey = true
-		col.IsAutoIncrement = true
-		col.Nullable = false
-		table.PrimaryKeys = append(table.PrimaryKeys, col.Name)
-		table.AutoIncrement = col.Name
-	}
-
-	if hasCacheTag {
-		if parser.cacherMgr.GetDefaultCacher() != nil { // !nash! use engine's cacher if provided
-			//engine.logger.Info("enable cache on table:", table.Name)
-			parser.cacherMgr.SetCacher(table.Name, parser.cacherMgr.GetDefaultCacher())
-		} else {
-			//engine.logger.Info("enable LRU cache on table:", table.Name)
-			parser.cacherMgr.SetCacher(table.Name, caches.NewLRUCacher2(caches.NewMemoryStore(), time.Hour, 10000))
-		}
-	}
-	if hasNoCacheTag {
-		//engine.logger.Info("disable cache on table:", table.Name)
-		parser.cacherMgr.SetCacher(table.Name, nil)
-	}
 
 	return table, nil
 }

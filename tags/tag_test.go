@@ -7,24 +7,83 @@ package tags
 import (
 	"testing"
 
-	"xorm.io/xorm/internal/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSplitTag(t *testing.T) {
 	var cases = []struct {
 		tag  string
-		tags []string
+		tags []tag
 	}{
-		{"not null default '2000-01-01 00:00:00' TIMESTAMP", []string{"not", "null", "default", "'2000-01-01 00:00:00'", "TIMESTAMP"}},
-		{"TEXT", []string{"TEXT"}},
-		{"default('2000-01-01 00:00:00')", []string{"default('2000-01-01 00:00:00')"}},
-		{"json  binary", []string{"json", "binary"}},
+		{"not null default '2000-01-01 00:00:00' TIMESTAMP", []tag{
+			{
+				name: "not",
+			},
+			{
+				name: "null",
+			},
+			{
+				name: "default",
+			},
+			{
+				name: "'2000-01-01 00:00:00'",
+			},
+			{
+				name: "TIMESTAMP",
+			},
+		},
+		},
+		{"TEXT", []tag{
+			{
+				name: "TEXT",
+			},
+		},
+		},
+		{"default('2000-01-01 00:00:00')", []tag{
+			{
+				name: "default",
+				params: []string{
+					"'2000-01-01 00:00:00'",
+				},
+			},
+		},
+		},
+		{"json  binary", []tag{
+			{
+				name: "json",
+			},
+			{
+				name: "binary",
+			},
+		},
+		},
+		{"numeric(10, 2)", []tag{
+			{
+				name:   "numeric",
+				params: []string{"10", "2"},
+			},
+		},
+		},
+		{"numeric(10, 2) notnull", []tag{
+			{
+				name:   "numeric",
+				params: []string{"10", "2"},
+			},
+			{
+				name: "notnull",
+			},
+		},
+		},
 	}
 
 	for _, kase := range cases {
-		tags := splitTag(kase.tag)
-		if !utils.SliceEq(tags, kase.tags) {
-			t.Fatalf("[%d]%v is not equal [%d]%v", len(tags), tags, len(kase.tags), kase.tags)
-		}
+		t.Run(kase.tag, func(t *testing.T) {
+			tags, err := splitTag(kase.tag)
+			assert.NoError(t, err)
+			assert.EqualValues(t, len(tags), len(kase.tags))
+			for i := 0; i < len(tags); i++ {
+				assert.Equal(t, tags[i], kase.tags[i])
+			}
+		})
 	}
 }
