@@ -126,7 +126,7 @@ func addIndex(indexName string, table *schemas.Table, col *schemas.Column, index
 
 var ErrIgnoreField = errors.New("field will be ignored")
 
-func (parser *Parser) parseFieldWithNoTag(field reflect.StructField, fieldValue reflect.Value) (*schemas.Column, error) {
+func (parser *Parser) parseFieldWithNoTag(fieldIndex int, field reflect.StructField, fieldValue reflect.Value) (*schemas.Column, error) {
 	var sqlType schemas.SQLType
 	if fieldValue.CanAddr() {
 		if _, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
@@ -141,6 +141,7 @@ func (parser *Parser) parseFieldWithNoTag(field reflect.StructField, fieldValue 
 	col := schemas.NewColumn(parser.columnMapper.Obj2Table(field.Name),
 		field.Name, sqlType, sqlType.DefaultLength,
 		sqlType.DefaultLength2, true)
+	col.FieldIndex = []int{fieldIndex}
 
 	if field.Type.Kind() == reflect.Int64 && (strings.ToUpper(col.FieldName) == "ID" || strings.HasSuffix(strings.ToUpper(col.FieldName), ".ID")) {
 		col.IsAutoIncrement = true
@@ -150,9 +151,10 @@ func (parser *Parser) parseFieldWithNoTag(field reflect.StructField, fieldValue 
 	return col, nil
 }
 
-func (parser *Parser) parseFieldWithTags(table *schemas.Table, field reflect.StructField, fieldValue reflect.Value, tags []tag) (*schemas.Column, error) {
+func (parser *Parser) parseFieldWithTags(table *schemas.Table, fieldIndex int, field reflect.StructField, fieldValue reflect.Value, tags []tag) (*schemas.Column, error) {
 	var col = &schemas.Column{
 		FieldName:       field.Name,
+		FieldIndex:      []int{fieldIndex},
 		Nullable:        true,
 		IsPrimaryKey:    false,
 		IsAutoIncrement: false,
@@ -238,7 +240,7 @@ func (parser *Parser) parseFieldWithTags(table *schemas.Table, field reflect.Str
 	return col, nil
 }
 
-func (parser *Parser) parseField(table *schemas.Table, field reflect.StructField, fieldValue reflect.Value) (*schemas.Column, error) {
+func (parser *Parser) parseField(table *schemas.Table, fieldIndex int, field reflect.StructField, fieldValue reflect.Value) (*schemas.Column, error) {
 	var (
 		tag       = field.Tag
 		ormTagStr = strings.TrimSpace(tag.Get(parser.identifier))
@@ -247,13 +249,13 @@ func (parser *Parser) parseField(table *schemas.Table, field reflect.StructField
 		return nil, ErrIgnoreField
 	}
 	if ormTagStr == "" {
-		return parser.parseFieldWithNoTag(field, fieldValue)
+		return parser.parseFieldWithNoTag(fieldIndex, field, fieldValue)
 	}
 	tags, err := splitTag(ormTagStr)
 	if err != nil {
 		return nil, err
 	}
-	return parser.parseFieldWithTags(table, field, fieldValue, tags)
+	return parser.parseFieldWithTags(table, fieldIndex, field, fieldValue, tags)
 }
 
 func isNotTitle(n string) bool {
@@ -279,16 +281,12 @@ func (parser *Parser) Parse(v reflect.Value) (*schemas.Table, error) {
 	table.Name = names.GetTableName(parser.tableMapper, v)
 
 	for i := 0; i < t.NumField(); i++ {
-		if isNotTitle(t.Field(i).Name) {
+		var field = t.Field(i)
+		if isNotTitle(field.Name) {
 			continue
 		}
 
-		var (
-			field      = t.Field(i)
-			fieldValue = v.Field(i)
-		)
-
-		col, err := parser.parseField(table, field, fieldValue)
+		col, err := parser.parseField(table, i, field, v.Field(i))
 		if err == ErrIgnoreField {
 			continue
 		} else if err != nil {

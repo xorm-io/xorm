@@ -652,11 +652,7 @@ func (engine *Engine) dumpTables(tables []*schemas.Table, w io.Writer, tp ...sch
 						return errors.New("unknown column error")
 					}
 
-					fields := strings.Split(col.FieldName, ".")
-					field := dataStruct
-					for _, fieldName := range fields {
-						field = field.FieldByName(fieldName)
-					}
+					field := dataStruct.FieldByIndex(col.FieldIndex)
 					temp += "," + formatColumnValue(dstDialect, field.Interface(), col)
 				}
 				_, err = io.WriteString(w, temp[1:]+");\n")

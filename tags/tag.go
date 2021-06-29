@@ -338,6 +338,7 @@ func ExtendsTagHandler(ctx *Context) error {
 		}
 		for _, col := range parentTable.Columns() {
 			col.FieldName = fmt.Sprintf("%v.%v", ctx.col.FieldName, col.FieldName)
+			col.FieldIndex = append(ctx.col.FieldIndex, col.FieldIndex...)
 
 			var tagPrefix = ctx.col.FieldName
 			if len(ctx.params) > 0 {

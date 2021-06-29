@@ -249,11 +249,11 @@ volumes:
 services:
 - name: mssql
   pull: always
-  image: microsoft/mssql-server-linux:latest
+  image: mcr.microsoft.com/mssql/server:latest
   environment:
     ACCEPT_EULA: Y
     SA_PASSWORD: yourStrong(!)Password
-    MSSQL_PID: Developer
+    MSSQL_PID: Standard
 
 ---
 kind: pipeline

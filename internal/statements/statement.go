@@ -734,6 +734,8 @@ func (statement *Statement) buildConds2(table *schemas.Table, bean interface{},
 				//engine.logger.Warn(err)
 			}
 			continue
+		} else if fieldValuePtr == nil {
+			continue
 		}
 
 		if col.IsDeleted && !unscoped { // tag "deleted" is enabled
