@@ -29,6 +29,25 @@ func (engine *Engine) row2mapStr(rows *core.Rows, types []*sql.ColumnType, field
 	return result, nil
 }
 
+func (engine *Engine) row2mapBytes(rows *core.Rows, types []*sql.ColumnType, fields []string) (map[string][]byte, error) {
+	var scanResults = make([]interface{}, len(fields))
+	for i := 0; i < len(fields); i++ {
+		var s sql.NullString
+		scanResults[i] = &s
+	}
+
+	if err := rows.Scan(scanResults...); err != nil {
+		return nil, err
+	}
+
+	result := make(map[string][]byte, len(fields))
+	for ii, key := range fields {
+		s := scanResults[ii].(*sql.NullString)
+		result[key] = []byte(s.String)
+	}
+	return result, nil
+}
+
 func (engine *Engine) row2sliceStr(rows *core.Rows, types []*sql.ColumnType, fields []string) ([]string, error) {
 	results := make([]string, 0, len(fields))
 	var scanResults = make([]interface{}, len(fields))
