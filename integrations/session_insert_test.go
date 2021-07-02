@@ -168,16 +168,16 @@ func TestInsertAutoIncr(t *testing.T) {
 	assert.Greater(t, user.Uid, int64(0))
 }
 
-type DefaultInsert struct {
-	Id      int64
-	Status  int `xorm:"default -1"`
-	Name    string
-	Created time.Time `xorm:"created"`
-	Updated time.Time `xorm:"updated"`
-}
-
 func TestInsertDefault(t *testing.T) {
 	assert.NoError(t, PrepareEngine())
+
+	type DefaultInsert struct {
+		Id      int64
+		Status  int `xorm:"default -1"`
+		Name    string
+		Created time.Time `xorm:"created"`
+		Updated time.Time `xorm:"updated"`
+	}
 
 	di := new(DefaultInsert)
 	err := testEngine.Sync2(di)
@@ -195,15 +195,15 @@ func TestInsertDefault(t *testing.T) {
 	assert.EqualValues(t, di2.Created.Unix(), di.Created.Unix())
 }
 
-type DefaultInsert2 struct {
-	Id        int64
-	Name      string
-	Url       string    `xorm:"text"`
-	CheckTime time.Time `xorm:"not null default '2000-01-01 00:00:00' TIMESTAMP"`
-}
-
 func TestInsertDefault2(t *testing.T) {
 	assert.NoError(t, PrepareEngine())
+
+	type DefaultInsert2 struct {
+		Id        int64
+		Name      string
+		Url       string    `xorm:"text"`
+		CheckTime time.Time `xorm:"not null default '2000-01-01 00:00:00' TIMESTAMP"`
+	}
 
 	di := new(DefaultInsert2)
 	err := testEngine.Sync2(di)

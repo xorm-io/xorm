@@ -52,7 +52,7 @@ func TestQueryString2(t *testing.T) {
 
 	type GetVar3 struct {
 		Id  int64 `xorm:"autoincr pk"`
-		Msg bool  `xorm:"bit"`
+		Msg bool
 	}
 
 	assert.NoError(t, testEngine.Sync2(new(GetVar3)))
@@ -192,7 +192,7 @@ func TestQueryStringNoParam(t *testing.T) {
 
 	type GetVar4 struct {
 		Id  int64 `xorm:"autoincr pk"`
-		Msg bool  `xorm:"bit"`
+		Msg bool
 	}
 
 	assert.NoError(t, testEngine.Sync2(new(GetVar4)))
@@ -229,7 +229,7 @@ func TestQuerySliceStringNoParam(t *testing.T) {
 
 	type GetVar6 struct {
 		Id  int64 `xorm:"autoincr pk"`
-		Msg bool  `xorm:"bit"`
+		Msg bool
 	}
 
 	assert.NoError(t, testEngine.Sync2(new(GetVar6)))
@@ -266,7 +266,7 @@ func TestQueryInterfaceNoParam(t *testing.T) {
 
 	type GetVar5 struct {
 		Id  int64 `xorm:"autoincr pk"`
-		Msg bool  `xorm:"bit"`
+		Msg bool
 	}
 
 	assert.NoError(t, testEngine.Sync2(new(GetVar5)))

@@ -406,16 +406,16 @@ func TestFindMapPtrString(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestFindBit(t *testing.T) {
-	type FindBitStruct struct {
+func TestFindBool(t *testing.T) {
+	type FindBoolStruct struct {
 		Id  int64
-		Msg bool `xorm:"bit"`
+		Msg bool
 	}
 
 	assert.NoError(t, PrepareEngine())
-	assertSync(t, new(FindBitStruct))
+	assertSync(t, new(FindBoolStruct))
 
-	cnt, err := testEngine.Insert([]FindBitStruct{
+	cnt, err := testEngine.Insert([]FindBoolStruct{
 		{
 			Msg: false,
 		},
@@ -426,14 +426,13 @@ func TestFindBit(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 2, cnt)
 
-	var results = make([]FindBitStruct, 0, 2)
+	var results = make([]FindBoolStruct, 0, 2)
 	err = testEngine.Find(&results)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 2, len(results))
 }
 
 func TestFindMark(t *testing.T) {
-
 	type Mark struct {
 		Mark1 string `xorm:"VARCHAR(1)"`
 		Mark2 string `xorm:"VARCHAR(1)"`
@@ -468,7 +467,7 @@ func TestFindAndCountOneFunc(t *testing.T) {
 	type FindAndCountStruct struct {
 		Id      int64
 		Content string
-		Msg     bool `xorm:"bit"`
+		Msg     bool
 	}
 
 	assert.NoError(t, PrepareEngine())
