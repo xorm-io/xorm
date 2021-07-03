@@ -17,7 +17,7 @@ func (statement *Statement) writeInsertOutput(buf *strings.Builder, table *schem
 		if _, err := buf.WriteString(" OUTPUT Inserted."); err != nil {
 			return err
 		}
-		if _, err := buf.WriteString(table.AutoIncrement); err != nil {
+		if err := statement.dialect.Quoter().QuoteTo(buf, table.AutoIncrement); err != nil {
 			return err
 		}
 	}

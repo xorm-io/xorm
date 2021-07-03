@@ -1024,3 +1024,44 @@ func TestInsertIntSlice(t *testing.T) {
 	assert.True(t, has)
 	assert.EqualValues(t, v3, v4)
 }
+
+func TestInsertDeleted(t *testing.T) {
+	assert.NoError(t, PrepareEngine())
+
+	type InsertDeletedStructNotRight struct {
+		ID        uint64    `xorm:"'ID' pk autoincr"`
+		DeletedAt time.Time `xorm:"'DELETED_AT' deleted notnull"`
+	}
+	// notnull tag will be ignored
+	err := testEngine.Sync2(new(InsertDeletedStructNotRight))
+	assert.NoError(t, err)
+
+	type InsertDeletedStruct struct {
+		ID        uint64    `xorm:"'ID' pk autoincr"`
+		DeletedAt time.Time `xorm:"'DELETED_AT' deleted"`
+	}
+
+	assert.NoError(t, testEngine.Sync2(new(InsertDeletedStruct)))
+
+	var v InsertDeletedStruct
+	_, err = testEngine.Insert(&v)
+	assert.NoError(t, err)
+
+	var v2 InsertDeletedStruct
+	has, err := testEngine.Get(&v2)
+	assert.NoError(t, err)
+	assert.True(t, has)
+
+	_, err = testEngine.ID(v.ID).Delete(new(InsertDeletedStruct))
+	assert.NoError(t, err)
+
+	var v3 InsertDeletedStruct
+	has, err = testEngine.Get(&v3)
+	assert.NoError(t, err)
+	assert.False(t, has)
+
+	var v4 InsertDeletedStruct
+	has, err = testEngine.Unscoped().Get(&v4)
+	assert.NoError(t, err)
+	assert.True(t, has)
+}

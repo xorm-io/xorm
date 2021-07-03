@@ -238,6 +238,7 @@ func UpdatedTagHandler(ctx *Context) error {
 // DeletedTagHandler describes deleted tag handler
 func DeletedTagHandler(ctx *Context) error {
 	ctx.col.IsDeleted = true
+	ctx.col.Nullable = true
 	return nil
 }
 

@@ -978,7 +978,7 @@ func (statement *Statement) joinColumns(cols []*schemas.Column, includeTableName
 
 // CondDeleted returns the conditions whether a record is soft deleted.
 func (statement *Statement) CondDeleted(col *schemas.Column) builder.Cond {
-	var colName = col.Name
+	var colName = statement.quote(col.Name)
 	if statement.JoinStr != "" {
 		var prefix string
 		if statement.TableAlias != "" {

@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
@@ -497,6 +498,16 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 		}
 
 		if col.IsDeleted {
+			colNames = append(colNames, col.Name)
+			if !col.Nullable {
+				if col.SQLType.IsNumeric() {
+					args = append(args, 0)
+				} else {
+					args = append(args, time.Time{}.Format("2006-01-02 15:04:05"))
+				}
+			} else {
+				args = append(args, nil)
+			}
 			continue
 		}
 
