@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm/convert"
-	"xorm.io/xorm/internal/json"
-	"xorm.io/xorm/internal/utils"
-	"xorm.io/xorm/schemas"
+	"github.com/xorm-io/xorm/convert"
+	"github.com/xorm-io/xorm/internal/json"
+	"github.com/xorm-io/xorm/internal/utils"
+	"github.com/xorm-io/xorm/schemas"
 )
 
 func (session *Session) str2Time(col *schemas.Column, data string) (outTime time.Time, outErr error) {

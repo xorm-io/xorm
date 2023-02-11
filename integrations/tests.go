@@ -13,12 +13,12 @@ import (
 	"strings"
 	"testing"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/caches"
-	"xorm.io/xorm/dialects"
-	"xorm.io/xorm/log"
-	"xorm.io/xorm/names"
-	"xorm.io/xorm/schemas"
+	"github.com/xorm-io/xorm"
+	"github.com/xorm-io/xorm/caches"
+	"github.com/xorm-io/xorm/dialects"
+	"github.com/xorm-io/xorm/log"
+	"github.com/xorm-io/xorm/names"
+	"github.com/xorm-io/xorm/schemas"
 )
 
 var (

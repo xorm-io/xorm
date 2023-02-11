@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"strings"
 
-	"xorm.io/xorm/internal/utils"
-	"xorm.io/xorm/names"
+	"github.com/xorm-io/xorm/internal/utils"
+	"github.com/xorm-io/xorm/names"
 )
 
 // TableNameWithSchema will add schema prefix on table name if possible
