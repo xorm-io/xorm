@@ -188,7 +188,7 @@ func (m *Migrate) createMigrationTableIfNotExists() error {
 		return nil
 	}
 
-	sql := fmt.Sprintf("CREATE TABLE %s (%s VARCHAR(255) PRIMARY KEY)", m.options.TableName, m.options.IDColumnName)
+	sql := fmt.Sprintf("CREATE TABLE %s (%s VARCHAR(100) PRIMARY KEY)", m.options.TableName, m.options.IDColumnName)
 	if _, err := m.db.Exec(sql); err != nil {
 		return err
 	}
