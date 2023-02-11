@@ -10,7 +10,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/stretchr/testify v1.4.0
 	github.com/syndtr/goleveldb v1.0.0
+	github.com/xorm-io/builder v0.3.13
 	github.com/ziutek/mymysql v1.5.4
 	modernc.org/sqlite v1.10.1-0.20210314190707-798bbeb9bb84
-	xorm.io/builder v0.3.8
 )

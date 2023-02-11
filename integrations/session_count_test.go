@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"xorm.io/builder"
+	"github.com/xorm-io/builder"
 )
 
 func TestCount(t *testing.T) {

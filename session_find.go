@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/xorm-io/builder"
 	"github.com/xorm-io/xorm/caches"
 	"github.com/xorm-io/xorm/internal/statements"
 	"github.com/xorm-io/xorm/internal/utils"
 	"github.com/xorm-io/xorm/schemas"
-	"xorm.io/builder"
 )
 
 const (
