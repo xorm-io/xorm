@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/contexts"
-	"xorm.io/xorm/schemas"
+	"github.com/xorm-io/xorm"
+	"github.com/xorm-io/xorm/contexts"
+	"github.com/xorm-io/xorm/schemas"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -18,13 +18,13 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm/contexts"
-	"xorm.io/xorm/convert"
-	"xorm.io/xorm/core"
-	"xorm.io/xorm/internal/json"
-	"xorm.io/xorm/internal/statements"
-	"xorm.io/xorm/log"
-	"xorm.io/xorm/schemas"
+	"github.com/xorm-io/xorm/contexts"
+	"github.com/xorm-io/xorm/convert"
+	"github.com/xorm-io/xorm/core"
+	"github.com/xorm-io/xorm/internal/json"
+	"github.com/xorm-io/xorm/internal/statements"
+	"github.com/xorm-io/xorm/log"
+	"github.com/xorm-io/xorm/schemas"
 )
 
 // ErrFieldIsNotExist columns does not exist

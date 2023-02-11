@@ -7,7 +7,7 @@ package xorm
 import (
 	"database/sql"
 
-	"xorm.io/xorm/core"
+	"github.com/xorm-io/xorm/core"
 )
 
 func (engine *Engine) row2mapStr(rows *core.Rows, types []*sql.ColumnType, fields []string) (map[string]string, error) {

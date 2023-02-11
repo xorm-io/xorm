@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"xorm.io/xorm/internal/utils"
-	"xorm.io/xorm/names"
-	"xorm.io/xorm/schemas"
+	"github.com/xorm-io/xorm/internal/utils"
+	"github.com/xorm-io/xorm/names"
+	"github.com/xorm-io/xorm/schemas"
 )
 
 type tempUser struct {
